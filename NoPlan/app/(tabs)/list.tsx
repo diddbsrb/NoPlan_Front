@@ -1,0 +1,14 @@
+import React from 'react';
+import { View, Text } from 'react-native';
+import CustomTopBar from '../components/CustomTopBar';
+
+export default function List() {
+  return (
+    <View style={{ flex: 1 }}>
+      <CustomTopBar />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>List Page</Text>
+      </View>
+    </View>
+  );
+} 
