@@ -15,6 +15,8 @@ export default function CustomTopBar({
   onProfile,
   logoSource,
 }: CustomTopBarProps) {
+  // 기본 로고 경로
+  const defaultLogo = require('../../assets/images/noplan_logo_blue.png');
   return (
     <View style={styles.container}>
       {/* Left: Back button */}
@@ -23,11 +25,7 @@ export default function CustomTopBar({
       </TouchableOpacity>
       {/* Center: Logo + Title */}
       <View style={styles.centerContainer}>
-        {logoSource ? (
-          <Image source={logoSource} style={styles.logo} resizeMode="contain" />
-        ) : (
-          <Ionicons name="image" size={32} color="#39939B" style={styles.logo} />
-        )}
+        <Image source={logoSource || defaultLogo} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>{title}</Text>
       </View>
       {/* Right: Profile button */}

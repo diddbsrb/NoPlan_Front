@@ -10,7 +10,7 @@ export default function HomeScreen() {
     >
       <View style={styles.container}>
         <Image
-          source={require('../../assets/images/partial-react-logo.png')}
+          source={require('../../assets/images/noplan_logo_white.png')}
           style={styles.logo}
           resizeMode="contain"
         />
