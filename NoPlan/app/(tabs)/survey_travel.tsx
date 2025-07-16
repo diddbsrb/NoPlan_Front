@@ -2,20 +2,31 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, FlatList } from 'react-native';
 import CustomTopBar from '../components/CustomTopBar';
 
-const CIRCLE_OPTIONS = [
-  '자연', '도시', '역사', '음식', '휴식', '모험', '문화', '쇼핑', '예술'
+// 2단계: 키워드 옵션 (최대 3개 선택)
+const KEYWORD_OPTIONS = [
+  '힐링', '자유로움', '감성적인', '활동적인', '자연', '도전', '체험', '휴식', '문화'
 ];
 
-const IMAGE_OPTIONS = [
-  require('../../assets/images/index_screen.png'),
-  require('../../assets/images/noplan_logo_white.png'),
-  require('../../assets/images/splash-icon.png'),
+// 3단계: 여행 방식 옵션
+const TRAVEL_TYPE_OPTIONS = [
+  { label: '대중교통', image: require('../../assets/images/index_screen.png') },
+  { label: '도보', image: require('../../assets/images/noplan_logo_white.png') },
+  { label: '자가용', image: require('../../assets/images/splash-icon.png') },
+];
+
+// 4단계: 동반자 옵션
+const COMPANION_OPTIONS = [
+  { label: '혼자', image: require('../../assets/images/index_screen.png') },
+  { label: '연인', image: require('../../assets/images/noplan_logo_white.png') },
+  { label: '친구', image: require('../../assets/images/splash-icon.png') },
+  { label: '가족', image: require('../../assets/images/icon.png') },
 ];
 
 export default function SurveyTravel() {
   const [step, setStep] = useState(1);
-  const [selectedCircle, setSelectedCircle] = useState<number | null>(null);
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
+  const [selectedTravelType, setSelectedTravelType] = useState<number | null>(null);
+  const [selectedCompanion, setSelectedCompanion] = useState<number | null>(null);
 
   // 진행 바 색상 계산
   const getBarStyle = (barStep: number) => ({
@@ -24,8 +35,24 @@ export default function SurveyTravel() {
     borderRadius: 4,
     marginHorizontal: 2,
     backgroundColor: step === barStep ? '#A3D8E3' : '#E0E0E0',
-    // 현재 단계까지 색을 채우고 싶으면: step >= barStep ? '#A3D8E3' : '#E0E0E0'
   });
+
+  // 키워드 선택 핸들러 (최대 3개)
+  const handleKeywordPress = (idx: number) => {
+    if (selectedKeywords.includes(idx)) {
+      setSelectedKeywords(selectedKeywords.filter(i => i !== idx));
+    } else if (selectedKeywords.length < 3) {
+      setSelectedKeywords([...selectedKeywords, idx]);
+    }
+  };
+
+  // 버튼 활성화 조건
+  const isNextEnabled = () => {
+    if (step === 2) return selectedKeywords.length === 3;
+    if (step === 3) return selectedTravelType !== null;
+    if (step === 4) return selectedCompanion !== null;
+    return true;
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -33,20 +60,23 @@ export default function SurveyTravel() {
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
         {step === 1 && (
           <>
-            <Text style={styles.title}>설문지에서 프로필을{"\n"}아래와 같이 시작합니다.</Text>
+            <Text style={styles.title}>사용자님에게 최적화된{"\n"}여행을 지금 시작합니다!</Text>
+            <Text style={styles.desc}>개인화된 목적지 추천을 위해서{"\n"}간단한 설문을 진행합니다.</Text>
           </>
         )}
         {step === 2 && (
           <>
-            <Text style={styles.title}>어떤 여행을{"\n"}가장 선호하시나요?</Text>
+            <Text style={styles.title}>이번 여행의 <Text style={{ color: '#4AB7C8' }}>키워드</Text>를 선택해주세요.</Text>
+            <Text style={styles.desc}>{`원하는 여행 스타일을 3개 선택\n(최대 3개)`}</Text>
             <View style={styles.circleGrid}>
-              {CIRCLE_OPTIONS.map((option, idx) => (
+              {KEYWORD_OPTIONS.map((option, idx) => (
                 <TouchableOpacity
                   key={option}
-                  style={[styles.circle, selectedCircle === idx && styles.circleSelected]}
-                  onPress={() => setSelectedCircle(idx)}
+                  style={[styles.circle, selectedKeywords.includes(idx) && styles.circleSelected]}
+                  onPress={() => handleKeywordPress(idx)}
+                  disabled={selectedKeywords.length === 3 && !selectedKeywords.includes(idx)}
                 >
-                  <Text style={{ color: selectedCircle === idx ? '#fff' : '#333' }}>{option}</Text>
+                  <Text style={{ color: selectedKeywords.includes(idx) ? '#fff' : '#333' }}>{option}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -54,20 +84,36 @@ export default function SurveyTravel() {
         )}
         {step === 3 && (
           <>
-            <Text style={styles.title}>이런 여행지는{"\n"}어떠신가요?</Text>
-            <FlatList
-              data={IMAGE_OPTIONS}
-              keyExtractor={(_, idx) => idx.toString()}
-              renderItem={({ item, index }) => (
+            <Text style={styles.title}>이번 여행의 <Text style={{ color: '#4AB7C8' }}>방식</Text>을 선택해주세요.</Text>
+            <View style={styles.imageGrid}>
+              {TRAVEL_TYPE_OPTIONS.map((option, idx) => (
                 <TouchableOpacity
-                  style={[styles.imageOption, selectedImage === index && styles.imageSelected]}
-                  onPress={() => setSelectedImage(index)}
+                  key={option.label}
+                  style={[styles.imageOption, selectedTravelType === idx && styles.imageSelected]}
+                  onPress={() => setSelectedTravelType(idx)}
                 >
-                  <Image source={item} style={{ width: '100%', height: 80, borderRadius: 8 }} resizeMode="cover" />
+                  <Image source={option.image} style={styles.optionImage} resizeMode="cover" />
+                  <Text style={styles.imageLabel}>{option.label}</Text>
                 </TouchableOpacity>
-              )}
-              style={{ width: '100%' }}
-            />
+              ))}
+            </View>
+          </>
+        )}
+        {step === 4 && (
+          <>
+            <Text style={styles.title}>이번 여행의 <Text style={{ color: '#4AB7C8' }}>동반자</Text>를 선택해주세요.</Text>
+            <View style={styles.imageGrid}>
+              {COMPANION_OPTIONS.map((option, idx) => (
+                <TouchableOpacity
+                  key={option.label}
+                  style={[styles.imageOption, selectedCompanion === idx && styles.imageSelected]}
+                  onPress={() => setSelectedCompanion(idx)}
+                >
+                  <Image source={option.image} style={styles.optionImage} resizeMode="cover" />
+                  <Text style={styles.imageLabel}>{option.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </>
         )}
       </View>
@@ -76,23 +122,29 @@ export default function SurveyTravel() {
         <View style={getBarStyle(1)} />
         <View style={getBarStyle(2)} />
         <View style={getBarStyle(3)} />
+        <View style={getBarStyle(4)} />
       </View>
-      {/* 다음 버튼 */}
-      <TouchableOpacity
-        style={styles.nextButton}
-        onPress={() => {
-          if (step < 3) setStep(step + 1);
-          // 마지막 단계에서 완료 처리 추가 가능
-        }}
-        disabled={
-          (step === 2 && selectedCircle === null) ||
-          (step === 3 && selectedImage === null)
-        }
-      >
-        <Text style={{ color: '#A3D8E3', fontWeight: 'bold', fontSize: 18 }}>
-          {step < 3 ? '다음' : '완료'}
-        </Text>
-      </TouchableOpacity>
+      {/* 버튼 영역 */}
+      <View style={styles.buttonRow}>
+        {step > 1 && (
+          <TouchableOpacity
+            style={[styles.navButton, { backgroundColor: '#fff', borderColor: '#A3D8E3', borderWidth: 1 }]}
+            onPress={() => setStep(step - 1)}
+          >
+            <Text style={{ color: '#A3D8E3', fontWeight: 'bold', fontSize: 18 }}>이전</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[styles.navButton, { backgroundColor: isNextEnabled() ? '#F2FAFC' : '#E0E0E0', borderColor: '#A3D8E3', borderWidth: 1 }]}
+          onPress={() => {
+            if (step < 4) setStep(step + 1);
+            // 마지막 단계에서 완료 처리 추가 가능
+          }}
+          disabled={!isNextEnabled()}
+        >
+          <Text style={{ color: '#A3D8E3', fontWeight: 'bold', fontSize: 18 }}>{step < 4 ? '다음' : '완료'}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -102,8 +154,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 30,
     marginTop: 16,
+  },
+  desc: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   circleGrid: {
     flexDirection: 'row',
@@ -114,26 +172,48 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   circle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#E0E0E0',
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 6,
+    margin: 8,
   },
   circleSelected: {
     backgroundColor: '#A3D8E3',
   },
+  imageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+    rowGap: 16,
+  },
   imageOption: {
-    marginVertical: 8,
+    width: 120,
+    height: 140,
+    margin: 8,
     borderWidth: 2,
     borderColor: 'transparent',
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
   },
   imageSelected: {
     borderColor: '#A3D8E3',
+  },
+  optionImage: {
+    width: 120,
+    height: 90,
+    borderRadius: 12,
+  },
+  imageLabel: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
   progressBarContainer: {
     flexDirection: 'row',
@@ -142,14 +222,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginHorizontal: 32,
   },
-  nextButton: {
-    backgroundColor: '#F2FAFC',
-    borderRadius: 8,
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
     marginHorizontal: 32,
     marginBottom: 100,
+  },
+  navButton: {
+    flex: 1,
+    borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#A3D8E3',
+    marginHorizontal: 4,
   },
 }); 
