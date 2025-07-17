@@ -27,25 +27,27 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // 페이드아웃 후 이미지 변경 및 페이드인
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
+      // 1) 현재 이미지 페이드아웃
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        // 2) 페이드아웃이 끝난 시점에 이미지 변경
+        setCurrentImageIndex(prev => (prev + 1) % imageList.length);
+        // 3) 새 이미지에 대해 페이드인
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 500,
           useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % imageList.length);
+        }).start();
       });
     }, 3000);
-
+  
     return () => clearInterval(interval);
   }, []);
+  
+  
 
   return (
     <AnimatedImageBackground
