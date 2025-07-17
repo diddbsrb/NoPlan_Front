@@ -33,37 +33,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // 변경: 위쪽 정렬
     paddingHorizontal: 20,
+    paddingTop: 100, // 추가: 위에서부터 여백
   },
   logo: {
     width: 120,
     height: 120,
-    marginBottom: 24,
-    marginTop: 40,
+    marginBottom: 16, // 변경: 아래 여백 줄임
+    marginTop: 0,     // 변경: 위 여백 제거
   },
   title: {
     fontSize: 36,
     color: '#fff',
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 8, // 변경: 아래 여백 줄임
     letterSpacing: 2,
     textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 32, // 변경: 아래 여백 줄임
     lineHeight: 24,
-    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowColor: 'rgba(211, 200, 200, 0.15)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   button: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(213, 237, 250, 0.85)',
     borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 48,
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#888',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

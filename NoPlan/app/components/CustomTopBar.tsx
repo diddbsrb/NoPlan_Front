@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent', // ← 여기만 수정!
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
