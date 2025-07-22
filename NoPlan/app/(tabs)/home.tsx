@@ -1,3 +1,4 @@
+// app/home.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -6,13 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ImageBackground } from 'react-native'; // 기존처럼 import
-const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 import { useRouter } from 'expo-router';
 
+const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
 const imageList = [
   require('../../assets/images/home/bg1.jpeg'),
@@ -29,15 +30,12 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // 1) 현재 이미지 페이드아웃
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
         useNativeDriver: true,
       }).start(() => {
-        // 2) 페이드아웃이 끝난 시점에 이미지 변경
         setCurrentImageIndex(prev => (prev + 1) % imageList.length);
-        // 3) 새 이미지에 대해 페이드인
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 500,
@@ -45,11 +43,9 @@ export default function HomeScreen() {
         }).start();
       });
     }, 3000);
-  
+
     return () => clearInterval(interval);
   }, []);
-  
-  
 
   return (
     <AnimatedImageBackground
@@ -57,7 +53,6 @@ export default function HomeScreen() {
       style={[styles.background, { opacity: fadeAnim }]}
       resizeMode="cover"
     >
-      {/* 흐린 오버레이 추가 */}
       <View style={styles.overlay} />
 
       <SafeAreaView style={styles.container}>
@@ -76,7 +71,10 @@ export default function HomeScreen() {
           <Text style={styles.title}>최고의 여행을{'\n'}지금 시작하세요!</Text>
         </View>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/survey_travel')}
+        >
           <Text style={styles.buttonText}>지금 시작하기</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -85,14 +83,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
+  background: { flex: 1, width: '100%', height: '100%' },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(147, 144, 144, 0.3)', // 원하는 투명도와 색상으로 조절
+    backgroundColor: 'rgba(147, 144, 144, 0.3)',
     zIndex: 1,
   },
   container: {
@@ -100,7 +94,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingBottom: 40,
-    zIndex: 2, // 오버레이 위에 내용이 보이도록
+    zIndex: 2,
   },
   header: {
     flexDirection: 'row',
@@ -109,10 +103,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginLeft: -30,
   },
-  logo: {
-    width: 100,
-    height: 30,
-  },
+  logo: { width: 100, height: 30 },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -133,9 +124,5 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#000',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  buttonText: { color: '#000', fontWeight: '600', fontSize: 14 },
 });

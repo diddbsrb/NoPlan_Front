@@ -1,6 +1,8 @@
+// app/(tabs)/home_travel.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, SectionList } from 'react-native';
-import CustomTopBar from '../components/CustomTopBar';
+import { useRouter } from 'expo-router';
+import CustomTopBar from '../(components)/CustomTopBar';
 
 interface TripItem {
   time: string;
@@ -32,6 +34,7 @@ const TRIP_SECTIONS: TripSection[] = [
 ];
 
 export default function HomeTravel() {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -40,7 +43,6 @@ export default function HomeTravel() {
       <View style={{ flex: 1, padding: 24 }}>
         <Text style={styles.title}>사용자님!{"\n"}여행은 즐거우신가요?</Text>
         <Text style={styles.subtitle}>사용자님의 행복하고 감성적인 여행이에요.</Text>
-        {/* 여행 일정 타임라인 */}
         <SectionList
           sections={TRIP_SECTIONS}
           keyExtractor={(item, index) => item.place + index}
@@ -51,13 +53,10 @@ export default function HomeTravel() {
           )}
           renderItem={({ item, index, section }) => (
             <View style={styles.timelineRow}>
-              {/* 타임라인 점선/원 */}
               <View style={styles.timelineCol}>
                 <View style={styles.timelineCircle} />
-                {/* 마지막 아이템이 아니면 점선 */}
                 {index < section.data.length - 1 && <View style={styles.timelineLine} />}
               </View>
-              {/* 시간/장소 */}
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTime}>{item.time}</Text>
                 <View style={styles.timelineBox}>
@@ -70,16 +69,19 @@ export default function HomeTravel() {
           showsVerticalScrollIndicator={false}
         />
       </View>
-      {/* 하단 버튼 */}
+
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.bottomBtnGray} onPress={() => setShowModal(true)}>
           <Text style={styles.bottomBtnTextGray}>여행 종료</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomBtnBlue}>
+        <TouchableOpacity
+          style={styles.bottomBtnBlue}
+          onPress={() => router.push('/survey_destination')}   // ← replace → push 로 변경
+        >
           <Text style={styles.bottomBtnTextBlue}>다음 행선지</Text>
         </TouchableOpacity>
       </View>
-      {/* 여행 종료 팝업 */}
+
       <Modal
         visible={showModal}
         transparent
@@ -155,8 +157,6 @@ const styles = StyleSheet.create({
     width: 2,
     height: 36,
     backgroundColor: '#E0E0E0',
-    marginTop: 0,
-    marginBottom: 0,
   },
   timelineContent: {
     flex: 1,
@@ -274,4 +274,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
-}); 
+});
