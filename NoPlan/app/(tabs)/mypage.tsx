@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
-import CustomTopBar from '../components/CustomTopBar';
+import CustomTopBar from '../(components)/CustomTopBar';
 
 // 분리된 컴포넌트 import
 import TermsComponent from './mypage/TermsComponent';

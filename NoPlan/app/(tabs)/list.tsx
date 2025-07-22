@@ -1,6 +1,8 @@
+// app/list.tsx
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from 'react-native';
-import CustomTopBar from '../components/CustomTopBar';
+import { useRouter } from 'expo-router';
+import CustomTopBar from '../(components)/CustomTopBar';
 
 const PLACES = [
   {
@@ -14,31 +16,36 @@ const PLACES = [
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Eiffel Tower',
+    location: 'Paris, France',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Great Wall',
+    location: 'Beijing, China',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Colosseum',
+    location: 'Rome, Italy',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
 ];
 
 export default function List() {
+  const router = useRouter();
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <CustomTopBar />
+      {/* replace로 홈 화면 강제 로드 (리로딩 효과) */}
+      <CustomTopBar onBack={() => router.replace('/home_travel')} />
+
       <View style={{ flex: 1, paddingHorizontal: 16 }}>
         <Text style={styles.title}>
           이런 곳 <Text style={{ color: '#4AB7C8' }}>어떠세요?</Text>
         </Text>
         <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
+
         <FlatList
           data={PLACES}
           keyExtractor={(_, idx) => idx.toString()}
@@ -50,7 +57,7 @@ export default function List() {
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.name}</Text>
                 <View style={styles.cardLocationRow}>
-                  <Text style={styles.cardLocationIcon}>🟡</Text>
+                  <Text style={styles.cardLocationIcon}>📍</Text>
                   <Text style={styles.cardLocation}>{item.location}</Text>
                 </View>
               </View>
@@ -74,17 +81,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    textAlign: 'left',
-    marginTop: 16,
-    marginBottom: 4,
-    marginLeft: 4,
+    textAlign: 'center',
+    marginTop: 32,
+    marginBottom: 12,
   },
   desc: {
     fontSize: 14,
     color: '#888',
-    textAlign: 'left',
-    marginBottom: 16,
-    marginLeft: 4,
+    textAlign: 'center',
+    marginBottom: 28,
   },
   card: {
     backgroundColor: '#fff',
@@ -116,8 +121,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardLocationIcon: {
-    fontSize: 14,
-    marginRight: 4,
+    fontSize: 16,
+    marginRight: 6,
   },
   cardLocation: {
     fontSize: 14,
@@ -144,4 +149,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-}); 
+});
