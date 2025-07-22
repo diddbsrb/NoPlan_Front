@@ -41,7 +41,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
         <View style={styles.settingRow}>
           <View style={styles.iconLabel}>
             <Image
-              source={require('../../../assets/images/kakao_icon.jpg')}
+              source={require('../../assets/images/kakao_icon.jpg')}
               style={styles.kakaoIcon}
             />
             <Text style={styles.label}>카카오 연동</Text>

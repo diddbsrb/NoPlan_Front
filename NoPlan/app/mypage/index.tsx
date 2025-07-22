@@ -1,12 +1,22 @@
+// app/mypage/index.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
-import CustomTopBar from '../(components)/CustomTopBar';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Dimensions,
+  Image,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import CustomTopBar from '../(components)/CustomTopBar';  // 경로가 프로젝트에 맞게 되어 있는지 확인
 
 // 분리된 컴포넌트 import
-import TermsComponent from './mypage/TermsComponent';
-import InfoEditComponent from './mypage/InfoEditComponent';
-import PasswordChangeComponent from './mypage/PasswordChangeComponent';
-import AccountDeleteComponent from './mypage/AccountDeleteComponent';
+import TermsComponent from './TermsComponent';
+import InfoEditComponent from './InfoEditComponent';
+import PasswordChangeComponent from './PasswordChangeComponent';
+import AccountDeleteComponent from './AccountDeleteComponent';
 
 const PLACES = [
   {
@@ -20,25 +30,28 @@ const PLACES = [
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Bali',
+    location: 'Indonesia, Bali',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Santorini',
+    location: 'Greece, Cyclades',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
   {
-    name: 'Disneyland',
-    location: 'California, United States',
+    name: 'Kyoto',
+    location: 'Japan, Kyoto',
     image: require('../../assets/images/noplan_logo_white.png'),
   },
 ];
 
-const MyPage = () => {
-  const [activeTab, setActiveTab] = useState('visited');
-  const [activePersonalScreen, setActivePersonalScreen] = useState('terms'); // 'terms', 'edit', 'password', 'delete'
+export default function MyPage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
+  const [activePersonalScreen, setActivePersonalScreen] = useState<
+    'terms' | 'edit' | 'password' | 'delete'
+  >('terms');
 
   const memories = [
     { id: 1, title: '여유로웠던 제주' },
@@ -47,8 +60,13 @@ const MyPage = () => {
   ];
 
   return (
-    <View style={{ flex: 1 }}>
-      <CustomTopBar />
+    <View style={styles.container}>
+      {/* 상단 바: 뒤로가기 버튼만, 프로필(마이페이지) 아이콘은 숨깁니다 */}
+      <CustomTopBar
+        title="내 정보"
+        onBack={() => router.back()}
+        showProfile={false}
+      />
 
       {/* 타이틀 */}
       <View style={styles.titleWrapper}>
@@ -57,32 +75,21 @@ const MyPage = () => {
 
       {/* 탭 메뉴 */}
       <View style={styles.tabWrapper}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'visited' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('visited')}
-        >
-          <Text style={[styles.tabText, activeTab === 'visited' && styles.tabTextActive]}>
-            방문한 곳
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'wishlist' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('wishlist')}
-        >
-          <Text style={[styles.tabText, activeTab === 'wishlist' && styles.tabTextActive]}>
-            가경님의 위시리스트
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'personal' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('personal')}
-        >
-          <Text style={[styles.tabText, activeTab === 'personal' && styles.tabTextActive]}>
-            개인정보 관리
-          </Text>
-        </TouchableOpacity>
+        {(['visited', 'wishlist', 'personal'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+              {{
+                visited: '방문한 곳',
+                wishlist: '위시리스트',
+                personal: '개인정보 관리',
+              }[tab]}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* 콘텐츠 */}
@@ -103,11 +110,11 @@ const MyPage = () => {
               PLACES.map((place, idx) => (
                 <View key={idx} style={styles.card}>
                   <Text style={styles.cardTitle}>{place.name}</Text>
-                  <Text style={{ color: '#888', marginBottom: 8 }}>{place.location}</Text>
+                  <Text style={styles.locationText}>{place.location}</Text>
                   <View style={styles.imageBox}>
                     <Image
                       source={place.image}
-                      style={{ width: '100%', height: '100%', borderRadius: 12 }}
+                      style={styles.image}
                       resizeMode="cover"
                     />
                   </View>
@@ -140,11 +147,14 @@ const MyPage = () => {
       </ScrollView>
     </View>
   );
-};
+}
 
 const screenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   titleWrapper: {
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -194,35 +204,19 @@ const styles = StyleSheet.create({
     height: 120,
     backgroundColor: '#eef5ff',
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
   },
   placeholderText: {
     textAlign: 'center',
     marginTop: 40,
     color: '#999',
   },
-  personalTabWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  personalTabButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-    backgroundColor: '#f0f0f0',
-  },
-  personalTabButtonActive: {
-    backgroundColor: '#d6ebf8',
-  },
-  personalTabText: {
-    fontSize: 13,
-    color: '#555',
-  },
-  personalTabTextActive: {
-    color: '#0077b6',
-    fontWeight: '600',
+  locationText: {
+    color: '#888',
+    marginBottom: 8,
   },
 });
-
-export default MyPage;
