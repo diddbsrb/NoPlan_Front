@@ -8,23 +8,23 @@ import {
   SafeAreaView,
   Image,
 } from 'react-native';
+import { useRouter } from 'expo-router'; // ✅ 추가
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter(); // ✅ 추가
 
   const handleLogin = () => {
-    // 로그인 처리 로직
     console.log(email, password);
+    router.push('/(tabs)/user_info'); // ✅ 로그인 후 이동
   };
 
   const handleKakaoLogin = () => {
-    // 카카오 로그인 처리
     console.log('카카오 로그인');
   };
 
   const handleSignup = () => {
-    // 회원가입 페이지 이동
     console.log('회원가입으로 이동');
   };
 

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ImageBackground } from 'react-native'; // 기존처럼 import
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
+import { useRouter } from 'expo-router';
 
 
 const imageList = [
@@ -24,6 +25,7 @@ const imageList = [
 export default function HomeScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const router = useRouter();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,7 +67,7 @@ export default function HomeScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/mypage')}>
             <Ionicons name="person" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
