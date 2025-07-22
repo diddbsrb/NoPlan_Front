@@ -64,13 +64,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="mypage"
-        options={{
-          title: 'My Page',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="survey_travel"
         options={{
           title: 'Survey Travel',

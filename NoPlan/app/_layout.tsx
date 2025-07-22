@@ -33,7 +33,12 @@ export default function RootLayout() {
           name="survey_destination"
           options={{ headerShown: false }}
         />
-        
+
+        <Stack.Screen
+          name="mypage"
+          options={{ headerShown: false }}
+        />
+
         {/* Not Found */}
         <Stack.Screen
           name="+not-found"
