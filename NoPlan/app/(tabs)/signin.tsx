@@ -8,16 +8,52 @@ import {
   SafeAreaView,
   Image,
 } from 'react-native';
-import { useRouter } from 'expo-router'; // ✅ 추가
+import { useRouter } from 'expo-router';
+import { authService } from '../../service/authService';
+import * as SecureStore from 'expo-secure-store';
+
+// 로그인 응답 타입 명시
+interface LoginResponse {
+  access: string;
+  refresh: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    is_info_exist: boolean;
+  };
+}
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter(); // ✅ 추가
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const handleLogin = () => {
-    console.log(email, password);
-    router.push('/(tabs)/user_info'); // ✅ 로그인 후 이동
+  const handleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authService.signIn(email, password);
+      const { access, refresh, user } = res.data as LoginResponse;
+      // access token 저장
+      await SecureStore.setItemAsync('accessToken', access);
+      if (user.is_info_exist) {
+        router.push('/(tabs)/user_info');
+      } else {
+        router.push('/(tabs)/user_info'); // 실제 경로로 수정
+      }
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(Array.isArray(err.response.data.error) ? err.response.data.error[0] : err.response.data.error);
+      } else {
+        setError('로그인에 실패했습니다.');
+      }
+      console.log('로그인 에러:', err.response ? err.response.data : err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKakaoLogin = () => {
@@ -25,7 +61,7 @@ export default function LoginScreen() {
   };
 
   const handleSignup = () => {
-    console.log('회원가입으로 이동');
+    router.push('/(tabs)/signup');
   };
 
   return (
@@ -53,8 +89,10 @@ export default function LoginScreen() {
         onChangeText={setPassword}
       />
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>로그인</Text>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.loginButtonText}>{loading ? '로그인 중...' : '로그인'}</Text>
       </TouchableOpacity>
 
       <Text style={styles.orText}>또는</Text>
@@ -159,5 +197,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#000',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
