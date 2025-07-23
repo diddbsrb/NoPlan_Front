@@ -1,26 +1,39 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { RadioGroup } from 'react-native-radio-buttons-group';
-import { useRouter } from 'expo-router'; // ✅ 추가
+import { useRouter } from 'expo-router';
+import { userService } from '../../service/userService';
 
 const InfoInputScreen = () => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [selectedGenderId, setSelectedGenderId] = useState<string | undefined>(undefined);
-  const router = useRouter(); // ✅ 추가
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   const genderOptions = [
-    { id: '1', label: '남성', value: '남' },
-    { id: '2', label: '여성', value: '여' },
+    { id: '1', label: '남성', value: 'M' },
+    { id: '2', label: '여성', value: 'F' },
   ];
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    setError('');
+    setLoading(true);
     const selected = genderOptions.find((item) => item.id === selectedGenderId);
     const gender = selected?.value || '';
-    console.log('이름:', name);
-    console.log('나이:', age);
-    console.log('성별:', gender);
-    router.push('/(tabs)/home'); // ✅ home.tsx로 이동
+    try {
+      await userService.updateInfo(name, Number(age), gender);
+      router.push('/(tabs)/home');
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('정보 저장에 실패했습니다.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,11 +66,10 @@ const InfoInputScreen = () => {
           layout="row"
         />
       </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleStart}>
-        <Text style={styles.buttonText}>여행 시작하기</Text>
+      {error ? <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text> : null}
+      <TouchableOpacity style={styles.button} onPress={handleStart} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? '저장 중...' : '여행 시작하기'}</Text>
       </TouchableOpacity>
-
       <Text style={styles.footer}>해당 과정은 첫 실행 한 번만 진행됩니다.</Text>
     </SafeAreaView>
   );

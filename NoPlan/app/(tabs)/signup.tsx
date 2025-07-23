@@ -7,15 +7,46 @@ import {
   StyleSheet,
   SafeAreaView
 } from 'react-native';
+import { authService } from '../../service/authService';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
-    // 회원가입 로직 처리
-    console.log(email, password, confirmPassword);
+  const handleSignup = async () => {
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const res = await authService.signUp(email, password, confirmPassword);
+      setSuccess('회원가입이 완료되었습니다!');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      if (err.response) {
+        if (err.response.data.email) {
+          setError(err.response.data.email[0]);
+        } else if (err.response.data.password) {
+          setError(err.response.data.password[0]);
+        } else {
+          setError('회원가입에 실패했습니다.');
+        }
+        console.log('응답 에러:', err.response.data);
+      } else if (err.request) {
+        setError('서버로부터 응답이 없습니다.');
+        console.log('요청 에러:', err.request);
+      } else {
+        setError('네트워크 오류가 발생했습니다.');
+        console.log('기타 에러:', err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,8 +78,11 @@ export default function SignupScreen() {
         onChangeText={setConfirmPassword}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
-        <Text style={styles.buttonText}>회원가입</Text>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {success ? <Text style={styles.successText}>{success}</Text> : null}
+
+      <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? '회원가입 중...' : '회원가입'}</Text>
       </TouchableOpacity>
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
@@ -112,5 +146,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#000',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  successText: {
+    color: 'green',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
