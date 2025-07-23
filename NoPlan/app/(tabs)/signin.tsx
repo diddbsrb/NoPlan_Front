@@ -40,9 +40,9 @@ export default function LoginScreen() {
       // access token 저장
       await SecureStore.setItemAsync('accessToken', access);
       if (user.is_info_exist) {
-        router.push('/(tabs)/user_info');
+        router.push('/(tabs)/home');
       } else {
-        router.push('/(tabs)/user_info'); // 실제 경로로 수정
+        router.push('/(tabs)/user_info');
       }
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.error) {
