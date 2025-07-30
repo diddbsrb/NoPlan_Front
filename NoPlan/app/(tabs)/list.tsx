@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { bookmarkService } from '../../service/bookmarkService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
@@ -30,20 +32,59 @@ export default function List() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
+  // contentId → bookmarkId 매핑
+  const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
 
-  // 총 페이지 수 (최소 1)
+  // **마운트 시점에 기존 북마크 불러오기**
+  useEffect(() => {
+    (async () => {
+      try {
+        const existing = await bookmarkService.getBookmarks();
+        const map: { [key: number]: number } = {};
+        existing.forEach(b => {
+          map[b.contentId] = b.id;
+        });
+        setFavorites(map);
+      } catch (e) {
+        console.error('Failed to load bookmarks on List:', e);
+      }
+    })();
+  }, []);
+
+  const toggleFavorite = async (item: any) => {
+    const contentId = item.contentid;
+    try {
+      if (!favorites[contentId]) {
+        const res = await bookmarkService.addBookmark({
+          contentId,
+          title: item.title,
+          firstImage: item.firstimage || '',
+          addr1: item.addr1,
+          overview: item.recommend_reason || '',
+        });
+        setFavorites(prev => ({ ...prev, [contentId]: res.id }));
+        Alert.alert('북마크', '북마크에 추가되었습니다.');
+      } else {
+        await bookmarkService.deleteBookmark(favorites[contentId]);
+        setFavorites(prev => {
+          const next = { ...prev };
+          delete next[contentId];
+          return next;
+        });
+        Alert.alert('북마크', '북마크에서 제거되었습니다.');
+      }
+    } catch (err) {
+      console.error('Bookmark error:', err);
+      Alert.alert('오류', '북마크 처리 중 문제가 발생했습니다.');
+    }
+  };
+
+  // 페이징 로직
   const totalPages = Math.max(Math.ceil(places.length / 5), 1);
-  // 현재 페이지에 보여줄 장소 리스트
-  const displayedPlaces = places.slice(
-    pageIndex * 5,
-    pageIndex * 5 + 5
-  );
+  const displayedPlaces = places.slice(pageIndex * 5, pageIndex * 5 + 5);
 
   useEffect(() => {
-    if (!type || mapX == null || mapY == null || radius == null) {
-      console.warn('⚠️ 필수 파라미터 누락 — fetch 건너뜀', { type, mapX, mapY, radius });
-      return;
-    }
+    if (!type || mapX == null || mapY == null || radius == null) return;
 
     let cancelled = false;
 
@@ -51,27 +92,22 @@ export default function List() {
       setLoading(true);
       setError(null);
 
-      const adjectiveParam = adjectives || '';
       const params = new URLSearchParams({
         mapX: mapX.toString(),
         mapY: mapY.toString(),
         radius: radius.toString(),
       });
-      if (adjectiveParam) params.append('adjectives', adjectiveParam);
+      if (adjectives) params.append('adjectives', adjectives);
 
       const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
-      console.log('🔍 Fetching URL:', apiUrl);
-
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
         if (!cancelled) {
-          const list = Array.isArray(data) ? data : [];
-          setPlaces(list);
-          setPageIndex(0); // 새로 받아올 때 항상 첫 페이지
+          setPlaces(Array.isArray(data) ? data : []);
+          setPageIndex(0);
         }
-      } catch (err) {
-        console.error('❌ Fetch error:', err);
+      } catch (e) {
         if (!cancelled) setError('목록을 불러오지 못했습니다.');
       } finally {
         if (!cancelled) setLoading(false);
@@ -83,8 +119,7 @@ export default function List() {
   }, [type, mapX, mapY, radius, adjectives]);
 
   const handleRetry = () => {
-    // 페이지 인덱스를 순환
-    setPageIndex((prev) => (prev + 1) % totalPages);
+    setPageIndex(prev => (prev + 1) % totalPages);
   };
 
   return (
@@ -125,7 +160,14 @@ export default function List() {
                 resizeMode="cover"
               />
               <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <TouchableOpacity onPress={() => toggleFavorite(item)}>
+                    <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
+                      {favorites[item.contentid] ? '★' : '☆'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.cardLocationRow}>
                   <Text style={styles.cardLocationIcon}>📍</Text>
                   <Text style={styles.cardLocation}>{item.addr1}</Text>
@@ -133,11 +175,13 @@ export default function List() {
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={!loading && !error ? (
-            <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
-              추천 결과가 없습니다.
-            </Text>
-          ) : null}
+          ListEmptyComponent={
+            !loading && !error ? (
+              <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
+                추천 결과가 없습니다.
+              </Text>
+            ) : null
+          }
           ListFooterComponent={
             <View style={styles.bottomArea}>
               <Text style={styles.bottomDesc}>이 중에서 가고싶은 곳이 없다면?</Text>
@@ -159,6 +203,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
+  },
+  star: {
+    fontSize: 24,
+    color: '#ccc',
+  },
+  filled: {
+    color: '#4AB7C8',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   desc: {
     fontSize: 14,

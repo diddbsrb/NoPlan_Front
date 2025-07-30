@@ -12,7 +12,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  Alert,
 } from 'react-native';
+import { bookmarkService } from '../service/bookmarkService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
@@ -31,12 +33,10 @@ interface ListPlace {
 }
 
 interface TourDetail {
-  // detail API에서 내려주는 다른 필드들
   mapx: string;
   mapy: string;
   firstimage?: string;
   firstimage2?: string;
-  // ...필요하다면 여기에 추가
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -56,13 +56,15 @@ export default function Info() {
   const [detail, setDetail] = useState<TourDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userLoc, setUserLoc] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // 북마크 상태
   const [favorite, setFavorite] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<number | null>(null);
 
   // 1) 리스트에서 전달받은 placesParam을 파싱
   const listPlaces: ListPlace[] = useMemo(() => {
     if (!placesParam) return [];
     try {
-      // expo-router가 자동으로 URI 디코딩할 수도 있지만, 안전하게 decodeURIComponent
       const decoded = decodeURIComponent(placesParam);
       return JSON.parse(decoded) as ListPlace[];
     } catch {
@@ -73,7 +75,7 @@ export default function Info() {
   // 2) listPlaces 중 현재 contentid와 일치하는 아이템 찾기
   const current = listPlaces.find(p => p.contentid === contentid);
 
-  // 3) detail API 호출 (위치나 추가 정보가 필요하면)
+  // 3) 상세 API 호출
   useEffect(() => {
     if (!contentid) return;
     fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentid}/`)
@@ -95,7 +97,26 @@ export default function Info() {
     })();
   }, []);
 
-  // 5) 바텀 시트 PanResponder
+  // 5) 초기 북마크 상태 로드
+  useEffect(() => {
+    (async () => {
+      try {
+        const existing = await bookmarkService.getBookmarks();
+        const found = existing.find(b => b.contentId === Number(contentid));
+        if (found) {
+          setFavorite(true);
+          setBookmarkId(found.id);
+        } else {
+          setFavorite(false);
+          setBookmarkId(null);
+        }
+      } catch (e) {
+        console.error('Failed to load bookmarks on Info:', e);
+      }
+    })();
+  }, [contentid]);
+
+  // 6) 바텀 시트 PanResponder
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10,
@@ -113,7 +134,42 @@ export default function Info() {
     })
   ).current;
 
-  const toggleFavorite = () => setFavorite(f => !f);
+  // 북마크 토글
+  const toggleFavorite = async () => {
+    // 화면에 사용할 데이터
+    const imageUri =
+      current?.firstimage ||
+      current?.firstimage2 ||
+      detail?.firstimage ||
+      detail?.firstimage2 ||
+      '';
+    const title = current?.title || '제목 없음';
+    const addr1 = current?.addr1 || '';
+    const overview = current?.recommend_reason || '';
+
+    try {
+      if (!favorite) {
+        const res = await bookmarkService.addBookmark({
+          contentId: Number(contentid),
+          title,
+          firstImage: imageUri,
+          addr1,
+          overview,
+        });
+        setBookmarkId(res.id);
+        setFavorite(true);
+        Alert.alert('북마크', '북마크에 추가되었습니다.');
+      } else if (bookmarkId) {
+        await bookmarkService.deleteBookmark(bookmarkId);
+        setBookmarkId(null);
+        setFavorite(false);
+        Alert.alert('북마크', '북마크에서 제거되었습니다.');
+      }
+    } catch (err) {
+      console.error('Bookmark error:', err);
+      Alert.alert('오류', '북마크 처리 중 문제가 발생했습니다.');
+    }
+  };
 
   if (error) {
     return (
@@ -123,32 +179,24 @@ export default function Info() {
     );
   }
   if ((!detail && !current) || !userLoc) {
-    // detail API나 listPlaces 중 하나라도 준비 안 됐으면 로딩
     return <ActivityIndicator style={styles.loader} size="large" color="#4AB7C8" />;
   }
 
-  // 6) 화면에 사용할 데이터 결정
-  // 이미지
+  // 화면에 사용할 데이터 결정
   const imageUri =
     current?.firstimage ||
     current?.firstimage2 ||
     detail?.firstimage ||
     detail?.firstimage2 ||
     '';
-
-  // 제목·주소
   const title = current?.title || '제목 없음';
   const addr1 = current?.addr1 || '';
-
-  // 추천 이유, 해시태그
   const recommendReason = current?.recommend_reason || '';
   const rawHashtags = current?.hashtags || '';
   const hashtags = rawHashtags
     .split('#')
     .map(t => t.trim())
     .filter(t => t.length > 0);
-
-  // 좌표
   const latitude = parseFloat(current?.mapy ?? detail!.mapy);
   const longitude = parseFloat(current?.mapx ?? detail!.mapx);
 
