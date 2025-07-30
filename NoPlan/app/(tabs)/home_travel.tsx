@@ -25,6 +25,7 @@ interface VisitedContentWithDate extends VisitedContent {
   created_at: string;
 }
 
+// 타임라인 아이템의 데이터 타입 정의
 interface TripItem {
   time: string;
   place: string;
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#A3D8E3',
     borderRadius: 8,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     backgroundColor: '#fff',
   },
@@ -244,9 +245,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 100,
-    paddingTop: 8,
+    paddingBottom: 40, // SafeArea 고려하여 조정
+    paddingTop: 12,
     backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   bottomBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginRight: 8 },
   bottomBtnTextGray: { color: '#888', fontWeight: 'bold', fontSize: 16 },
