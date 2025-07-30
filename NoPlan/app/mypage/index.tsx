@@ -1,5 +1,5 @@
 // app/mypage/index.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // *** useEffect 추가 ***
 import {
   View,
   Text,
@@ -10,7 +10,10 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import CustomTopBar from '../(components)/CustomTopBar';  // 경로가 프로젝트에 맞게 되어 있는지 확인
+import CustomTopBar from '../(components)/CustomTopBar';
+
+// *** 사용자 정보 서비스를 import 합니다 ***
+import { userService } from '../../service/userService'; 
 
 // 분리된 컴포넌트 import
 import TermsComponent from './TermsComponent';
@@ -18,33 +21,7 @@ import InfoEditComponent from './InfoEditComponent';
 import PasswordChangeComponent from './PasswordChangeComponent';
 import AccountDeleteComponent from './AccountDeleteComponent';
 
-const PLACES = [
-  {
-    name: 'Phuket',
-    location: 'Thailand, Bangkok',
-    image: require('../../assets/images/index_screen.png'),
-  },
-  {
-    name: 'Disneyland',
-    location: 'California, United States',
-    image: require('../../assets/images/noplan_logo_white.png'),
-  },
-  {
-    name: 'Bali',
-    location: 'Indonesia, Bali',
-    image: require('../../assets/images/noplan_logo_white.png'),
-  },
-  {
-    name: 'Santorini',
-    location: 'Greece, Cyclades',
-    image: require('../../assets/images/noplan_logo_white.png'),
-  },
-  {
-    name: 'Kyoto',
-    location: 'Japan, Kyoto',
-    image: require('../../assets/images/noplan_logo_white.png'),
-  },
-];
+
 
 export default function MyPage() {
   const router = useRouter();
@@ -52,6 +29,9 @@ export default function MyPage() {
   const [activePersonalScreen, setActivePersonalScreen] = useState<
     'terms' | 'edit' | 'password' | 'delete'
   >('terms');
+  
+  // *** 사용자 이름을 저장할 상태 추가 ***
+  const [userName, setUserName] = useState('회원'); 
 
   const memories = [
     { id: 1, title: '여유로웠던 제주' },
@@ -59,18 +39,34 @@ export default function MyPage() {
     { id: 3, title: '고즈넉했던 대전' },
   ];
 
+  // *** 컴포넌트가 로드될 때 사용자 정보를 불러오는 useEffect 추가 ***
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const userInfo = await userService.getUserInfo();
+        // 이름이 null이나 undefined일 경우를 대비하여 기본값('회원')을 설정합니다.
+        setUserName(userInfo.name ?? '회원');
+      } catch (error) {
+        console.error("사용자 이름 불러오기 실패:", error);
+        // 에러 발생 시 기본 이름으로 유지됩니다.
+      }
+    };
+
+    fetchUserName();
+  }, []); // 빈 배열을 전달하여 컴포넌트가 처음 렌더링될 때 한 번만 실행되도록 합니다.
+
   return (
     <View style={styles.container}>
-      {/* 상단 바: 뒤로가기 버튼만, 프로필(마이페이지) 아이콘은 숨깁니다 */}
       <CustomTopBar
         title="내 정보"
         onBack={() => router.back()}
         showProfile={false}
       />
 
-      {/* 타이틀 */}
+      {/* 타이틀: 상태에 저장된 사용자 이름을 사용하도록 변경 */}
       <View style={styles.titleWrapper}>
-        <Text style={styles.title}>가경님의 기억</Text>
+        {/* *** 이 부분이 '가경'에서 동적 이름으로 변경됩니다 *** */}
+        <Text style={styles.title}>{userName}님의 기억</Text>
       </View>
 
       {/* 탭 메뉴 */}
