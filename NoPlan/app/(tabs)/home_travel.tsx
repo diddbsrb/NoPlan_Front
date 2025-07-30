@@ -1,38 +1,28 @@
-// app/(tabs)/home_travel.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, SectionList } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  SectionList,
+  ActivityIndicator, // 로딩 인디케이터 import
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { travelService } from '../../service/travelService';
 
+// 타임라인 아이템의 데이터 타입 정의
 interface TripItem {
   time: string;
   place: string;
 }
 
+// SectionList에 사용될 섹션의 데이터 타입 정의
 interface TripSection {
   date: string;
   data: TripItem[];
 }
-
-const TRIP_SECTIONS: TripSection[] = [
-  {
-    date: '2025.07.04 금요일',
-    data: [
-      { time: '오후 12:10', place: '여행 시작' },
-      { time: '오후 2:14', place: '경복궁' },
-      { time: '오후 4:15', place: '스킬 카페' },
-    ],
-  },
-  {
-    date: '2025.07.05 토요일',
-    data: [
-      { time: '오후 12:10', place: '여행 시작' },
-      { time: '오후 2:14', place: '경복궁' },
-      { time: '오후 4:15', place: '스킬 카페' },
-    ],
-  },
-];
 
 export default function HomeTravel() {
   const router = useRouter();
@@ -42,13 +32,22 @@ export default function HomeTravel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 비동기 즉시 실행 함수로 데이터 로딩
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        // 가장 최근의 여정 조회
-        const tripRes = await travelService.getTripData();
-        const trips = Array.isArray(tripRes?.data) ? tripRes.data : [];
+        // 1. 가장 최근의 여정 조회
+        // 서비스 함수가 실제 데이터 배열을 직접 반환하므로 .data 없이 사용합니다.
+        const trips = await travelService.getTripData();
+
+        if (!trips || trips.length === 0) {
+          setError('진행 중인 여행을 찾을 수 없습니다.');
+          setLoading(false);
+          return;
+        }
+
+        // created_at을 기준으로 내림차순 정렬하여 가장 최근 여행을 찾습니다.
         const latestTrip = trips.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
         if (!latestTrip) {
@@ -57,60 +56,82 @@ export default function HomeTravel() {
           return;
         }
 
-        // 해당 여정의 방문지 조회
-        const visitedRes = await travelService.getVisitedContentData(latestTrip.id);
-        const visitedContents = Array.isArray(visitedRes?.data) ? visitedRes.data : [];
+        // 2. 해당 여정의 방문지 조회
+        // tripId로 방문지를 조회하는 수정된 함수(getVisitedContentsByTrip)를 호출합니다.
+        const visitedContents = await travelService.getVisitedContentsByTrip(latestTrip.id);
 
+        // 3. 데이터를 SectionList 형식에 맞게 가공합니다.
         const grouped = [{
-          date: latestTrip.region + (latestTrip.created_at ? ` (${latestTrip.created_at.split('T')[0]})` : ''),
-          data: visitedContents.map((content) => ({
-            time: content.created_at ? content.created_at.split('T')[1]?.slice(0, 5) : '',
-            place: content.title,
-          })),
+          date: `${latestTrip.region} (${latestTrip.created_at.split('T')[0]})`,
+          data: visitedContents
+            // 타임라인이 시간 순서대로 보이도록 오름차순 정렬
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            .map((content) => ({
+              // 'HH:mm' 형식으로 시간만 추출
+              time: content.created_at ? content.created_at.split('T')[1]?.slice(0, 5) : '',
+              place: content.title,
+            })),
         }];
 
         setSections(grouped);
-      } catch (e) {
-        setError('여행 정보를 불러오지 못했습니다.');
+
+      } catch (e: any) {
+        console.error("여행 정보 로딩 실패:", e.message);
+        setError('여행 정보를 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, []); // 컴포넌트가 처음 마운트될 때 한 번만 실행
+
+  // 로딩 및 에러 상태에 따른 UI 렌더링
+  const renderBody = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color="#A3D8E3" style={{ marginTop: 40 }} />;
+    }
+    if (error) {
+      return <Text style={styles.errorText}>{error}</Text>;
+    }
+    if (sections.length === 0 || sections[0].data.length === 0) {
+      return <Text style={styles.placeholderText}>현재 여행 기록이 없습니다.</Text>;
+    }
+    return (
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, index) => item.place + index}
+        renderSectionHeader={({ section: { date } }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>{date}</Text>
+          </View>
+        )}
+        renderItem={({ item, index, section }) => (
+          <View style={styles.timelineRow}>
+            <View style={styles.timelineCol}>
+              <View style={styles.timelineCircle} />
+              {/* 마지막 아이템이 아닐 경우에만 라인을 그립니다. */}
+              {index < section.data.length - 1 && <View style={styles.timelineLine} />}
+            </View>
+            <View style={styles.timelineContent}>
+              <Text style={styles.timelineTime}>{item.time}</Text>
+              <View style={styles.timelineBox}>
+                <Text style={styles.timelinePlace}>{item.place}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+        style={{ marginTop: 16 }}
+        showsVerticalScrollIndicator={false}
+      />
+    );
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={styles.container}>
       <CustomTopBar />
-      <View style={{ flex: 1, padding: 24 }}>
+      <View style={styles.contentContainer}>
         <Text style={styles.title}>사용자님!{"\n"}여행은 즐거우신가요?</Text>
         <Text style={styles.subtitle}>사용자님의 행복하고 감성적인 여행이에요.</Text>
-        {loading && <Text style={{textAlign:'center',margin:16}}>로딩 중...</Text>}
-        {error && <Text style={{color:'red',textAlign:'center',margin:8}}>{error}</Text>}
-        <SectionList
-          sections={sections}
-          keyExtractor={(item, index) => item.place + index}
-          renderSectionHeader={({ section: { date } }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionHeaderText}>{date}</Text>
-            </View>
-          )}
-          renderItem={({ item, index, section }) => (
-            <View style={styles.timelineRow}>
-              <View style={styles.timelineCol}>
-                <View style={styles.timelineCircle} />
-                {index < section.data.length - 1 && <View style={styles.timelineLine} />}
-              </View>
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTime}>{item.time}</Text>
-                <View style={styles.timelineBox}>
-                  <Text style={styles.timelinePlace}>{item.place}</Text>
-                </View>
-              </View>
-            </View>
-          )}
-          style={{ marginTop: 16 }}
-          showsVerticalScrollIndicator={false}
-        />
+        {renderBody()}
       </View>
 
       <View style={styles.bottomBar}>
@@ -121,7 +142,6 @@ export default function HomeTravel() {
           style={styles.bottomBtnBlue}
           onPress={() => router.replace('/survey_destination')}
         >
-          {/* survey_destination에서 useTravelSurvey()로 설문 데이터 접근 가능 */}
           <Text style={styles.bottomBtnTextBlue}>다음 행선지</Text>
         </TouchableOpacity>
       </View>
@@ -152,18 +172,38 @@ export default function HomeTravel() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
+    lineHeight: 30,
   },
   subtitle: {
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
     marginBottom: 12,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 40,
+  },
+  placeholderText: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: '#999',
+    fontSize: 15,
   },
   sectionHeader: {
     marginTop: 18,
@@ -183,7 +223,7 @@ const styles = StyleSheet.create({
   timelineRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    paddingVertical: 6,
   },
   timelineCol: {
     width: 24,
@@ -195,12 +235,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#A3D8E3',
     marginTop: 4,
-    marginBottom: 2,
   },
   timelineLine: {
+    flex: 1,
     width: 2,
-    height: 36,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#EAEAEA',
+    marginTop: 4,
+    minHeight: 40,
   },
   timelineContent: {
     flex: 1,
@@ -213,13 +254,14 @@ const styles = StyleSheet.create({
     color: '#3CB4C7',
     width: 64,
     marginRight: 6,
+    fontWeight: '600',
   },
   timelineBox: {
     flex: 1,
     borderWidth: 2,
     borderColor: '#A3D8E3',
     borderRadius: 8,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     backgroundColor: '#fff',
   },
@@ -232,15 +274,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 100,
-    paddingTop: 8,
+    paddingBottom: 40, // SafeArea 고려하여 조정
+    paddingTop: 12,
     backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
   },
   bottomBtnGray: {
+    flex: 1,
     backgroundColor: '#E0E0E0',
     borderRadius: 8,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    alignItems: 'center',
     marginRight: 8,
   },
   bottomBtnTextGray: {
@@ -249,10 +294,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   bottomBtnBlue: {
+    flex: 1,
     backgroundColor: '#A3D8E3',
     borderRadius: 8,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    alignItems: 'center',
     marginLeft: 8,
   },
   bottomBtnTextBlue: {
@@ -262,16 +308,17 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 28,
+    padding: 24,
     alignItems: 'center',
-    width: 280,
+    width: '80%',
+    maxWidth: 320,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -286,32 +333,33 @@ const styles = StyleSheet.create({
   modalDesc: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 18,
+    marginBottom: 24,
     textAlign: 'center',
   },
   modalBtnRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     width: '100%',
   },
   modalBtnGray: {
-    backgroundColor: '#E0E0E0',
+    flex: 1,
+    backgroundColor: '#E9E9E9',
     borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    marginRight: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginRight: 6,
   },
   modalBtnTextGray: {
-    color: '#888',
+    color: '#555',
     fontWeight: 'bold',
     fontSize: 15,
   },
   modalBtnBlue: {
+    flex: 1,
     backgroundColor: '#A3D8E3',
     borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    marginLeft: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginLeft: 6,
   },
   modalBtnTextBlue: {
     color: '#fff',

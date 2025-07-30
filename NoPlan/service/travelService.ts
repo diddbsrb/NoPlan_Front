@@ -11,6 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 export interface Trip {
   id: number;
   region: string;
+  created_at: string;
 }
 export interface VisitedContent {
   content_id: number;
@@ -22,6 +23,7 @@ export interface VisitedContent {
   overview: string;
   hashtags: string;
   recommend_reason: string;
+  created_at: string;
 }
 export const travelService = {
   // 기존 함수
@@ -52,7 +54,6 @@ export const travelService = {
    * @returns Promise<Trip[]> - 여행 객체의 배열을 반환합니다.
    */
   getTripData: async (): Promise<Trip[]> => {
-    // 이 함수는 '여행 계획' 목록을 가져올 때 사용할 수 있습니다.
     const token = await SecureStore.getItemAsync('accessToken');
     try {
       const res = await apiClient.get<Trip[]>(
@@ -85,12 +86,19 @@ export const travelService = {
     }
   },
 
-  getVisitedContentDataByTrip: async (tripId: number) => {
+  getVisitedContentsByTrip: async (tripId: number): Promise<VisitedContent[]> => {
     const token = await SecureStore.getItemAsync('accessToken');
-    return apiClient.get(
-      `/users/visited-contents/?trip=${tripId}`,
-      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-    );
+    try {
+        const res = await apiClient.get<VisitedContent[]>(
+        `/users/visited-contents/?trip=${tripId}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+      );
+      // *** 핵심: res.data를 직접 반환하도록 수정 ***
+      return res.data;
+    } catch(err: any) {
+        console.error(`❌ Trip ID ${tripId}의 방문 콘텐츠 조회 실패:`, err.response?.data || err.message);
+        throw err;
+    }
   },
-  
+
 };
