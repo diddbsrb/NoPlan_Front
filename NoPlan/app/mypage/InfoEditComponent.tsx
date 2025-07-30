@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Switch, StyleSheet, Image } from 'react-native';
-
+import { userService } from '../../service/userService';
+console.log('🧩 InfoEditComponent 렌더됨');
 interface Props {
   onBack: () => void;
   onPassword: () => void;
@@ -10,6 +11,30 @@ interface Props {
 const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(true);  // 위치 정보 제공
   const [isAlarmEnabled, setIsAlarmEnabled] = useState(false);       // 알림 설정
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    console.log('✅ useEffect 진입');
+    const fetchUserInfo = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await userService.getUserInfo();
+        console.log('📦 getUserInfo 응답:', res.data);
+        const data = res.data as { name: string; email: string };
+        setName(data.name);
+        setEmail(data.email);
+      } catch (err: any) {
+        setError('사용자 정보를 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -20,17 +45,13 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
       <View style={styles.card}>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이름</Text>
-          <Text style={styles.value}>정가경</Text>
+          <Text style={styles.value}>{loading ? '로딩 중...' : error ? error : name}</Text>
         </View>
 
-        <View style={styles.infoBlock}>
-          <Text style={styles.label}>휴대폰 번호</Text>
-          <Text style={styles.value}>01038104169</Text>
-        </View>
-
+        
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이메일</Text>
-          <Text style={styles.value}>uhuhu@naver.com</Text>
+          <Text style={styles.value}>{loading ? '로딩 중...' : error ? error : email}</Text>
         </View>
 
         <TouchableOpacity onPress={onPassword} style={styles.passwordRow}>
