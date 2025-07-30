@@ -40,6 +40,11 @@ export default function RootLayout() {
             options={{ headerShown: false }}
           />
 
+          <Stack.Screen
+            name="info"
+            options={{ headerShown: false }}
+          />
+
           {/* Not Found */}
           <Stack.Screen
             name="+not-found"

@@ -1,287 +1,245 @@
 // Info.tsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
-  FlatList,
   Dimensions,
   Animated,
   PanResponder,
-  Modal,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 
-const PLACES = [
-  {
-    name: '경복궁',
-    location: '서울 종로구 사직로 161 경복궁',
-    image: require('../assets/images/index_screen.png'),
-    description:
-      '경복궁은 한국의 역사와 전통을 생생히 느낄 수 있으며, 도심 속에서 고즈넉한 궁궐의 정취를 만끽할 수 있어 힐니스 여행을 추구하는 당신에게 추천합니다.',
-    tags: ['#고즈넉함', '#고궁', '#산책하기좋은'],
-    map: require('../assets/images/partial-react-logo.png'),
-  },
-  // … 추가 장소 …
-];
+// 리스트 API에서 내려주는 객체 타입 (필요한 필드만)
+interface ListPlace {
+  contentid: string;
+  title: string;
+  addr1: string;
+  mapx: string;
+  mapy: string;
+  firstimage?: string;
+  firstimage2?: string;
+  recommend_reason: string;
+  hashtags: string;
+}
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-// 완전히 펼쳐졌을 때
-const SHEET_EXPANDED = 150;
-// 접힌(헤더만 보이는) 기본 위치
-const SHEET_COLLAPSED = SCREEN_HEIGHT - 200;
-// 접힌 상태에서 추가로 당길 수 있는 최대 오버슛
+interface TourDetail {
+  // detail API에서 내려주는 다른 필드들
+  mapx: string;
+  mapy: string;
+  firstimage?: string;
+  firstimage2?: string;
+  // ...필요하다면 여기에 추가
+}
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SHEET_EXPANDED = 100;
+const SHEET_COLLAPSED = SCREEN_HEIGHT - 180;
 const MAX_OVERSHOOT = 100;
 
 export default function Info() {
   const router = useRouter();
-  const { contentid, places } = useLocalSearchParams();
-  const parsedPlaces = Array.isArray(places) ? places : JSON.parse(places || '[]');
+  const { contentid, places: placesParam } = useLocalSearchParams<{
+    contentid: string;
+    places: string;
+  }>();
 
-  const [currentIdx, setCurrentIdx] = useState(0);
   const sheetY = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
-  const [isSheetExpanded, setIsSheetExpanded] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [detail, setDetail] = useState<{ latitude: number; longitude: number; title: string; addr1: string } | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [detail, setDetail] = useState<TourDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLoc, setUserLoc] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [favorite, setFavorite] = useState(false);
 
+  // 1) 리스트에서 전달받은 placesParam을 파싱
+  const listPlaces: ListPlace[] = useMemo(() => {
+    if (!placesParam) return [];
+    try {
+      // expo-router가 자동으로 URI 디코딩할 수도 있지만, 안전하게 decodeURIComponent
+      const decoded = decodeURIComponent(placesParam);
+      return JSON.parse(decoded) as ListPlace[];
+    } catch {
+      return [];
+    }
+  }, [placesParam]);
+
+  // 2) listPlaces 중 현재 contentid와 일치하는 아이템 찾기
+  const current = listPlaces.find(p => p.contentid === contentid);
+
+  // 3) detail API 호출 (위치나 추가 정보가 필요하면)
   useEffect(() => {
     if (!contentid) return;
-
     fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentid}/`)
       .then(res => res.json())
-      .then(data => setDetail(data))
+      .then((data: TourDetail) => setDetail(data))
       .catch(() => setError('상세 정보를 불러오지 못했습니다.'));
   }, [contentid]);
 
+  // 4) 사용자 위치 권한/좌표
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setError('위치 권한이 필요합니다.');
         return;
       }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
+      const loc = await Location.getCurrentPositionAsync({});
+      setUserLoc({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
     })();
   }, []);
 
+  // 5) 바텀 시트 PanResponder
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10,
-
       onPanResponderMove: (_, g) => {
-        // 기본 접힌 위치에서 gesture.dy 만큼
         let newY = SHEET_COLLAPSED + g.dy;
-        // 위쪽 한계
-        if (newY < SHEET_EXPANDED) newY = SHEET_EXPANDED;
-        // 아래쪽 오버슛 한계
-        if (newY > SHEET_COLLAPSED + MAX_OVERSHOOT)
-          newY = SHEET_COLLAPSED + MAX_OVERSHOOT;
-
+        newY = Math.max(SHEET_EXPANDED, Math.min(newY, SHEET_COLLAPSED + MAX_OVERSHOOT));
         sheetY.setValue(newY);
-
-        // 중간값 이하로 올라가면 detail 열기
-        const mid = (SHEET_EXPANDED + SHEET_COLLAPSED) / 2;
-        setIsSheetExpanded(newY <= mid);
       },
-
       onPanResponderRelease: (_, g) => {
-        let toValue: number;
-
-        if (g.dy < -50) {
-          // 충분히 위로 스와이프 → 펼침
-          toValue = SHEET_EXPANDED;
-        } else {
-          // 조금이라도 아래로 당기면 → 기본 접힌 위치로 복귀
-          toValue = SHEET_COLLAPSED;
-        }
-
-        Animated.spring(sheetY, {
-          toValue,
-          useNativeDriver: false,
-          bounciness: 6,
-        }).start(() => {
-          setIsSheetExpanded(toValue === SHEET_EXPANDED);
+        const toValue = g.dy < -50 ? SHEET_EXPANDED : SHEET_COLLAPSED;
+        Animated.spring(sheetY, { toValue, bounciness: 6, useNativeDriver: false }).start(() => {
+          setIsExpanded(toValue === SHEET_EXPANDED);
         });
       },
     })
   ).current;
 
-  const place = PLACES[currentIdx];
+  const toggleFavorite = () => setFavorite(f => !f);
 
   if (error) {
-    return <Text style={{ color: 'red' }}>{error}</Text>;
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>{error}</Text>
+      </View>
+    );
+  }
+  if ((!detail && !current) || !userLoc) {
+    // detail API나 listPlaces 중 하나라도 준비 안 됐으면 로딩
+    return <ActivityIndicator style={styles.loader} size="large" color="#4AB7C8" />;
   }
 
-  if (!userLocation || !detail) {
-    return <ActivityIndicator size="large" color="#A3D8E3" />;
-  }
+  // 6) 화면에 사용할 데이터 결정
+  // 이미지
+  const imageUri =
+    current?.firstimage ||
+    current?.firstimage2 ||
+    detail?.firstimage ||
+    detail?.firstimage2 ||
+    '';
+
+  // 제목·주소
+  const title = current?.title || '제목 없음';
+  const addr1 = current?.addr1 || '';
+
+  // 추천 이유, 해시태그
+  const recommendReason = current?.recommend_reason || '';
+  const rawHashtags = current?.hashtags || '';
+  const hashtags = rawHashtags
+    .split('#')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+
+  // 좌표
+  const latitude = parseFloat(current?.mapy ?? detail!.mapy);
+  const longitude = parseFloat(current?.mapx ?? detail!.mapx);
 
   return (
     <View style={styles.container}>
-      {/* 이미지 슬라이드 */}
-      <FlatList
-        data={parsedPlaces}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={e =>
-          setCurrentIdx(
-            Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH)
-          )
-        }
-        keyExtractor={(_, i) => i.toString()}
-        renderItem={({ item }) => (
-          <View>
-            <Image
-              source={item.image}
-              style={styles.image}
-              resizeMode="cover"
-            />
-            <Text>{item.title}</Text>
-            <Text>{item.addr1}</Text>
-            {/* Add more fields as needed */}
-          </View>
-        )}
-      />
-
-      {/* 인디케이터 */}
-      <View style={styles.indicatorRow}>
-        {PLACES.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.indicatorDot,
-              currentIdx === i && styles.indicatorDotActive,
-            ]}
-          />
-        ))}
+      {/* 배경 이미지 */}
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
       </View>
 
+      {/* 요약 카드 */}
+      {!isExpanded && (
+        <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+          <View style={styles.cardContent}>
+            <View>
+              <Text style={styles.cardTitle}>{title}</Text>
+              <Text style={styles.cardSubtitle}>{addr1}</Text>
+            </View>
+            <TouchableOpacity onPress={toggleFavorite}>
+              <Text style={[styles.star, favorite && styles.filled]}>
+                {favorite ? '★' : '☆'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* 바텀 시트 */}
-      <Animated.View
-        style={[
-          styles.sheet,
-          {
-            top: sheetY,
-            height: SCREEN_HEIGHT,    // bottom 대신 height 고정
-          },
-        ]}
-        {...panResponder.panHandlers}
-      >
-        <View style={styles.sheetHandle} />
-
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.placeName}>{place.name}</Text>
-          <Text style={styles.placeLocation}>{place.location}</Text>
-        </View>
-
-        {/* 상세 */}
-        {isSheetExpanded && (
-          <ScrollView
-            contentContainerStyle={styles.detail}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.desc}>{place.description}</Text>
-            <View style={styles.tags}>
-              {place.tags.map(tag => (
-                <Text key={tag} style={styles.tag}>
-                  {tag}
-                </Text>
-              ))}
+      <Animated.View style={[styles.sheet, { top: sheetY }]}>
+        <View style={styles.handleArea} {...panResponder.panHandlers}>
+          <View style={styles.handle} />
+          <View style={styles.sheetHeader}>
+            <View style={styles.sheetHeaderText}>
+              <Text style={styles.sheetTitle}>{title}</Text>
+              <Text style={styles.sheetSubtitle}>{addr1}</Text>
             </View>
-            <Image
-              source={place.map}
-              style={styles.map}
-              resizeMode="cover"
-            />
-            <View style={styles.buttons}>
-              <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>경로 탐색</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => setModalVisible(true)}
-              >
-                <Text style={styles.buttonText}>방문했어요</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        )}
-      </Animated.View>
-
-      {/* 방문완료 모달 */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>방문 완료!</Text>
-            <Text style={styles.modalText}>
-              현재 추천된 관광지 이력은 저장되지 않습니다.{'\n'}
-              정말 방문하셨나요?
-            </Text>
-            <View style={styles.modalBtns}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnGray]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalBtnGrayText}>더 볼래요.</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalBtnBlue]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalBtnBlueText}>네 방문했어요.</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={toggleFavorite}>
+              <Text style={[styles.star, favorite && styles.filled]}>
+                {favorite ? '★' : '☆'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
 
-      {/* 지도 */}
-      <MapView
-        style={{ flex: 1 }}
-        initialRegion={{
-          latitude: (userLocation.latitude + detail.latitude) / 2,
-          longitude: (userLocation.longitude + detail.longitude) / 2,
-          latitudeDelta: Math.abs(userLocation.latitude - detail.latitude) * 2,
-          longitudeDelta: Math.abs(userLocation.longitude - detail.longitude) / 2,
-        }}
-      >
-        <Marker
-          coordinate={userLocation}
-          title="현재 위치"
-          description="사용자의 현재 위치"
-        />
-        <Marker
-          coordinate={{ latitude: detail.latitude, longitude: detail.longitude }}
-          title={detail.title}
-          description={detail.addr1}
-        />
-      </MapView>
+        <ScrollView contentContainerStyle={styles.sheetContent}>
+          {/* 추천 이유 */}
+          <Text style={styles.overview}>{recommendReason}</Text>
+
+          {/* 해시태그 */}
+          <View style={styles.tagsRow}>
+            {hashtags.map(tag => (
+              <View key={tag} style={styles.tag}>
+                <Text style={styles.tagText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* 지도 */}
+          <View style={styles.mapPreview}>
+            <MapView
+              style={StyleSheet.absoluteFillObject}
+              initialRegion={{
+                latitude,
+                longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
+              <Marker coordinate={{ latitude, longitude }} title={title} />
+            </MapView>
+          </View>
+
+          {/* 버튼 */}
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() =>
+                Linking.openURL(`https://map.kakao.com/link/to/${title},${latitude},${longitude}`)
+              }
+            >
+              <Text style={styles.primaryButtonText}>경로 탐색</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => console.log('방문 체크')}>
+              <Text style={styles.secondaryButtonText}>방문했어요</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </Animated.View>
 
       {/* 뒤로가기 */}
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => router.back()}
-      >
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backText}>{'<'}</Text>
       </TouchableOpacity>
     </View>
@@ -289,148 +247,103 @@ export default function Info() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F7F7', position: 'relative' },
-  image: {
-    width: SCREEN_WIDTH,
-    height: 600,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-  },
-  indicatorRow: {
+  container: { flex: 1, backgroundColor: '#f0f0f0' },
+
+  imageContainer: {
     position: 'absolute',
-    bottom: 24,
+    top: 0,
     left: 0,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    zIndex: 10,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.7,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
   },
-  indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D0D0D0',
-    marginHorizontal: 4,
+  image: { width: '100%', height: '100%' },
+
+  card: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    elevation: 5,
   },
-  indicatorDotActive: {
-    backgroundColor: '#4AB7C8',
-  },
+  cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 4, textAlign: 'center' },
+
+  star: { fontSize: 24, color: '#ccc' },
+  filled: { color: '#4AB7C8' },
+
   sheet: {
     position: 'absolute',
-    left: '7.5%',
-    width: '85%',
+    left: 16,
+    right: 16,
+    height: SCREEN_HEIGHT,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 12,
-    paddingTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    elevation: 10,
   },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: 48,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: '#E0E0E0',
-    marginBottom: 12,
-  },
-  header: { alignItems: 'center', marginBottom: 8 },
-  placeName: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
-  placeLocation: { fontSize: 15, color: '#4AB7C8' },
-  detail: { paddingBottom: 24 },
-  desc: { fontSize: 15, color: '#444', marginBottom: 12 },
-  tags: {
+  handleArea: { alignItems: 'center', paddingVertical: 12 },
+  handle: { width: 40, height: 6, borderRadius: 3, backgroundColor: '#ccc', marginBottom: 6 },
+
+  sheetHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
-  },
-  tag: {
-    backgroundColor: '#F2FAFC',
-    color: '#4AB7C8',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: 8,
-    marginBottom: 6,
-    fontSize: 13,
-  },
-  map: {
-    width: '100%',
-    height: 120,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  buttons: {
-    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
-  button: {
+  sheetHeaderText: { flex: 1 },
+
+  sheetTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'left' },
+  sheetSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 2, textAlign: 'left' },
+
+  sheetContent: { paddingHorizontal: 16 },
+  overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
+
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
+  tag: { backgroundColor: '#e0f7fa', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, margin: 4 },
+  tagText: { fontSize: 12, color: '#00796b' },
+
+  mapPreview: { width: '100%', height: 400, borderRadius: 12, overflow: 'hidden', marginBottom: 16 },
+
+  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  primaryButton: {
     flex: 1,
     backgroundColor: '#4AB7C8',
     borderRadius: 8,
     paddingVertical: 12,
-    marginHorizontal: 6,
     alignItems: 'center',
+    marginRight: 8,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  modalOverlay: {
+  primaryButtonText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  secondaryButton: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    width: 300,
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: 28,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalText: {
-    fontSize: 14,
-    color: '#444',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  modalBtns: { flexDirection: 'row', width: '100%' },
-  modalBtn: {
-    flex: 1,
+    borderColor: '#4AB7C8',
+    borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+    marginLeft: 8,
   },
-  modalBtnGray: { backgroundColor: '#F2F2F2', marginRight: 8 },
-  modalBtnGrayText: { color: '#888', fontWeight: 'bold', fontSize: 15 },
-  modalBtnBlue: { backgroundColor: '#4AB7C8', marginLeft: 8 },
-  modalBtnBlueText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  secondaryButtonText: { fontSize: 16, color: '#4AB7C8', fontWeight: '600' },
+
   backBtn: {
     position: 'absolute',
-    top: 36,
+    top: 40,
     left: 16,
-    zIndex: 10,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 20,
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 6,
   },
-  backText: { fontSize: 28, color: '#4AB7C8' },
+  backText: { fontSize: 24, color: '#4AB7C8' },
+
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  error: { color: 'red' },
 });
