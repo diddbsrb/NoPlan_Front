@@ -22,11 +22,11 @@ const PLACES = [
   {
     name: '경복궁',
     location: '서울 종로구 사직로 161 경복궁',
-    image: require('../../assets/images/index_screen.png'),
+    image: require('../assets/images/index_screen.png'),
     description:
       '경복궁은 한국의 역사와 전통을 생생히 느낄 수 있으며, 도심 속에서 고즈넉한 궁궐의 정취를 만끽할 수 있어 힐니스 여행을 추구하는 당신에게 추천합니다.',
     tags: ['#고즈넉함', '#고궁', '#산책하기좋은'],
-    map: require('../../assets/images/partial-react-logo.png'),
+    map: require('../assets/images/partial-react-logo.png'),
   },
   // … 추가 장소 …
 ];
