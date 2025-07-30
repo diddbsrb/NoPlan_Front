@@ -46,18 +46,29 @@ export default function HomeTravel() {
       setLoading(true);
       setError(null);
       try {
-        const res = await travelService.getTripData();
-        // API 응답을 TripSection[] 형태로 변환 필요 (예시)
-        const trips = res?.data || [];
-        // 변환 로직은 실제 API 응답 구조에 맞게 수정 필요
-        const grouped = Array.isArray(trips) ? trips.map((trip: any) => ({
-          date: trip.region + (trip.created_at ? ` (${trip.created_at.split('T')[0]})` : ''),
-          data: [
-            { time: trip.created_at ? trip.created_at.split('T')[1]?.slice(0,5) : '', place: trip.region },
-            { time: '', place: trip.transportation },
-            { time: '', place: trip.companion },
-          ],
-        })) : [];
+        // 가장 최근의 여정 조회
+        const tripRes = await travelService.getTripData();
+        const trips = Array.isArray(tripRes?.data) ? tripRes.data : [];
+        const latestTrip = trips.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+        if (!latestTrip) {
+          setError('최근 여정을 찾을 수 없습니다.');
+          setLoading(false);
+          return;
+        }
+
+        // 해당 여정의 방문지 조회
+        const visitedRes = await travelService.getVisitedContentData(latestTrip.id);
+        const visitedContents = Array.isArray(visitedRes?.data) ? visitedRes.data : [];
+
+        const grouped = [{
+          date: latestTrip.region + (latestTrip.created_at ? ` (${latestTrip.created_at.split('T')[0]})` : ''),
+          data: visitedContents.map((content) => ({
+            time: content.created_at ? content.created_at.split('T')[1]?.slice(0, 5) : '',
+            place: content.title,
+          })),
+        }];
+
         setSections(grouped);
       } catch (e) {
         setError('여행 정보를 불러오지 못했습니다.');

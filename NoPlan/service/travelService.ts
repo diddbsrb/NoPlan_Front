@@ -29,4 +29,12 @@ export const travelService = {
       token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
     );
   },
-}; 
+  // 신규 함수: 방문한 콘텐츠 데이터 조회 (토큰 필요)
+  getVisitedContentData: async (tripId: number) => {
+    const token = await SecureStore.getItemAsync('accessToken');
+    return apiClient.get(
+      `/users/visited-contents/?trip=${tripId}`,
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+    );
+  },
+};
