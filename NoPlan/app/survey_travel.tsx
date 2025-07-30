@@ -12,6 +12,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import CustomTopBar from './(components)/CustomTopBar';
+import * as Location from 'expo-location';
+import { travelService } from '../service/travelService';
+import { useTravelSurvey } from './(components)/TravelSurveyContext';
 
 // 기존 headerShown 옵션은 레이아웃에서 관리하므로 제거/주석 처리
 // export const options = {
@@ -38,18 +41,53 @@ const COMPANION_OPTIONS = [
 
 export default function SurveyTravel() {
   const router = useRouter();
+  const { setSurvey } = useTravelSurvey();
   const [step, setStep] = useState(1);
   const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
   const [selectedTravelType, setSelectedTravelType] = useState<number | null>(null);
   const [selectedCompanion, setSelectedCompanion] = useState<number | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 포커스될 때마다 상태 초기화
   useFocusEffect(
     useCallback(() => {
       setStep(1);
       setSelectedKeywords([]);
       setSelectedTravelType(null);
       setSelectedCompanion(null);
+      setRegion(null);
+      setError(null);
+      setLoading(true);
+      (async () => {
+        try {
+          // 위치 권한 요청 및 위치 획득
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            setError('위치 권한이 필요합니다.');
+            setLoading(false);
+            return;
+          }
+          let location = await Location.getCurrentPositionAsync({});
+          setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+          // 지역명 조회
+          const res = await travelService.getRegionArea(location.coords.latitude, location.coords.longitude);
+          // 응답 구조 확인용 콘솔
+          console.log('region api res:', res);
+          // Axios 응답에서 실제 데이터는 res.data에 있음
+          const regionName = (res as any)?.data?.region_1depth_name || '';
+          if (!regionName) {
+            setError('지역 정보를 찾을 수 없습니다.');
+          } else {
+            setRegion(regionName);
+          }
+        } catch (e) {
+          setError('위치 또는 지역 정보 조회에 실패했습니다.');
+        } finally {
+          setLoading(false);
+        }
+      })();
     }, [])
   );
 
@@ -193,10 +231,47 @@ export default function SurveyTravel() {
     }
   };
 
+  const handleComplete = async () => {
+    if (!region || selectedTravelType === null || selectedCompanion === null || !coords) {
+      setError('모든 정보를 입력해주세요.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await travelService.createTripWithAuth(
+        region,
+        TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
+        COMPANION_OPTIONS[selectedCompanion].label
+      );
+      // radius 설정: 도보=200, 대중교통=500, 자가용=1000
+      let radius = 500;
+      if (selectedTravelType === 1) radius = 200;
+      else if (selectedTravelType === 2) radius = 1000;
+      // adjectives: 선택된 키워드
+      const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx]).join(',');
+      setSurvey({
+        mapX: coords.longitude,
+        mapY: coords.latitude,
+        radius,
+        adjectives,
+        region,
+        transportation: TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
+        companion: COMPANION_OPTIONS[selectedCompanion].label,
+      });
+      router.replace('/home_travel');
+    } catch (e) {
+      setError('여행 생성에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomTopBar onBack={() => router.back()} />
-
+      {loading && <Text style={{textAlign:'center',margin:16}}>로딩 중...</Text>}
+      {error && <Text style={{color:'red',textAlign:'center',margin:8}}>{error}</Text>}
       <View style={styles.inner}>{renderStep()}</View>
 
       <View style={styles.progressBarContainer}>
@@ -225,15 +300,8 @@ export default function SurveyTravel() {
             styles.navButton,
             isNextEnabled() ? styles.nextButton : styles.nextDisabled,
           ]}
-          onPress={() => {
-            if (step < 4) {
-              setStep(s => s + 1);
-            } else {
-              // 완료 시 survey_travel을 대체하고 home_travel으로 이동
-              router.replace('/home_travel');
-            }
-          }}
-          disabled={!isNextEnabled()}
+          onPress={step < 4 ? () => setStep(s => s + 1) : handleComplete}
+          disabled={!isNextEnabled() || loading}
         >
           <Text style={styles.nextText}>{step < 4 ? '다음' : '완료'}</Text>
         </TouchableOpacity>

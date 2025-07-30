@@ -1,8 +1,9 @@
 // app/(tabs)/home_travel.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, SectionList } from 'react-native';
 import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
+import { travelService } from '../../service/travelService';
 
 interface TripItem {
   time: string;
@@ -36,6 +37,35 @@ const TRIP_SECTIONS: TripSection[] = [
 export default function HomeTravel() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
+  const [sections, setSections] = useState<TripSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await travelService.getTripData();
+        // API 응답을 TripSection[] 형태로 변환 필요 (예시)
+        const trips = res?.data || [];
+        // 변환 로직은 실제 API 응답 구조에 맞게 수정 필요
+        const grouped = Array.isArray(trips) ? trips.map((trip: any) => ({
+          date: trip.region + (trip.created_at ? ` (${trip.created_at.split('T')[0]})` : ''),
+          data: [
+            { time: trip.created_at ? trip.created_at.split('T')[1]?.slice(0,5) : '', place: trip.region },
+            { time: '', place: trip.transportation },
+            { time: '', place: trip.companion },
+          ],
+        })) : [];
+        setSections(grouped);
+      } catch (e) {
+        setError('여행 정보를 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -43,8 +73,10 @@ export default function HomeTravel() {
       <View style={{ flex: 1, padding: 24 }}>
         <Text style={styles.title}>사용자님!{"\n"}여행은 즐거우신가요?</Text>
         <Text style={styles.subtitle}>사용자님의 행복하고 감성적인 여행이에요.</Text>
+        {loading && <Text style={{textAlign:'center',margin:16}}>로딩 중...</Text>}
+        {error && <Text style={{color:'red',textAlign:'center',margin:8}}>{error}</Text>}
         <SectionList
-          sections={TRIP_SECTIONS}
+          sections={sections}
           keyExtractor={(item, index) => item.place + index}
           renderSectionHeader={({ section: { date } }) => (
             <View style={styles.sectionHeader}>
@@ -76,8 +108,9 @@ export default function HomeTravel() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.bottomBtnBlue}
-          onPress={() => router.push('/survey_destination')}   // ← replace → push 로 변경
+          onPress={() => router.replace('/survey_destination')}
         >
+          {/* survey_destination에서 useTravelSurvey()로 설문 데이터 접근 가능 */}
           <Text style={styles.bottomBtnTextBlue}>다음 행선지</Text>
         </TouchableOpacity>
       </View>
