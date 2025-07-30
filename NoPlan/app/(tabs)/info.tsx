@@ -1,5 +1,5 @@
 // Info.tsx
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,12 @@ import {
   Animated,
   PanResponder,
   Modal,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const PLACES = [
   {
@@ -36,10 +40,42 @@ const SHEET_COLLAPSED = SCREEN_HEIGHT - 200;
 const MAX_OVERSHOOT = 100;
 
 export default function Info() {
+  const router = useRouter();
+  const { contentid, places } = useLocalSearchParams();
+  const parsedPlaces = Array.isArray(places) ? places : JSON.parse(places || '[]');
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const sheetY = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [detail, setDetail] = useState<{ latitude: number; longitude: number; title: string; addr1: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    if (!contentid) return;
+
+    fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentid}/`)
+      .then(res => res.json())
+      .then(data => setDetail(data))
+      .catch(() => setError('상세 정보를 불러오지 못했습니다.'));
+  }, [contentid]);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('위치 권한이 필요합니다.');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -85,11 +121,19 @@ export default function Info() {
 
   const place = PLACES[currentIdx];
 
+  if (error) {
+    return <Text style={{ color: 'red' }}>{error}</Text>;
+  }
+
+  if (!userLocation || !detail) {
+    return <ActivityIndicator size="large" color="#A3D8E3" />;
+  }
+
   return (
     <View style={styles.container}>
       {/* 이미지 슬라이드 */}
       <FlatList
-        data={PLACES}
+        data={parsedPlaces}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -100,11 +144,16 @@ export default function Info() {
         }
         keyExtractor={(_, i) => i.toString()}
         renderItem={({ item }) => (
-          <Image
-            source={item.image}
-            style={styles.image}
-            resizeMode="cover"
-          />
+          <View>
+            <Image
+              source={item.image}
+              style={styles.image}
+              resizeMode="cover"
+            />
+            <Text>{item.title}</Text>
+            <Text>{item.addr1}</Text>
+            {/* Add more fields as needed */}
+          </View>
         )}
       />
 
@@ -206,12 +255,32 @@ export default function Info() {
         </View>
       </Modal>
 
+      {/* 지도 */}
+      <MapView
+        style={{ flex: 1 }}
+        initialRegion={{
+          latitude: (userLocation.latitude + detail.latitude) / 2,
+          longitude: (userLocation.longitude + detail.longitude) / 2,
+          latitudeDelta: Math.abs(userLocation.latitude - detail.latitude) * 2,
+          longitudeDelta: Math.abs(userLocation.longitude - detail.longitude) / 2,
+        }}
+      >
+        <Marker
+          coordinate={userLocation}
+          title="현재 위치"
+          description="사용자의 현재 위치"
+        />
+        <Marker
+          coordinate={{ latitude: detail.latitude, longitude: detail.longitude }}
+          title={detail.title}
+          description={detail.addr1}
+        />
+      </MapView>
+
       {/* 뒤로가기 */}
       <TouchableOpacity
         style={styles.backBtn}
-        onPress={() => {
-          /* navigation.goBack() */
-        }}
+        onPress={() => router.back()}
       >
         <Text style={styles.backText}>{'<'}</Text>
       </TouchableOpacity>

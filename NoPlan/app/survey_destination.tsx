@@ -68,13 +68,28 @@ export default function SurveyDestination() {
               let { status } = await Location.requestForegroundPermissionsAsync();
               if (status !== 'granted') throw new Error('위치 권한이 필요합니다.');
               let location = await Location.getCurrentPositionAsync({});
+
+              // 이동수단에 따른 반경 설정
+              const radiusMap: { [key: string]: number } = {
+                '도보': 200,
+                '대중교통': 500,
+                '자가용': 1000,
+              };
+              const radius = radiusMap[survey.transportation || '대중교통'] || 500;
+
+              // 키워드 설정
+              const adjectives = survey.adjectives || '';
+
               const newSurvey = {
                 ...survey,
                 mapX: location.coords.longitude,
                 mapY: location.coords.latitude,
+                radius,
+                adjectives,
               };
               console.log('[survey_destination] setSurvey request body:', newSurvey);
               setSurvey(newSurvey);
+
               // 목적지별 API type 매핑
               const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
               const type = typeMap[selected];

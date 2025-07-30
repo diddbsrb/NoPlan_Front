@@ -1,8 +1,16 @@
-// app/list.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../../assets/images/식당.jpg'),
@@ -14,30 +22,63 @@ const DEFAULT_IMAGES = {
 export default function List() {
   const router = useRouter();
   const { type } = useLocalSearchParams();
+  const {
+    survey: { mapX, mapY, radius, adjectives },
+  } = useTravelSurvey();
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!type) return;
-    setLoading(true);
-    setError(null);
-    // 임시 좌표: 서울시청 (126.9778, 37.5665), 반경 10000m
-    const mapX = 126.9778;
-    const mapY = 37.5665;
-    const radius = 10000;
-    fetch(`https://no-plan.cloud/api/v1/tours/${type}/?mapX=${mapX}&mapY=${mapY}&radius=${radius}`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setPlaces(data.slice(0, 5));
-        } else {
-          setPlaces([]);
+    // 필수 파라미터 체크 (context에서 숫자로 전달됨)
+    if (!type || mapX == null || mapY == null || radius == null) {
+      console.warn('⚠️ 필수 파라미터 누락 — fetch 건너뜀', { type, mapX, mapY, radius });
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchPlaces = async () => {
+      setLoading(true);
+      setError(null);
+
+      // adjectives가 문자열로 전달됨
+      const adjectiveParam = adjectives || '';
+
+      // URLSearchParams로 안전하게 쿼리 생성
+      const params = new URLSearchParams({
+        mapX: mapX.toString(),
+        mapY: mapY.toString(),
+        radius: radius.toString(),
+      });
+      if (adjectiveParam) params.append('adjectives', adjectiveParam);
+
+      const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
+      console.log('🧩 Context survey:', { mapX, mapY, radius, adjectives: adjectiveParam });
+      console.log('🔍 Fetching URL:', apiUrl);
+
+      try {
+        const response = await fetch(apiUrl);
+        console.log('✅ HTTP status:', response.status);
+        const data = await response.json();
+        console.log('📦 Response data:', data);
+
+        if (!cancelled) {
+          setPlaces(Array.isArray(data) ? data.slice(0, 5) : []);
         }
-      })
-      .catch(() => setError('목록을 불러오지 못했습니다.'))
-      .finally(() => setLoading(false));
-  }, [type]);
+      } catch (err) {
+        console.error('❌ Fetch error:', err);
+        if (!cancelled) setError('목록을 불러오지 못했습니다.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchPlaces();
+    return () => {
+      cancelled = true;
+    };
+  }, [type, mapX, mapY, radius, adjectives]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -55,9 +96,22 @@ export default function List() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: '/info',
+                  params: { contentid: item.contentid, places: JSON.stringify(places) },
+                })
+              }
+            >
               <Image
-                source={item.firstimage ? { uri: item.firstimage } : DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES]}
+                source={
+                  item.firstimage
+                    ? { uri: item.firstimage }
+                    : DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES]
+                }
                 style={styles.cardImage}
                 resizeMode="cover"
               />
@@ -70,11 +124,7 @@ export default function List() {
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={
-            !loading && !error ? (
-              <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>추천 결과가 없습니다.</Text>
-            ) : null
-          }
+          ListEmptyComponent={!loading && !error ? <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>추천 결과가 없습니다.</Text> : null}
           ListFooterComponent={
             <View style={styles.bottomArea}>
               <Text style={styles.bottomDesc}>이 중에서 가고싶은 곳이 없다면?</Text>
