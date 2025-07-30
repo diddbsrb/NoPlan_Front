@@ -1,5 +1,6 @@
 // app/mypage/index.tsx
-import React, { useState, useEffect } from 'react'; // *** useEffect 추가 ***
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,138 +9,158 @@ import {
   ScrollView,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 
-// *** 사용자 정보 서비스를 import 합니다 ***
-import { userService } from '../../service/userService'; 
+// --- 서비스 및 타입 import ---
+import { userService } from '../../service/userService';
+import { travelService, VisitedContent } from '../../service/travelService';
+// *** 핵심: bookmarkService와 해당 응답 타입을 import 합니다. ***
+import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
 
-// 분리된 컴포넌트 import
+// --- 분리된 컴포넌트 import ---
 import TermsComponent from './TermsComponent';
 import InfoEditComponent from './InfoEditComponent';
 import PasswordChangeComponent from './PasswordChangeComponent';
 import AccountDeleteComponent from './AccountDeleteComponent';
 
-
-
 export default function MyPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
-  const [activePersonalScreen, setActivePersonalScreen] = useState<
-    'terms' | 'edit' | 'password' | 'delete'
-  >('terms');
+  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('terms');
   
-  // *** 사용자 이름을 저장할 상태 추가 ***
-  const [userName, setUserName] = useState('회원'); 
+  // --- 상태 관리 ---
+  const [userName, setUserName] = useState('회원');
+  const [visitedContents, setVisitedContents] = useState<VisitedContent[]>([]);
+  // *** 위시리스트 상태를 BookmarkResponse[] 타입으로 변경합니다. ***
+  const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const memories = [
-    { id: 1, title: '여유로웠던 제주' },
-    { id: 2, title: '도전적이었던 부산' },
-    { id: 3, title: '고즈넉했던 대전' },
-  ];
-
-  // *** 컴포넌트가 로드될 때 사용자 정보를 불러오는 useEffect 추가 ***
+  // 사용자 이름 불러오기
   useEffect(() => {
     const fetchUserName = async () => {
       try {
         const userInfo = await userService.getUserInfo();
-        // 이름이 null이나 undefined일 경우를 대비하여 기본값('회원')을 설정합니다.
         setUserName(userInfo.name ?? '회원');
       } catch (error) {
         console.error("사용자 이름 불러오기 실패:", error);
-        // 에러 발생 시 기본 이름으로 유지됩니다.
+      }
+    };
+    fetchUserName();
+  }, []);
+
+  // 탭 변경 시 데이터 동적 로딩
+  useEffect(() => {
+    const fetchDataForTab = async () => {
+      if (activeTab !== 'personal') {
+        setIsLoading(true);
+      }
+      
+      try {
+        if (activeTab === 'visited') {
+          const data = await travelService.getVisitedContents();
+          setVisitedContents(data);
+        } else if (activeTab === 'wishlist') {
+          // *** 핵심 변경: bookmarkService.getBookmarks() 호출 ***
+          const data = await bookmarkService.getBookmarks();
+          setBookmarks(data);
+        }
+      } catch (error) {
+        console.error(`${activeTab} 데이터 불러오기 실패:`, error);
+        if (activeTab === 'visited') setVisitedContents([]);
+        if (activeTab === 'wishlist') setBookmarks([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchUserName();
-  }, []); // 빈 배열을 전달하여 컴포넌트가 처음 렌더링될 때 한 번만 실행되도록 합니다.
+    fetchDataForTab();
+  }, [activeTab]);
+
+  // 콘텐츠 렌더링 함수
+  const renderContent = () => {
+    if (isLoading && activeTab !== 'personal') {
+      return <ActivityIndicator size="large" color="#0077b6" style={{ marginTop: 40 }} />;
+    }
+
+    // --- 방문한 곳 탭 ---
+    if (activeTab === 'visited') {
+      if (visitedContents.length === 0) {
+        return <Text style={styles.placeholderText}>아직 방문 기록이 없어요.</Text>;
+      }
+      return visitedContents.map((content) => (
+        <View key={content.content_id} style={styles.card}>
+          <Text style={styles.cardTitle}>{content.title}</Text>
+          <Text style={styles.locationText}>{content.addr1}</Text>
+          <View style={styles.imageBox}>
+            <Image
+              source={{ uri: content.first_image }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
+        </View>
+      ));
+    }
+
+    // --- 위시리스트 탭 ---
+    if (activeTab === 'wishlist') {
+      if (bookmarks.length === 0) {
+        return <Text style={styles.placeholderText}>위시리스트(북마크)가 비어있어요.</Text>;
+      }
+      // *** bookmark 데이터를 사용하여 카드를 렌더링합니다. ***
+      return bookmarks.map((bookmark) => (
+        <View key={bookmark.id} style={styles.card}>
+          <Text style={styles.cardTitle}>{bookmark.title}</Text>
+          <Text style={styles.locationText}>{bookmark.addr1}</Text>
+          <View style={styles.imageBox}>
+            <Image
+              source={{ uri: bookmark.firstImage }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
+        </View>
+      ));
+    }
+
+    // --- 개인정보 관리 탭 ---
+    if (activeTab === 'personal') {
+      return (
+        <>
+          {activePersonalScreen === 'terms' && <TermsComponent onEdit={() => setActivePersonalScreen('edit')} />}
+          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActivePersonalScreen('terms')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} />}
+          {activePersonalScreen === 'password' && <PasswordChangeComponent onBack={() => setActivePersonalScreen('edit')} />}
+          {activePersonalScreen === 'delete' && <AccountDeleteComponent onBack={() => setActivePersonalScreen('edit')} />}
+        </>
+      );
+    }
+    
+    return null;
+  };
 
   return (
     <View style={styles.container}>
-      <CustomTopBar
-        title="내 정보"
-        onBack={() => router.back()}
-        showProfile={false}
-      />
+      <CustomTopBar title="내 정보" onBack={() => router.back()} showProfile={false} />
 
-      {/* 타이틀: 상태에 저장된 사용자 이름을 사용하도록 변경 */}
       <View style={styles.titleWrapper}>
-        {/* *** 이 부분이 '가경'에서 동적 이름으로 변경됩니다 *** */}
         <Text style={styles.title}>{userName}님의 기억</Text>
       </View>
 
-      {/* 탭 메뉴 */}
       <View style={styles.tabWrapper}>
         {(['visited', 'wishlist', 'personal'] as const).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
-            onPress={() => setActiveTab(tab)}
-          >
+          <TouchableOpacity key={tab} style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]} onPress={() => setActiveTab(tab)}>
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {{
-                visited: '방문한 곳',
-                wishlist: '위시리스트',
-                personal: '개인정보 관리',
-              }[tab]}
+              {{ visited: '방문한 곳', wishlist: '위시리스트', personal: '개인정보 관리' }[tab]}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* 콘텐츠 */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {activeTab === 'visited' &&
-          memories.map((item) => (
-            <View key={item.id} style={styles.card}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <View style={styles.imageBox} />
-            </View>
-          ))}
-
-        {activeTab === 'wishlist' && (
-          <>
-            {PLACES.length === 0 ? (
-              <Text style={styles.placeholderText}>위시리스트가 비어 있습니다.</Text>
-            ) : (
-              PLACES.map((place, idx) => (
-                <View key={idx} style={styles.card}>
-                  <Text style={styles.cardTitle}>{place.name}</Text>
-                  <Text style={styles.locationText}>{place.location}</Text>
-                  <View style={styles.imageBox}>
-                    <Image
-                      source={place.image}
-                      style={styles.image}
-                      resizeMode="cover"
-                    />
-                  </View>
-                </View>
-              ))
-            )}
-          </>
-        )}
-
-        {activeTab === 'personal' && (
-          <>
-            {activePersonalScreen === 'terms' && (
-              <TermsComponent onEdit={() => setActivePersonalScreen('edit')} />
-            )}
-            {activePersonalScreen === 'edit' && (
-              <InfoEditComponent
-                onBack={() => setActivePersonalScreen('terms')}
-                onPassword={() => setActivePersonalScreen('password')}
-                onDelete={() => setActivePersonalScreen('delete')}
-              />
-            )}
-            {activePersonalScreen === 'password' && (
-              <PasswordChangeComponent onBack={() => setActivePersonalScreen('edit')} />
-            )}
-            {activePersonalScreen === 'delete' && (
-              <AccountDeleteComponent onBack={() => setActivePersonalScreen('edit')} />
-            )}
-          </>
-        )}
+        {renderContent()}
       </ScrollView>
     </View>
   );
@@ -192,15 +213,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: {
-    marginBottom: 15,
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   imageBox: {
     width: screenWidth - 40,
-    height: 120,
+    height: 180,
     backgroundColor: '#eef5ff',
     borderRadius: 12,
     overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   image: {
     width: '100%',
@@ -212,7 +239,8 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   locationText: {
+    fontSize: 13,
     color: '#888',
-    marginBottom: 8,
+    marginBottom: 12,
   },
 });
