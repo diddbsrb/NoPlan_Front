@@ -9,7 +9,6 @@ import * as SecureStore from 'expo-secure-store';
 export interface Trip {
   id: number;
   region: string;
-  created_at: string;
 }
 
 /**
