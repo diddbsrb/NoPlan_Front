@@ -1,4 +1,5 @@
 // Info.tsx
+
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -14,12 +15,13 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { bookmarkService } from '../service/bookmarkService';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 
-// 리스트 API에서 내려주는 객체 타입 (필요한 필드만)
+import { bookmarkService } from '../service/bookmarkService';
+import { travelService, CreateVisitedContentDto } from '../service/travelService';
+
 interface ListPlace {
   contentid: string;
   title: string;
@@ -57,11 +59,10 @@ export default function Info() {
   const [error, setError] = useState<string | null>(null);
   const [userLoc, setUserLoc] = useState<{ latitude: number; longitude: number } | null>(null);
 
-  // 북마크 상태
   const [favorite, setFavorite] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<number | null>(null);
 
-  // 1) 리스트에서 전달받은 placesParam을 파싱
+  // 1) 리스트에서 받은 placesParam 파싱
   const listPlaces: ListPlace[] = useMemo(() => {
     if (!placesParam) return [];
     try {
@@ -72,7 +73,7 @@ export default function Info() {
     }
   }, [placesParam]);
 
-  // 2) listPlaces 중 현재 contentid와 일치하는 아이템 찾기
+  // 2) 현재 contentid에 해당하는 항목
   const current = listPlaces.find(p => p.contentid === contentid);
 
   // 3) 상세 API 호출
@@ -84,7 +85,7 @@ export default function Info() {
       .catch(() => setError('상세 정보를 불러오지 못했습니다.'));
   }, [contentid]);
 
-  // 4) 사용자 위치 권한/좌표
+  // 4) 위치 권한/좌표 조회
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -106,9 +107,6 @@ export default function Info() {
         if (found) {
           setFavorite(true);
           setBookmarkId(found.id);
-        } else {
-          setFavorite(false);
-          setBookmarkId(null);
         }
       } catch (e) {
         console.error('Failed to load bookmarks on Info:', e);
@@ -116,7 +114,7 @@ export default function Info() {
     })();
   }, [contentid]);
 
-  // 6) 바텀 시트 PanResponder
+  // 6) 바텀시트 PanResponder
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10,
@@ -136,7 +134,6 @@ export default function Info() {
 
   // 북마크 토글
   const toggleFavorite = async () => {
-    // 화면에 사용할 데이터
     const imageUri =
       current?.firstimage ||
       current?.firstimage2 ||
@@ -171,6 +168,7 @@ export default function Info() {
     }
   };
 
+  // 로딩/에러 처리
   if (error) {
     return (
       <View style={styles.center}>
@@ -199,6 +197,51 @@ export default function Info() {
     .filter(t => t.length > 0);
   const latitude = parseFloat(current?.mapy ?? detail!.mapy);
   const longitude = parseFloat(current?.mapx ?? detail!.mapx);
+
+  // 방문 체크 처리
+  const handleVisit = () => {
+    console.log('▶ handleVisit 호출!');
+    Alert.alert(
+      '방문했어요',
+      '이 장소를 방문 목록에 추가하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '확인',
+          onPress: async () => {
+            try {
+              // 최신 trip 가져오기
+              const trips = await travelService.getTripData();
+              const latest = trips.sort((a, b) => b.id - a.id)[0];
+
+              // DTO 구성
+              const dto: CreateVisitedContentDto = {
+                content_id: Number(contentid),
+                title,
+                first_image: imageUri,
+                addr1,
+                mapx: `${longitude}`,
+                mapy: `${latitude}`,
+                overview: recommendReason,
+                hashtags: rawHashtags,
+                recommend_reason: recommendReason,
+              };
+
+              // POST 요청
+              await travelService.createVisitedContent(latest.id, dto);
+
+              // 홈으로 replace 이동
+              router.replace('/(tabs)/home_travel');
+            } catch (e) {
+              console.error('방문 추가 실패', e);
+              Alert.alert('오류', '방문 추가에 실패했습니다.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -254,7 +297,7 @@ export default function Info() {
             ))}
           </View>
 
-          {/* 지도 */}
+          {/* 지도 미리보기 */}
           <View style={styles.mapPreview}>
             <MapView
               style={StyleSheet.absoluteFillObject}
@@ -274,19 +317,21 @@ export default function Info() {
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={() =>
-                Linking.openURL(`https://map.kakao.com/link/to/${title},${latitude},${longitude}`)
+                Linking.openURL(
+                  `https://map.kakao.com/link/to/${title},${latitude},${longitude}`
+                )
               }
             >
               <Text style={styles.primaryButtonText}>경로 탐색</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => console.log('방문 체크')}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleVisit}>
               <Text style={styles.secondaryButtonText}>방문했어요</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </Animated.View>
 
-      {/* 뒤로가기 */}
+      {/* 뒤로가기 버튼 */}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backText}>{'<'}</Text>
       </TouchableOpacity>
