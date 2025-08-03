@@ -17,6 +17,13 @@ export const authService = {
   signIn: (email: string, password: string) =>
     apiClient.post('/users/login/', { email, password }),
 
+   // ★★★ 카카오 로그인을 위한 함수 추가 ★★★
+  // 백엔드에 인가 코드를 보내고 우리 서비스의 토큰을 받아옵니다.
+  kakaoLogin: (code: string) => {
+    console.log(`[authService] 카카오 인가 코드 전송: ${code}`);
+    return apiClient.post('/users/kakao/', { code });
+  },
+  
   /**
    * *** 신규 추가된 로그아웃 함수 ***
    * 서버에 refresh 토큰을 전송하여 만료시키도록 요청합니다.
@@ -48,3 +55,4 @@ export const authService = {
     }
   },
 };
+
