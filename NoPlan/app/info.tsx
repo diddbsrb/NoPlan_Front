@@ -21,6 +21,7 @@ import MapView, { Marker } from 'react-native-maps';
 
 import { bookmarkService } from '../service/bookmarkService';
 import { travelService, CreateVisitedContentDto } from '../service/travelService';
+import { categoryMapping } from '../utils/categoryMapping';
 
 interface ListPlace {
   contentid: string;
@@ -213,6 +214,11 @@ export default function Info() {
               // 최신 trip 가져오기
               const trips = await travelService.getTripData();
               const latest = trips.sort((a, b) => b.id - a.id)[0];
+
+              // 🆕 카테고리 판단 및 저장
+              const category = categoryMapping.determineCategory(title, recommendReason);
+              await categoryMapping.saveCategory(Number(contentid), category);
+              console.log(`[info] 카테고리 저장: ${title} -> ${category}`);
 
               // DTO 구성
               const dto: CreateVisitedContentDto = {
