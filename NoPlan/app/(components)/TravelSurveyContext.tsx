@@ -8,6 +8,7 @@ export interface TravelSurveyData {
   region?: string;
   transportation?: string;
   companion?: string;
+  autoRecommendType?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
 }
 
 interface TravelSurveyContextType {

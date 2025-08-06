@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
 import * as Location from 'expo-location';
-import { useTravelSurvey } from './(components)/TravelSurveyContext';
+import { useTravelSurvey, TravelSurveyData } from './(components)/TravelSurveyContext';
 
 const DEST_OPTIONS = [
   { label: '식당', image: require('../assets/images/식당.jpg') },
@@ -20,12 +20,70 @@ export default function SurveyDestination() {
   const { survey, setSurvey } = useTravelSurvey();
   const [loading, setLoading] = useState(false);
 
-  // 화면에 포커스될 때마다 선택 초기화
+  // 🆕 자동 추천 타입이 있으면 자동 선택 및 자동 진행
   useFocusEffect(
     useCallback(() => {
-      setSelected(null);
-    }, [])
+      if (survey.autoRecommendType) {
+        // 자동 추천 타입에 따른 인덱스 매핑
+        const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
+        const autoIndex = typeMap.indexOf(survey.autoRecommendType);
+        if (autoIndex !== -1) {
+          setSelected(autoIndex);
+          console.log(`[survey_destination] 자동 선택: ${survey.autoRecommendType} -> 인덱스 ${autoIndex}`);
+          
+          // 🆕 자동으로 다음 버튼 클릭 효과
+          setTimeout(() => {
+            handleNextButton(autoIndex);
+          }, 500); // 0.5초 후 자동 진행
+        }
+      } else {
+        setSelected(null);
+      }
+    }, [survey.autoRecommendType])
   );
+
+  // 🆕 다음 버튼 로직을 함수로 분리
+  const handleNextButton = async (selectedIndex: number) => {
+    setLoading(true);
+    try {
+      // 현재 위치 받아서 글로벌 상태에 업데이트
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') throw new Error('위치 권한이 필요합니다.');
+      let location = await Location.getCurrentPositionAsync({});
+
+      // 이동수단에 따른 반경 설정
+      const radiusMap: { [key: string]: number } = {
+        '도보': 200,
+        '대중교통': 500,
+        '자가용': 1000,
+      };
+      const radius = radiusMap[survey.transportation || '대중교통'] || 500;
+
+      // 키워드 설정
+      const adjectives = survey.adjectives || '';
+
+      // autoRecommendType을 제외한 새로운 survey 객체 생성
+      const { autoRecommendType, ...surveyWithoutAuto } = survey;
+      const newSurvey: TravelSurveyData = {
+        ...surveyWithoutAuto,
+        mapX: location.coords.longitude,
+        mapY: location.coords.latitude,
+        radius,
+        adjectives,
+      };
+      console.log('[survey_destination] setSurvey request body:', newSurvey);
+      setSurvey(newSurvey);
+
+      // 목적지별 API type 매핑
+      const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
+      const type = typeMap[selectedIndex];
+      router.replace({ pathname: '/list', params: { type } });
+    } catch (e) {
+      alert('위치 정보를 가져올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -60,45 +118,9 @@ export default function SurveyDestination() {
           { backgroundColor: selected !== null ? '#F2FAFC' : '#E0E0E0' },
         ]}
         disabled={selected === null || loading}
-        onPress={async () => {
+        onPress={() => {
           if (selected !== null) {
-            setLoading(true);
-            try {
-              // 현재 위치 받아서 글로벌 상태에 업데이트
-              let { status } = await Location.requestForegroundPermissionsAsync();
-              if (status !== 'granted') throw new Error('위치 권한이 필요합니다.');
-              let location = await Location.getCurrentPositionAsync({});
-
-              // 이동수단에 따른 반경 설정
-              const radiusMap: { [key: string]: number } = {
-                '도보': 200,
-                '대중교통': 500,
-                '자가용': 1000,
-              };
-              const radius = radiusMap[survey.transportation || '대중교통'] || 500;
-
-              // 키워드 설정
-              const adjectives = survey.adjectives || '';
-
-              const newSurvey = {
-                ...survey,
-                mapX: location.coords.longitude,
-                mapY: location.coords.latitude,
-                radius,
-                adjectives,
-              };
-              console.log('[survey_destination] setSurvey request body:', newSurvey);
-              setSurvey(newSurvey);
-
-              // 목적지별 API type 매핑
-              const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
-              const type = typeMap[selected];
-              router.replace({ pathname: '/list', params: { type } });
-            } catch (e) {
-              alert('위치 정보를 가져올 수 없습니다.');
-            } finally {
-              setLoading(false);
-            }
+            handleNextButton(selected);
           }
         }}
       >
