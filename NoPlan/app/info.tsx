@@ -15,7 +15,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -99,21 +99,26 @@ export default function Info() {
     })();
   }, []);
 
-  // 5) 초기 북마크 상태 로드
-  useEffect(() => {
-    (async () => {
-      try {
-        const existing = await bookmarkService.getBookmarks();
-        const found = existing.find(b => b.contentId === Number(contentid));
-        if (found) {
-          setFavorite(true);
-          setBookmarkId(found.id);
+  // 5) 화면이 포커스될 때마다 북마크 상태 새로고침
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        try {
+          const existing = await bookmarkService.getBookmarks();
+          const found = existing.find(b => b.contentId === Number(contentid));
+          if (found) {
+            setFavorite(true);
+            setBookmarkId(found.id);
+          } else {
+            setFavorite(false);
+            setBookmarkId(null);
+          }
+        } catch (e) {
+          console.error('Failed to load bookmarks on Info:', e);
         }
-      } catch (e) {
-        console.error('Failed to load bookmarks on Info:', e);
-      }
-    })();
-  }, [contentid]);
+      })();
+    }, [contentid])
+  );
 
   // 6) 바텀시트 PanResponder
   const panResponder = useRef(

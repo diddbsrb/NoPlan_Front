@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { bookmarkService } from '../../service/bookmarkService';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 
@@ -35,21 +35,23 @@ export default function List() {
   // contentId → bookmarkId 매핑
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
 
-  // **마운트 시점에 기존 북마크 불러오기**
-  useEffect(() => {
-    (async () => {
-      try {
-        const existing = await bookmarkService.getBookmarks();
-        const map: { [key: number]: number } = {};
-        existing.forEach(b => {
-          map[b.contentId] = b.id;
-        });
-        setFavorites(map);
-      } catch (e) {
-        console.error('Failed to load bookmarks on List:', e);
-      }
-    })();
-  }, []);
+  // **화면이 포커스될 때마다 북마크 상태 새로고침**
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        try {
+          const existing = await bookmarkService.getBookmarks();
+          const map: { [key: number]: number } = {};
+          existing.forEach(b => {
+            map[b.contentId] = b.id;
+          });
+          setFavorites(map);
+        } catch (e) {
+          console.error('Failed to load bookmarks on List:', e);
+        }
+      })();
+    }, [])
+  );
 
   const toggleFavorite = async (item: any) => {
     const contentId = item.contentid;
