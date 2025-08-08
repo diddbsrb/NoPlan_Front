@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { authService } from '../../service/authService';
 
 export default function SignupScreen() {
@@ -16,6 +17,7 @@ export default function SignupScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignup = async () => {
     setError('');
@@ -87,7 +89,7 @@ export default function SignupScreen() {
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
         <Text style={styles.footerText}>이미 계정이 있으신가요? </Text>
-        <TouchableOpacity onPress={() => console.log('로그인하기 클릭')}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/signin')}>
           <Text style={styles.loginText}>로그인하기</Text>
         </TouchableOpacity>
       </View>

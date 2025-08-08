@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start', // 변경: 위쪽 정렬
-    paddingHorizontal: 20,
+    paddingVertical: 10,
     paddingTop: 100, // 추가: 위에서부터 여백
   },
   logo: {
@@ -72,13 +72,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   button: {
-    backgroundColor: 'rgba(213, 237, 250, 0.85)',
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: 10,
+    paddingVertical: 20,
+    paddingHorizontal: 140,
     alignItems: 'center',
     position: 'absolute',
-    bottom: 60,
+    bottom: 40,
     alignSelf: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   buttonText: {
-    color: '#888',
+    color: '#000',
     fontSize: 15,
     fontWeight: '600',
   },
