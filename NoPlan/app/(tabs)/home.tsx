@@ -25,37 +25,70 @@ const imageList = [
 
 export default function HomeScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [nextImageIndex, setNextImageIndex] = useState(1);
+  const fadeAnim1 = useRef(new Animated.Value(1)).current;
+  const fadeAnim2 = useRef(new Animated.Value(0)).current;
+  const isAnimating = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
     const interval = setInterval(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start(() => {
-        setCurrentImageIndex(prev => (prev + 1) % imageList.length);
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
+      if (isAnimating.current) return; // 애니메이션 중이면 스킵
+      
+      isAnimating.current = true;
+      // 다음 이미지 인덱스 계산
+      const nextIndex = (currentImageIndex + 1) % imageList.length;
+      setNextImageIndex(nextIndex);
+
+      // 크로스페이드 애니메이션
+      Animated.parallel([
+        Animated.timing(fadeAnim1, {
+          toValue: 0,
+          duration: 2000,
           useNativeDriver: true,
-        }).start();
+        }),
+        Animated.timing(fadeAnim2, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // 애니메이션 완료 후 인덱스 업데이트 (깜빡임 방지)
+        setCurrentImageIndex(nextIndex);
+        // 애니메이션 값 리셋을 다음 프레임으로 지연
+        requestAnimationFrame(() => {
+          fadeAnim1.setValue(1);
+          fadeAnim2.setValue(0);
+          isAnimating.current = false;
+        });
       });
-    }, 3000);
+    }, 6000); // 6초마다 전환
 
     return () => clearInterval(interval);
-  }, []);
+  }, [currentImageIndex]);
 
   return (
-    <AnimatedImageBackground
-      source={imageList[currentImageIndex]}
-      style={[styles.background, { opacity: fadeAnim }]}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay} />
+    <View style={styles.container}>
+      {/* 첫 번째 배경 이미지 */}
+      <AnimatedImageBackground
+        source={imageList[currentImageIndex]}
+        style={[styles.background, { opacity: fadeAnim1 }]}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
+      </AnimatedImageBackground>
 
-      <SafeAreaView style={styles.container}>
+      {/* 두 번째 배경 이미지 (크로스페이드용) */}
+      <AnimatedImageBackground
+        source={imageList[nextImageIndex]}
+        style={[styles.background, styles.overlayBackground, { opacity: fadeAnim2 }]}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay} />
+      </AnimatedImageBackground>
+
+      {/* UI 요소들 (고정 위치) */}
+      <SafeAreaView style={styles.uiContainer}>
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/noplan_logo_white.png')}
@@ -78,18 +111,32 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>지금 시작하기</Text>
         </TouchableOpacity>
       </SafeAreaView>
-    </AnimatedImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width: '100%', height: '100%' },
+  container: {
+    flex: 1,
+  },
+  background: { 
+    flex: 1, 
+    width: '100%', 
+    height: '100%',
+    position: 'absolute',
+  },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(147, 144, 144, 0.3)',
-    zIndex: 1,
   },
-  container: {
+  uiContainer: {
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 12,
@@ -119,9 +166,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   button: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    paddingVertical: 12,
-    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    paddingVertical: 20,
+    paddingHorizontal: 120,
+    borderRadius: 10,
+    marginBottom: 2,
     alignItems: 'center',
   },
   buttonText: { color: '#000', fontWeight: '600', fontSize: 14 },
