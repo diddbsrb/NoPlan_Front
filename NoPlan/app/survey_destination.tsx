@@ -72,13 +72,21 @@ export default function SurveyDestination() {
         adjectives,
       };
       console.log('[survey_destination] setSurvey request body:', newSurvey);
+      console.log('[survey_destination] Location data:', {
+        longitude: location.coords.longitude,
+        latitude: location.coords.latitude,
+        radius,
+        transportation: survey.transportation
+      });
       setSurvey(newSurvey);
 
       // 목적지별 API type 매핑
       const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
       const type = typeMap[selectedIndex];
+      console.log('[survey_destination] Navigating to list with type:', type);
       router.replace({ pathname: '/list', params: { type } });
     } catch (e) {
+      console.error('[survey_destination] Error:', e);
       alert('위치 정보를 가져올 수 없습니다.');
     } finally {
       setLoading(false);

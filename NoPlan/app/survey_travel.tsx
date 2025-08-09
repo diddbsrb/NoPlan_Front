@@ -22,8 +22,8 @@ import { useTravelSurvey } from './(components)/TravelSurveyContext';
 // };
 
 const KEYWORD_OPTIONS = [
-  '힐링', '자유로움', '감성적인', '활동적인',
-  '자연', '도전', '체험', '휴식', '문화',
+  '고즈넉한', '낭만적인', '모던한', '힙한', '고급스러운',
+  '전통적인', '활동적인', '산뜻한', '정겨운',
 ];
 
 const TRAVEL_TYPE_OPTIONS = [
