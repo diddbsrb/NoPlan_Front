@@ -86,7 +86,18 @@ export default function List() {
   const displayedPlaces = places.slice(pageIndex * 5, pageIndex * 5 + 5);
 
   useEffect(() => {
-    if (!type || mapX == null || mapY == null || radius == null) return;
+    console.log('[list.tsx] useEffect triggered with:', {
+      type,
+      mapX,
+      mapY,
+      radius,
+      adjectives
+    });
+    
+    if (!type || mapX == null || mapY == null || radius == null) {
+      console.log('[list.tsx] Missing required params:', { type, mapX, mapY, radius });
+      return;
+    }
 
     let cancelled = false;
 
@@ -102,14 +113,18 @@ export default function List() {
       if (adjectives) params.append('adjectives', adjectives);
 
       const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
+      console.log('[list.tsx] API URL:', apiUrl);
+      
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
+        console.log('[list.tsx] API response:', data);
         if (!cancelled) {
           setPlaces(Array.isArray(data) ? data : []);
           setPageIndex(0);
         }
       } catch (e) {
+        console.error('[list.tsx] API error:', e);
         if (!cancelled) setError('목록을 불러오지 못했습니다.');
       } finally {
         if (!cancelled) setLoading(false);
@@ -145,12 +160,25 @@ export default function List() {
             <TouchableOpacity
               style={styles.card}
               activeOpacity={0.85}
-              onPress={() =>
-                router.push({
-                  pathname: '/info',
-                  params: { contentid: item.contentid, places: JSON.stringify(places) },
-                })
-              }
+              onPress={() => {
+                try {
+                  console.log('[list.tsx] Navigating to info with:', {
+                    contentid: item.contentid,
+                    placesLength: places.length,
+                    item: item
+                  });
+                  router.push({
+                    pathname: '/info',
+                    params: { 
+                      contentid: item.contentid, 
+                      places: JSON.stringify(places) 
+                    },
+                  });
+                } catch (error) {
+                  console.error('[list.tsx] Navigation error:', error);
+                  Alert.alert('오류', '상세 페이지로 이동할 수 없습니다.');
+                }
+              }}
             >
               <Image
                 source={

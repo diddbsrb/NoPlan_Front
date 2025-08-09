@@ -18,7 +18,12 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.donggguk.noplan",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "${GOOGLE_MAPS_API_KEY}"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -45,7 +50,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "${EAS_PROJECT_ID}"
+        "projectId": "67cffa78-bba4-420b-97ed-3cc43e88724f"
       }
     }
   }

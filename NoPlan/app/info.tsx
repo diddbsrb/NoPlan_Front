@@ -40,6 +40,10 @@ interface TourDetail {
   mapy: string;
   firstimage?: string;
   firstimage2?: string;
+  title?: string;
+  addr1?: string;
+  overview?: string;
+  contentid?: string;
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -79,44 +83,99 @@ export default function Info() {
 
   // 3) 상세 API 호출
   useEffect(() => {
-    if (!contentid) return;
-    fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentid}/`)
-      .then(res => res.json())
-      .then((data: TourDetail) => setDetail(data))
-      .catch(() => setError('상세 정보를 불러오지 못했습니다.'));
+    if (!contentid) {
+      setError('콘텐츠 ID가 없습니다.');
+      return;
+    }
+    
+    let isMounted = true;
+    
+    console.log('[info.tsx] Fetching detail for contentid:', contentid);
+    const apiUrl = `https://no-plan.cloud/api/v1/tours/detail/${contentid}/`;
+    console.log('[info.tsx] API URL:', apiUrl);
+    
+    fetch(apiUrl)
+      .then(res => {
+        console.log('[info.tsx] Response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data: TourDetail) => {
+        console.log('[info.tsx] Detail data received:', data);
+        if (isMounted) {
+          setDetail(data);
+        }
+      })
+      .catch((error) => {
+        console.error('[info.tsx] Detail API error:', error);
+        if (isMounted) {
+          setError(`상세 정보를 불러오지 못했습니다: ${error.message}`);
+        }
+      });
+    
+    return () => {
+      isMounted = false;
+    };
   }, [contentid]);
 
   // 4) 위치 권한/좌표 조회
   useEffect(() => {
+    let isMounted = true;
+    
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('위치 권한이 필요합니다.');
-        return;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          if (isMounted) {
+            setError('위치 권한이 필요합니다.');
+          }
+          return;
+        }
+        const loc = await Location.getCurrentPositionAsync({});
+        if (isMounted) {
+          setUserLoc({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+        }
+      } catch (error) {
+        console.error('[info.tsx] Location error:', error);
+        if (isMounted) {
+          setError('위치 정보를 가져오지 못했습니다.');
+        }
       }
-      const loc = await Location.getCurrentPositionAsync({});
-      setUserLoc({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
     })();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // 5) 화면이 포커스될 때마다 북마크 상태 새로고침
   useFocusEffect(
     React.useCallback(() => {
+      let isMounted = true;
+      
       (async () => {
         try {
           const existing = await bookmarkService.getBookmarks();
-          const found = existing.find(b => b.contentId === Number(contentid));
-          if (found) {
-            setFavorite(true);
-            setBookmarkId(found.id);
-          } else {
-            setFavorite(false);
-            setBookmarkId(null);
+          if (isMounted) {
+            const found = existing.find(b => b.contentId === Number(contentid));
+            if (found) {
+              setFavorite(true);
+              setBookmarkId(found.id);
+            } else {
+              setFavorite(false);
+              setBookmarkId(null);
+            }
           }
         } catch (e) {
           console.error('Failed to load bookmarks on Info:', e);
         }
       })();
+      
+      return () => {
+        isMounted = false;
+      };
     }, [contentid])
   );
 
@@ -179,30 +238,52 @@ export default function Info() {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => router.back()}>
+          <Text style={styles.retryButtonText}>뒤로가기</Text>
+        </TouchableOpacity>
       </View>
     );
   }
+  
+  // 데이터가 없고 위치 정보도 없는 경우 로딩 표시
   if ((!detail && !current) || !userLoc) {
-    return <ActivityIndicator style={styles.loader} size="large" color="#4AB7C8" />;
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#4AB7C8" />
+        <Text style={{ marginTop: 16, color: '#666' }}>정보를 불러오는 중...</Text>
+      </View>
+    );
   }
 
   // 화면에 사용할 데이터 결정
+  console.log('[info.tsx] Data processing:', { current, detail });
+  
   const imageUri =
     current?.firstimage ||
     current?.firstimage2 ||
     detail?.firstimage ||
     detail?.firstimage2 ||
     '';
-  const title = current?.title || '제목 없음';
-  const addr1 = current?.addr1 || '';
-  const recommendReason = current?.recommend_reason || '';
+  const title = current?.title || detail?.title || '제목 없음';
+  const addr1 = current?.addr1 || detail?.addr1 || '';
+  const recommendReason = current?.recommend_reason || detail?.overview || '';
   const rawHashtags = current?.hashtags || '';
   const hashtags = rawHashtags
     .split('#')
     .map(t => t.trim())
     .filter(t => t.length > 0);
-  const latitude = parseFloat(current?.mapy ?? detail!.mapy);
-  const longitude = parseFloat(current?.mapx ?? detail!.mapx);
+  
+  // 좌표 처리 - detail에서 가져온 경우 문자열을 숫자로 변환
+  let latitude: number, longitude: number;
+  try {
+    latitude = parseFloat(current?.mapy ?? detail?.mapy ?? '0');
+    longitude = parseFloat(current?.mapx ?? detail?.mapx ?? '0');
+    console.log('[info.tsx] Coordinates:', { latitude, longitude });
+  } catch (error) {
+    console.error('[info.tsx] Coordinate parsing error:', error);
+    latitude = 37.5665; // 서울 기본 좌표
+    longitude = 126.9780;
+  }
 
   // 방문 체크 처리
   const handleVisit = () => {
@@ -318,6 +399,9 @@ export default function Info() {
                 latitudeDelta: 0.005,
                 longitudeDelta: 0.005,
               }}
+              // onError={(error) => {
+              //   console.error('[info.tsx] MapView error:', error);
+              // }}
             >
               <Marker coordinate={{ latitude, longitude }} title={title} />
             </MapView>
@@ -449,5 +533,17 @@ const styles = StyleSheet.create({
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  error: { color: 'red' },
+  error: { color: 'red', marginBottom: 20 },
+  retryButton: {
+    backgroundColor: '#4AB7C8',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

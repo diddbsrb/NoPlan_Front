@@ -22,10 +22,16 @@ const TravelSurveyContext = createContext<TravelSurveyContextType | undefined>(u
 export function TravelSurveyProvider({ children }: { children: ReactNode }) {
   const [survey, setSurveyState] = useState<TravelSurveyData>({});
   const setSurvey = (data: TravelSurveyData) => {
-    console.log('[TravelSurveyContext] setSurvey request body:', data);
+    console.log('[TravelSurveyContext] setSurvey called with:', data);
     setSurveyState(data);
   };
-  const clearSurvey = () => setSurveyState({});
+  const clearSurvey = () => {
+    console.log('[TravelSurveyContext] clearSurvey called');
+    setSurveyState({});
+  };
+  
+  console.log('[TravelSurveyContext] Current survey state:', survey);
+  
   return (
     <TravelSurveyContext.Provider value={{ survey, setSurvey, clearSurvey }}>
       {children}
