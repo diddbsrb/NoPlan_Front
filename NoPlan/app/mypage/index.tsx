@@ -16,7 +16,7 @@ import CustomTopBar from '../(components)/CustomTopBar';
 
 // --- 서비스 및 타입 import ---
 import { userService } from '../../service/userService';
-import { travelService, VisitedContent } from '../../service/travelService';
+import { travelService, VisitedContent, Trip } from '../../service/travelService';
 import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
 
 // --- 분리된 컴포넌트 import ---
@@ -27,7 +27,10 @@ import AccountDeleteComponent from './AccountDeleteComponent';
 
 // trip_id를 키로 가지는 그룹화된 데이터 타입 정의
 type VisitedTrips = {
-  [key: string]: VisitedContent[];
+  [key: string]: {
+    contents: VisitedContent[];
+    tripInfo?: Trip;
+  };
 };
 
 // ★★★ 비어있는 이미지를 대체할 이미지 URL 상수 ★★★
@@ -46,7 +49,10 @@ export default function MyPage() {
 
   // 팝업(Modal) 관리를 위한 상태
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState<VisitedContent[] | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<{
+    contents: VisitedContent[];
+    tripInfo?: Trip;
+  } | null>(null);
 
   // 사용자 이름 불러오기
   useEffect(() => {
@@ -70,17 +76,28 @@ export default function MyPage() {
       
       try {
         if (activeTab === 'visited') {
-          const data = await travelService.getVisitedContents();
+          const [visitedData, tripsData] = await Promise.all([
+            travelService.getVisitedContents(),
+            travelService.getTripData()
+          ]);
           
           // ★★★ 핵심 수정 1: 실제 데이터 필드명인 'trip'으로 그룹화합니다 ★★★
-          const groupedData = data.reduce((acc, content) => {
+          const groupedData = visitedData.reduce((acc, content) => {
             const key = content.trip; // 'trip_id'가 아닌 'trip'
             if (!acc[key]) {
-              acc[key] = [];
+              acc[key] = { contents: [], tripInfo: undefined };
             }
-            acc[key].push(content);
+            acc[key].contents.push(content);
             return acc;
           }, {} as VisitedTrips);
+
+          // trip 정보 추가
+          tripsData.forEach(trip => {
+            if (groupedData[trip.id]) {
+              groupedData[trip.id].tripInfo = trip;
+            }
+          });
+          
           setVisitedTrips(groupedData);
 
         } else if (activeTab === 'wishlist') {
@@ -159,7 +176,8 @@ export default function MyPage() {
         }
         
         return tripIds.map((tripId) => {
-          const tripContents = visitedTrips[tripId];
+          const tripData = visitedTrips[tripId];
+          const tripContents = tripData.contents;
           const firstContent = tripContents[0];
           const imageUrl = firstContent.first_image ? firstContent.first_image : PLACEHOLDER_IMAGE_URL;
   
@@ -269,7 +287,17 @@ export default function MyPage() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>여행 기록 상세보기</Text>
             <ScrollView>
-              {selectedTrip?.map((content) => {
+              {/* 여행 요약 섹션 */}
+              {selectedTrip?.tripInfo?.summary && (
+                <View style={styles.summarySection}>
+                  <Text style={styles.summaryTitle}>여행 요약</Text>
+                  <Text style={styles.summaryText}>{selectedTrip.tripInfo.summary}</Text>
+                </View>
+              )}
+              
+              {/* 방문한 장소들 */}
+              <Text style={styles.visitedPlacesTitle}>방문한 장소들</Text>
+              {selectedTrip?.contents.map((content) => {
                 // ★★★ 핵심 수정 3: 팝업 내부의 이미지도 안전하게 처리합니다 ★★★
                 const imageUrl = content.first_image ? content.first_image : PLACEHOLDER_IMAGE_URL;
                 return (
@@ -438,5 +466,32 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  summarySection: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#666',
+    textAlign: 'justify',
+  },
+  visitedPlacesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    marginTop: 10,
   },
 });

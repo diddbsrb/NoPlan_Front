@@ -239,17 +239,19 @@ export default function SurveyTravel() {
     setLoading(true);
     setError(null);
     try {
+      // adjectives: 선택된 키워드
+      const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx]).join(',');
+      
       await travelService.createTripWithAuth(
         region,
         TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
-        COMPANION_OPTIONS[selectedCompanion].label
+        COMPANION_OPTIONS[selectedCompanion].label,
+        adjectives
       );
       // radius 설정: 도보=200, 대중교통=500, 자가용=1000
       let radius = 500;
       if (selectedTravelType === 1) radius = 200;
       else if (selectedTravelType === 2) radius = 1000;
-      // adjectives: 선택된 키워드
-      const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx]).join(',');
       setSurvey({
         mapX: coords.longitude,
         mapY: coords.latitude,
