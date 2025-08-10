@@ -1,7 +1,6 @@
 // service/travelService.ts
 
 import { apiClient } from './apiClient';
-import * as SecureStore from 'expo-secure-store';
 
 /**
  * 여행 객체 타입
@@ -61,33 +60,20 @@ export const travelService = {
     apiClient.post('/trips', data),
 
   getRegionArea: async (lat: number, lon: number) => {
-    const token = await SecureStore.getItemAsync('accessToken');
-    return apiClient.get(
-      `/users/find-region/?lat=${lat}&lon=${lon}`,
-      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-    );
+    return apiClient.get(`/users/find-region/?lat=${lat}&lon=${lon}`);
   },
 
   createTripWithAuth: async (region: string, transportation: string, companion: string, adjectives?: string) => {
-    const token = await SecureStore.getItemAsync('accessToken');
     const payload: any = { region, transportation, companion };
     if (adjectives) {
       payload.adjectives = adjectives;
     }
-    return apiClient.post(
-      '/users/trips/',
-      payload,
-      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-    );
+    return apiClient.post('/users/trips/',payload);
   },
 
   getTripData: async (): Promise<Trip[]> => {
-    const token = await SecureStore.getItemAsync('accessToken');
     try {
-      const res = await apiClient.get<Trip[]>(
-        '/users/trips/',
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      const res = await apiClient.get<Trip[]>('/users/trips/');
       return res.data;
     } catch (err: any) {
       console.error('❌ 여행 정보 조회 실패:', err.response?.data || err.message);
@@ -103,12 +89,8 @@ export const travelService = {
    * 사용자가 방문한 모든 콘텐츠를 조회합니다.
    */
   getVisitedContents: async (): Promise<VisitedContent[]> => {
-    const token = await SecureStore.getItemAsync('accessToken');
     try {
-      const res = await apiClient.get<VisitedContent[]>(
-        '/users/visited-contents/',
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      const res = await apiClient.get<VisitedContent[]>('/users/visited-contents/');
       return res.data;
     } catch (err: any) {
       console.error('❌ 방문한 콘텐츠 조회 실패:', err.response?.data || err.message);
@@ -120,14 +102,10 @@ export const travelService = {
    * 특정 trip에 속한 방문 콘텐츠만 조회합니다.
    */
   getVisitedContentDataByTrip: async (tripId: number): Promise<VisitedContent[]> => {
-    const token = await SecureStore.getItemAsync('accessToken');
     const url = `/users/visited-contents/?trip=${tripId}`;
     console.log(`[travelService] GET ${url}`);           // ← 요청 URL 로그
     try {
-      const res = await apiClient.get<VisitedContent[]>(
-        url,
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      const res = await apiClient.get<VisitedContent[]>(url,);
       console.log('[travelService] response.data:', res.data);  // ← 응답 데이터 로그
       return res.data;
     } catch (err: any) {
@@ -145,14 +123,9 @@ export const travelService = {
     tripId: number,
     data: CreateVisitedContentDto
   ): Promise<VisitedContent> => {
-    const token = await SecureStore.getItemAsync('accessToken');
     try {
       const payload = { trip: tripId, ...data };
-      const res = await apiClient.post<VisitedContent>(
-        '/users/visited-contents/',
-        payload,
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      const res = await apiClient.post<VisitedContent>('/users/visited-contents/',payload);
       return res.data;
     } catch (err: any) {
       console.error('❌ 방문 콘텐츠 추가 실패:', err.response?.data || err.message);
@@ -164,13 +137,8 @@ export const travelService = {
    * 여행 요약을 생성합니다.
    */
   summarizeTrip: async (tripId: number): Promise<{ trip_id: number; summary: string }> => {
-    const token = await SecureStore.getItemAsync('accessToken');
     try {
-      const res = await apiClient.post<{ trip_id: number; summary: string }>(
-        `/tours/trips/${tripId}/summarize/`,
-        {},
-        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
-      );
+      const res = await apiClient.post<{ trip_id: number; summary: string }>(`/tours/trips/${tripId}/summarize/`,{});
       return res.data;
     } catch (err: any) {
       console.error('❌ 여행 요약 생성 실패:', err.response?.data || err.message);
