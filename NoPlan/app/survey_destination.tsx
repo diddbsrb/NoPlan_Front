@@ -1,10 +1,10 @@
 // app/survey_destination.tsx
-import React, { useState, useCallback } from 'react';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
-import CustomTopBar from './(components)/CustomTopBar';
 import * as Location from 'expo-location';
-import { useTravelSurvey, TravelSurveyData } from './(components)/TravelSurveyContext';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CustomTopBar from './(components)/CustomTopBar';
+import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
 
 const DEST_OPTIONS = [
   { label: '식당', image: require('../assets/images/식당.jpg') },
@@ -53,9 +53,9 @@ export default function SurveyDestination() {
 
       // 이동수단에 따른 반경 설정
       const radiusMap: { [key: string]: number } = {
-        '도보': 200,
-        '대중교통': 500,
-        '자가용': 1000,
+        '도보': 1000,
+        '대중교통': 2000,
+        '자가용': 3000,
       };
       const radius = radiusMap[survey.transportation || '대중교통'] || 500;
 
