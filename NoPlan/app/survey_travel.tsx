@@ -1,19 +1,19 @@
 // app/survey_travel.tsx
-import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
+  Image,
   SafeAreaView,
-  View,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Image,
-  ScrollView,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import CustomTopBar from './(components)/CustomTopBar';
-import * as Location from 'expo-location';
 import { travelService } from '../service/travelService';
+import CustomTopBar from './(components)/CustomTopBar';
 import { useTravelSurvey } from './(components)/TravelSurveyContext';
 
 // 기존 headerShown 옵션은 레이아웃에서 관리하므로 제거/주석 처리
@@ -100,7 +100,7 @@ export default function SurveyTravel() {
   };
 
   const isNextEnabled = () => {
-    if (step === 2) return selectedKeywords.length === 3;
+    if (step === 2) return selectedKeywords.length > 0;
     if (step === 3) return selectedTravelType !== null;
     if (step === 4) return selectedCompanion !== null;
     return true;
@@ -126,7 +126,7 @@ export default function SurveyTravel() {
               이번 여행의 <Text style={{ color: '#4AB7C8' }}>키워드</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
-              원하는 여행 스타일을 3개 선택 {'\n'}(최대 3개)
+              원하는 여행 스타일 1~3개 선택 {'\n'}(최대 3개)
             </Text>
             <View style={styles.circleGrid}>
               {KEYWORD_OPTIONS.map((opt, idx) => (
@@ -161,7 +161,7 @@ export default function SurveyTravel() {
               이번 여행의 <Text style={{ color: '#4AB7C8' }}>방식</Text>을 선택해주세요.
             </Text>
             <Text style={styles.desc}>
-              NO PLAN이 방식에 맞는 최적의 여행지를 찾아드립니다.
+              NO PLAN이 거리를 고려해 최적의 여행지를 찾아드립니다.
             </Text>
             <ScrollView
               style={styles.scrollView}
@@ -248,10 +248,10 @@ export default function SurveyTravel() {
         COMPANION_OPTIONS[selectedCompanion].label,
         adjectives
       );
-      // radius 설정: 도보=200, 대중교통=500, 자가용=1000
-      let radius = 500;
-      if (selectedTravelType === 1) radius = 200;
-      else if (selectedTravelType === 2) radius = 1000;
+      // radius 설정: 도보=1000, 대중교통=2000, 자가용=3000
+      let radius = 2000;
+      if (selectedTravelType === 1) radius = 1000;
+      else if (selectedTravelType === 2) radius = 3000;
       setSurvey({
         mapX: coords.longitude,
         mapY: coords.latitude,

@@ -1,20 +1,20 @@
 // app/(tabs)/home_travel.tsx
 
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  SectionList,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  SectionList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
-import { useTravelSurvey, TravelSurveyData } from '../(components)/TravelSurveyContext';
+import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
   travelService,
   Trip,
@@ -151,9 +151,9 @@ export default function HomeTravel() {
       
       // 이동수단에 따른 반경 설정
       const radiusMap: { [key: string]: number } = {
-        '도보': 200,
-        '대중교통': 500,
-        '자가용': 1000,
+        '도보': 1000,
+        '대중교통': 2000,
+        '자가용': 3000,
       };
       const radius = radiusMap[survey.transportation || '대중교통'] || 500;
       
