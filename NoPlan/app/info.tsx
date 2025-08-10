@@ -272,7 +272,8 @@ export default function Info() {
     '';
   const title = current?.title || detail?.title || '제목 없음';
   const addr1 = current?.addr1 || detail?.addr1 || '';
-  const recommendReason = current?.recommend_reason || detail?.overview || '';
+  const recommendReason = current?.recommend_reason || '';
+  const overview = detail?.overview || '';
   const rawHashtags = current?.hashtags || '';
   const hashtags = rawHashtags
     .split('#')
@@ -320,7 +321,7 @@ export default function Info() {
                 addr1,
                 mapx: `${longitude}`,
                 mapy: `${latitude}`,
-                overview: recommendReason,
+                overview: overview,
                 hashtags: rawHashtags,
                 recommend_reason: recommendReason,
               };
@@ -387,7 +388,9 @@ export default function Info() {
           <CrowdStatus status={current?.populartimes?.current_status || null} />
           
           {/* 추천 이유 */}
-          <Text style={styles.overview}>{recommendReason}</Text>
+          {recommendReason && (
+            <Text style={styles.overview}>{recommendReason}</Text>
+          )}
 
           {/* 해시태그 */}
           <View style={styles.tagsRow}>
