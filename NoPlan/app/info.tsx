@@ -33,6 +33,12 @@ interface ListPlace {
   firstimage2?: string;
   recommend_reason: string;
   hashtags: string;
+  populartimes?: {
+    current_status?: string;
+    rating?: number;
+    rating_n?: number;
+    busiest_time?: string;
+  };
 }
 
 interface TourDetail {
@@ -377,6 +383,9 @@ export default function Info() {
         </View>
 
         <ScrollView contentContainerStyle={styles.sheetContent}>
+          {/* 혼잡도 정보 */}
+          <CrowdStatus status={current?.populartimes?.current_status || null} />
+          
           {/* 추천 이유 */}
           <Text style={styles.overview}>{recommendReason}</Text>
 
@@ -433,6 +442,32 @@ export default function Info() {
     </View>
   );
 }
+
+// 혼잡도 표시 컴포넌트
+const CrowdStatus = ({ status }: { status: string | null }) => {
+  if (!status) return null;
+  
+  const config = {
+    not_busy: { icon: '🟢', text: '여유로움', color: '#4CAF50' },
+    normal: { icon: '🟡', text: '보통', color: '#FF9800' },
+    busy: { icon: '🔴', text: '혼잡함', color: '#F44336' }
+  };
+  
+  const crowdInfo = config[status as keyof typeof config];
+  if (!crowdInfo) return null;
+  
+  return (
+    <View style={styles.crowdStatus}>
+      <Text style={styles.crowdLabel}>현재 혼잡도</Text>
+      <View style={styles.crowdInfo}>
+        <Text style={styles.crowdIcon}>{crowdInfo.icon}</Text>
+        <Text style={[styles.crowdText, { color: crowdInfo.color }]}>
+          {crowdInfo.text}
+        </Text>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f0f0' },
@@ -493,6 +528,29 @@ const styles = StyleSheet.create({
 
   sheetContent: { paddingHorizontal: 16 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
+
+  // 혼잡도 스타일 추가
+  crowdStatus: {
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e0e0e0',
+  },
+  crowdLabel: { 
+    fontSize: 12, 
+    color: '#666', 
+    marginBottom: 4,
+    fontWeight: '500'
+  },
+  crowdInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  crowdIcon: { fontSize: 16, marginRight: 8 },
+  crowdText: { fontSize: 14, fontWeight: '600' },
 
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tag: { backgroundColor: '#e0f7fa', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, margin: 4 },
