@@ -1,7 +1,6 @@
 // service/bookmarkService.ts
 
 import { apiClient } from './apiClient'
-import * as SecureStore from 'expo-secure-store'
 
 export interface BookmarkCreate {
   contentId: number
@@ -48,20 +47,9 @@ function toCamelResponse(item: any): BookmarkResponse {
 export const bookmarkService = {
   /** 북마크 추가 */
   async addBookmark(data: BookmarkCreate): Promise<BookmarkResponse> {
-    const token = await SecureStore.getItemAsync('accessToken')
-    console.log('[bookmarkService] token:', token)
-
     const payload = toSnakePayload(data)
-    console.log('[bookmarkService] addBookmark payload:', payload)
-
     try {
-      const res = await apiClient.post(
-        '/users/bookmarks/',
-        payload,
-        token
-          ? { headers: { Authorization: `Bearer ${token}` } }
-          : undefined
-      )
+      const res = await apiClient.post('/users/bookmarks/',payload)
       console.log(
         '[bookmarkService] addBookmark response:',
         res.status,
@@ -81,17 +69,10 @@ export const bookmarkService = {
 
   /** 북마크 삭제 */
   async deleteBookmark(bookmarkId: number): Promise<void> {
-    const token = await SecureStore.getItemAsync('accessToken')
-    console.log('[bookmarkService] token:', token)
     console.log('[bookmarkService] deleteBookmark id:', bookmarkId)
 
     try {
-      const res = await apiClient.delete(
-        `/users/bookmarks/${bookmarkId}/`,
-        token
-          ? { headers: { Authorization: `Bearer ${token}` } }
-          : undefined
-      )
+      const res = await apiClient.delete(`/users/bookmarks/${bookmarkId}/`)
       console.log(
         '[bookmarkService] deleteBookmark response:',
         res.status
@@ -109,17 +90,10 @@ export const bookmarkService = {
 
   /** 북마크 목록 조회 */
   async getBookmarks(): Promise<BookmarkResponse[]> {
-    const token = await SecureStore.getItemAsync('accessToken')
-    console.log('[bookmarkService] token:', token)
     console.log('[bookmarkService] getBookmarks called')
 
     try {
-      const res = await apiClient.get(
-        '/users/bookmarks/',
-        token
-          ? { headers: { Authorization: `Bearer ${token}` } }
-          : undefined
-      )
+      const res = await apiClient.get('/users/bookmarks/')
       console.log(
         '[bookmarkService] getBookmarks response:',
         res.status,

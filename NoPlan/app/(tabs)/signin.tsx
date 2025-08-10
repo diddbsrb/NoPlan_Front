@@ -1,17 +1,17 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
+  Image,
+  SafeAreaView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Image,
-  ActivityIndicator,
+  View
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
+
 import * as SecureStore from 'expo-secure-store';
+import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
 
 // 백엔드 응답 타입 (기존과 동일)
 interface LoginResponse {
@@ -44,9 +44,11 @@ export default function SigninScreen() {
     setLoading(true);
     try {
       const res = await authService.signIn(email, password);
-      const { access, user } = res.data as LoginResponse;
+      const { access, refresh, user } = res.data as LoginResponse;
       
       await SecureStore.setItemAsync('accessToken', access);
+      await SecureStore.setItemAsync('refreshToken', refresh); // 리프레시 토큰 저장
+
 
       if (user.is_info_exist) {
         router.replace('/(tabs)/home');
