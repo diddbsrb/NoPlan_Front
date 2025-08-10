@@ -338,9 +338,30 @@ export default function HomeTravel() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalBtnBlue}
-                onPress={() => {
+                onPress={async () => {
                   setShowModal(false);
-                  router.replace('/home');
+                  try {
+                    // 최신 trip 가져오기
+                    const trips = await travelService.getTripData();
+                    const latest = trips.sort((a, b) => b.id - a.id)[0];
+                    
+                    // 여행 요약 생성
+                    const summaryData = await travelService.summarizeTrip(latest.id);
+                    
+                    // summary.tsx로 이동하면서 요약 데이터 전달
+                    router.replace({
+                      pathname: '/summary',
+                      params: { 
+                        tripId: latest.id.toString(),
+                        summary: summaryData.summary,
+                        region: latest.region
+                      }
+                    });
+                  } catch (e) {
+                    console.error('여행 요약 생성 실패:', e);
+                    // 요약 생성 실패 시 바로 홈으로 이동
+                    router.replace('/home');
+                  }
                 }}
               >
                 <Text style={styles.modalBtnTextBlue}>여행 종료</Text>

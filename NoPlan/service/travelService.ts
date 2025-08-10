@@ -9,6 +9,11 @@ import * as SecureStore from 'expo-secure-store';
 export interface Trip {
   id: number;
   region: string;
+  transportation?: string;
+  companion?: string;
+  adjectives?: string;
+  summary?: string;
+  created_at?: string;
 }
 
 /**
@@ -63,11 +68,15 @@ export const travelService = {
     );
   },
 
-  createTripWithAuth: async (region: string, transportation: string, companion: string) => {
+  createTripWithAuth: async (region: string, transportation: string, companion: string, adjectives?: string) => {
     const token = await SecureStore.getItemAsync('accessToken');
+    const payload: any = { region, transportation, companion };
+    if (adjectives) {
+      payload.adjectives = adjectives;
+    }
     return apiClient.post(
       '/users/trips/',
-      { region, transportation, companion },
+      payload,
       token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
     );
   },
@@ -147,6 +156,24 @@ export const travelService = {
       return res.data;
     } catch (err: any) {
       console.error('❌ 방문 콘텐츠 추가 실패:', err.response?.data || err.message);
+      throw err;
+    }
+  },
+
+  /**
+   * 여행 요약을 생성합니다.
+   */
+  summarizeTrip: async (tripId: number): Promise<{ trip_id: number; summary: string }> => {
+    const token = await SecureStore.getItemAsync('accessToken');
+    try {
+      const res = await apiClient.post<{ trip_id: number; summary: string }>(
+        `/tours/trips/${tripId}/summarize/`,
+        {},
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+      );
+      return res.data;
+    } catch (err: any) {
+      console.error('❌ 여행 요약 생성 실패:', err.response?.data || err.message);
       throw err;
     }
   },
