@@ -90,7 +90,7 @@ export default function SignupScreen() {
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
         <Text style={styles.footerText}>이미 계정이 있으신가요? </Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/signin')}>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/signin')}>
           <Text style={styles.loginText}>로그인하기</Text>
         </TouchableOpacity>
       </View>

@@ -169,7 +169,7 @@ export default function HomeTravel() {
       setSurvey(newSurvey);
       
       // 🆕 survey_destination.tsx로 이동하여 일관된 흐름 유지
-      router.replace('/survey_destination');
+      router.push('/survey_destination');
     } catch (e) {
       console.error('자동 추천 처리 실패:', e);
       Alert.alert('오류', '위치 정보를 가져올 수 없습니다.');
@@ -315,7 +315,7 @@ export default function HomeTravel() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.bottomBtnBlue}
-          onPress={() => router.replace('/survey_destination')}
+          onPress={() => router.push('/survey_destination')}
         >
           <Text style={styles.bottomBtnTextBlue}>다음 행선지</Text>
         </TouchableOpacity>
