@@ -41,7 +41,7 @@ const COMPANION_OPTIONS = [
 
 export default function SurveyTravel() {
   const router = useRouter();
-  const { setSurvey } = useTravelSurvey();
+  const { setSurvey, setIsTraveling } = useTravelSurvey();
   const [step, setStep] = useState(1);
   const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
   const [selectedTravelType, setSelectedTravelType] = useState<number | null>(null);
@@ -261,6 +261,15 @@ export default function SurveyTravel() {
         transportation: TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
         companion: COMPANION_OPTIONS[selectedCompanion].label,
       });
+      
+      // 여행 시작: 여행 상태를 true로 설정
+      await setIsTraveling(true);
+      
+      // 🆕 여행 상태가 제대로 반영될 때까지 잠시 대기
+      console.log('[survey_travel] 여행 상태를 true로 설정 완료, 잠시 대기...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('[survey_travel] home_travel로 이동 시작');
       router.replace('/home_travel');
     } catch (e) {
       setError('여행 생성에 실패했습니다.');

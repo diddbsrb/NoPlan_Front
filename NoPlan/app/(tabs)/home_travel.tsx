@@ -1,9 +1,8 @@
 // app/(tabs)/home_travel.tsx
 
-import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -50,7 +49,7 @@ interface RecommendationContext {
 
 export default function HomeTravel() {
   const router = useRouter();
-  const { survey, setSurvey } = useTravelSurvey();
+  const { survey, setSurvey, setIsTraveling, isTraveling } = useTravelSurvey();
   const [showModal, setShowModal] = useState(false);
   const [sections, setSections] = useState<TripSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,6 +181,12 @@ export default function HomeTravel() {
     setError(null);
 
     try {
+      // 🆕 여행 상태 확인 및 설정
+      if (!isTraveling) {
+        console.log('[home_travel] 여행 상태가 false입니다. true로 설정합니다.');
+        await setIsTraveling(true);
+      }
+      
       // 1) 트립 전체 조회
       const trips = (await travelService.getTripData()) as TripWithDate[];
       console.log('[HomeTravel] trips:', JSON.stringify(trips, null, 2));
@@ -199,6 +204,19 @@ export default function HomeTravel() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
       console.log('[HomeTravel] latest trip:', JSON.stringify(latest, null, 2));
+
+      // 🆕 최신 여행 정보로 survey 상태 업데이트 (adjectives 포함)
+      if (latest) {
+        const updatedSurvey = {
+          ...survey,
+          region: latest.region,
+          transportation: latest.transportation || survey.transportation,
+          companion: latest.companion || survey.companion,
+          adjectives: latest.adjectives || survey.adjectives, // 🆕 adjectives 추가
+        };
+        setSurvey(updatedSurvey);
+        console.log('[HomeTravel] survey 상태 업데이트됨:', updatedSurvey);
+      }
 
       // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
@@ -251,12 +269,14 @@ export default function HomeTravel() {
     }
   };
 
-  // 화면 포커스될 때마다 호출
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [])
-  );
+  // 🆕 컴포넌트 마운트 시에만 실행
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // 🆕 useFocusEffect 제거 - 여행 상태 확인이 불필요함
+  // home_travel 화면에 진입했다는 것 = 이미 여행 중인 상태
+  // fetchData에서 여행 데이터를 가져왔다 = 여행이 존재함
 
   return (
     <View style={styles.container}>
@@ -348,6 +368,9 @@ export default function HomeTravel() {
                     // 여행 요약 생성
                     const summaryData = await travelService.summarizeTrip(latest.id);
                     
+                    // 🆕 여행 상태 변경은 summary.tsx에서 처리하도록 제거
+                    // await setIsTraveling(false);
+                    
                     // summary.tsx로 이동하면서 요약 데이터 전달
                     router.replace({
                       pathname: '/summary',
@@ -359,6 +382,8 @@ export default function HomeTravel() {
                     });
                   } catch (e) {
                     console.error('여행 요약 생성 실패:', e);
+                    // 🆕 요약 생성 실패 시에도 여행 상태를 false로 설정
+                    await setIsTraveling(false);
                     // 요약 생성 실패 시 바로 홈으로 이동
                     router.replace('/home');
                   }
