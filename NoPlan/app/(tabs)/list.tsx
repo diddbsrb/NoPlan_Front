@@ -41,6 +41,7 @@ export default function List() {
   // contentId → bookmarkId 매핑
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState<{ [contentId: number]: boolean }>({});
 
   // 폰트 로드
   useEffect(() => {
@@ -97,14 +98,36 @@ export default function List() {
 
   const toggleFavorite = async (item: any) => {
     const contentId = item.contentid;
+    
+    // 이미 로딩 중이면 무시
+    if (bookmarkLoading[contentId]) return;
+    
     try {
       if (!favorites[contentId]) {
+        // 로딩 상태 시작
+        setBookmarkLoading(prev => ({ ...prev, [contentId]: true }));
+        
+        // 북마크 추가 시 상세 정보 먼저 가져오기
+        let overview = '';
+        try {
+          const detailResponse = await fetch(`https://no-plan.cloud/api/v1/tours/detail/${contentId}/`);
+          if (detailResponse.ok) {
+            const detailData = await detailResponse.json();
+            overview = detailData.overview || '';
+            console.log('[list.tsx] 상세 정보 가져옴:', overview);
+          }
+        } catch (detailError) {
+          console.log('[list.tsx] 상세 정보 가져오기 실패, 빈 문자열 사용:', detailError);
+        }
+
         const res = await bookmarkService.addBookmark({
           contentId,
           title: item.title,
           firstImage: item.firstimage || '',
           addr1: item.addr1,
-          overview: item.recommend_reason || '',
+          overview: overview,
+          hashtags: item.hashtags || '',
+          recommendReason: item.recommend_reason || '',
         });
         setFavorites(prev => ({ ...prev, [contentId]: res.id }));
         Alert.alert('북마크', '북마크에 추가되었습니다.');
@@ -120,6 +143,9 @@ export default function List() {
     } catch (err) {
       console.error('Bookmark error:', err);
       Alert.alert('오류', '북마크 처리 중 문제가 발생했습니다.');
+    } finally {
+      // 로딩 상태 종료
+      setBookmarkLoading(prev => ({ ...prev, [contentId]: false }));
     }
   };
 
@@ -259,10 +285,17 @@ export default function List() {
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
-                  <TouchableOpacity onPress={() => toggleFavorite(item)}>
-                    <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
-                      {favorites[item.contentid] ? '★' : '☆'}
-                    </Text>
+                  <TouchableOpacity 
+                    onPress={() => toggleFavorite(item)}
+                    disabled={bookmarkLoading[item.contentid]}
+                  >
+                    {bookmarkLoading[item.contentid] ? (
+                      <ActivityIndicator size="small" color="#123A86" />
+                    ) : (
+                      <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
+                        {favorites[item.contentid] ? '★' : '☆'}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={styles.cardLocationRow}>
