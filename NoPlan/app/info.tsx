@@ -1,27 +1,34 @@
 // Info.tsx
 
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import * as Location from 'expo-location';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Dimensions,
+  ActivityIndicator,
+  Alert,
   Animated,
+  Dimensions,
+  Image,
+  Linking,
   PanResponder,
   ScrollView,
-  ActivityIndicator,
-  Linking,
-  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 
 import { bookmarkService } from '../service/bookmarkService';
-import { travelService, CreateVisitedContentDto } from '../service/travelService';
+import { CreateVisitedContentDto, travelService } from '../service/travelService';
 import { categoryMapping } from '../utils/categoryMapping';
+
+const DEFAULT_IMAGES = {
+  restaurants: require('../assets/images/식당.jpg'),
+  cafes: require('../assets/images/카페.jpg'),
+  accommodations: require('../assets/images/숙소.jpg'),
+  attractions: require('../assets/images/관광지.jpg'),
+};
 
 interface ListPlace {
   contentid: string;
@@ -59,9 +66,10 @@ const MAX_OVERSHOOT = 100;
 
 export default function Info() {
   const router = useRouter();
-  const { contentid, places: placesParam } = useLocalSearchParams<{
+  const { contentid, places: placesParam, type } = useLocalSearchParams<{
     contentid: string;
     places: string;
+    type?: string;
   }>();
 
   const sheetY = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
@@ -270,6 +278,9 @@ export default function Info() {
     detail?.firstimage ||
     detail?.firstimage2 ||
     '';
+  
+  // 기본 이미지 설정
+  const defaultImage = type ? DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES] : DEFAULT_IMAGES.restaurants;
   const title = current?.title || detail?.title || '제목 없음';
   const addr1 = current?.addr1 || detail?.addr1 || '';
   const recommendReason = current?.recommend_reason || '';
@@ -346,7 +357,11 @@ export default function Info() {
     <View style={styles.container}>
       {/* 배경 이미지 */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+        <Image 
+          source={imageUri ? { uri: imageUri } : defaultImage} 
+          style={styles.image} 
+          resizeMode="cover" 
+        />
       </View>
 
       {/* 요약 카드 */}

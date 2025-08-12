@@ -55,6 +55,7 @@ export default function HomeTravel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recommendationContext, setRecommendationContext] = useState<RecommendationContext | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
 
   // sections 상태 변화를 문자열화해서 로그
   useEffect(() => {
@@ -138,6 +139,7 @@ export default function HomeTravel() {
 
   // 자동 추천 처리 함수
   const handleAutoRecommendation = async (type: RecommendationType) => {
+    setRecommendationLoading(true);
     try {
       // 현재 위치 가져오기
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -167,11 +169,13 @@ export default function HomeTravel() {
       };
       setSurvey(newSurvey);
       
-      // 🆕 survey_destination.tsx로 이동하여 일관된 흐름 유지
-      router.push('/survey_destination');
+      // 🆕 survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
+      router.replace({ pathname: '/list', params: { type } });
     } catch (e) {
       console.error('자동 추천 처리 실패:', e);
       Alert.alert('오류', '위치 정보를 가져올 수 없습니다.');
+    } finally {
+      setRecommendationLoading(false);
     }
   };
 
@@ -292,12 +296,21 @@ export default function HomeTravel() {
         {recommendationContext && !loading && !error && (
           <View style={styles.recommendationSection}>
             <Text style={styles.recommendationMessage}>{recommendationContext.message}</Text>
-            <TouchableOpacity
-              style={styles.recommendationButton}
-              onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
-            >
-              <Text style={styles.recommendationButtonText}>{recommendationContext.buttonText}</Text>
-            </TouchableOpacity>
+                         <TouchableOpacity
+               style={[
+                 styles.recommendationButton,
+                 recommendationLoading && styles.recommendationButtonDisabled
+               ]}
+               onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
+               disabled={recommendationLoading || loading}
+             >
+               <Text style={[
+                 styles.recommendationButtonText,
+                 recommendationLoading && styles.recommendationButtonTextDisabled
+               ]}>
+                 {recommendationLoading ? '위치 확인 중...' : recommendationContext.buttonText}
+               </Text>
+             </TouchableOpacity>
           </View>
         )}
 
@@ -484,9 +497,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  recommendationButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
+     recommendationButtonText: {
+     color: '#fff',
+     fontWeight: 'bold',
+     fontSize: 16,
+   },
+   recommendationButtonDisabled: {
+     backgroundColor: '#E0E0E0',
+   },
+   recommendationButtonTextDisabled: {
+     color: '#888',
+   },
+ });
