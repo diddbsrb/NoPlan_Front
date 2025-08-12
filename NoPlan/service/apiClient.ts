@@ -11,7 +11,7 @@ apiClient.interceptors.request.use(
   async (config) => {
     // 헤더 객체가 없을 경우를 대비해 초기화합니다.
     if (!config.headers) {
-      config.headers = {};
+      config.headers = axios.AxiosHeaders.from();
     }
 
     // 로그인/회원가입과 같은 특정 URL은 토큰 추가 로직을 건너뜁니다.
@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(
     // 2. 헤더 객체가 없을 경우를 대비해, 빈 객체로 확실히 만들어줍니다. (매우 중요!)
     //    이것이 타입스크립트 오류를 해결하는 핵심 중 하나입니다.
     if (!config.headers) {
-      config.headers = {};
+      config.headers = axios.AxiosHeaders.from();
     }
 
     // 3. 토큰이 존재하면, 안전하게 헤더에 추가합니다.

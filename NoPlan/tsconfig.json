@@ -2,6 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "paths": {
       "@/*": [
         "./*"
@@ -11,6 +13,7 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".expo/react-native-action-sheet.d.ts",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ]

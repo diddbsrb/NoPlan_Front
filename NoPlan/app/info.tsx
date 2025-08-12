@@ -1,6 +1,6 @@
 // Info.tsx
 
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -158,7 +158,7 @@ export default function Info() {
 
   // 5) 화면이 포커스될 때마다 북마크 상태 새로고침
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       let isMounted = true;
       
       (async () => {
