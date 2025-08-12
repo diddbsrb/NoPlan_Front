@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-gesture-handler/android/build.gradle b/node_modules/react-native-gesture-handler/android/build.gradle
+index 79aaec3..aa093c4 100644
+--- a/node_modules/react-native-gesture-handler/android/build.gradle
++++ b/node_modules/react-native-gesture-handler/android/build.gradle
+@@ -4,7 +4,7 @@ import javax.inject.Inject
+ import java.nio.file.Files
+ 
+ buildscript {
+-    def kotlin_version = rootProject.ext.has('kotlinVersion') ? rootProject.ext.get('kotlinVersion') : project.properties['RNGH_kotlinVersion']
++    def kotlin_version = "1.8.22"
+ 
+     repositories {
+         mavenCentral()
