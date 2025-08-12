@@ -181,11 +181,12 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: 'rgba(255,255,255,0.65)',
-    paddingVertical: 20,
-    paddingHorizontal: 120,
+    paddingVertical: 18,
+    paddingHorizontal: 140,
     borderRadius: 10,
     marginBottom: 2,
     alignItems: 'center',
+    alignSelf: 'center',
   },
-  buttonText: { color: '#000', fontFamily: 'Pretendard-Light', fontWeight: '600', fontSize: 14 },
+      buttonText: { color: '#000', fontFamily: 'Pretendard-Medium', fontSize: 14 },
 });

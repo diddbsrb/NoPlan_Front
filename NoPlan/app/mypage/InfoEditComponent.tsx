@@ -242,8 +242,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 15,
     color: '#333',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   passwordRow: {
     marginBottom: 20,
@@ -252,8 +251,7 @@ const styles = StyleSheet.create({
   },
   link: {
     color: '#123A86',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   settingRow: {
     flexDirection: 'row',

@@ -112,8 +112,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginLeft: 8,
   },
@@ -140,8 +139,7 @@ const styles = StyleSheet.create({
   },
   regionText: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#123A86',
   },
   summarySection: {
@@ -165,8 +163,7 @@ const styles = StyleSheet.create({
   },
   messageTitle: {
     fontSize: 20,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 12,
     textAlign: 'center',
@@ -192,7 +189,6 @@ const styles = StyleSheet.create({
   homeButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
 });

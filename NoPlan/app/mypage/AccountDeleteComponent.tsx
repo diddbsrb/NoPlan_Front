@@ -35,7 +35,7 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
         <Text style={{ color: '#123A86' }}>← 뒤로가기</Text>
       </TouchableOpacity>
       <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#ddd' }}>
-        <Text style={{ fontSize: 14, fontFamily: 'Pretendard-Light', fontWeight: 'bold', marginBottom: 10 }}>삭제 전 확인해주세요!</Text>
+        <Text style={{ fontSize: 14, fontFamily: 'Pretendard-Medium', marginBottom: 10 }}>삭제 전 확인해주세요!</Text>
         <Text style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>
           - 계정 삭제 시 모든 데이터가 영구적으로 삭제되며 복구가 불가합니다.
         </Text>
@@ -64,7 +64,7 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#123A86' }} />
               )}
             </View>
-            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#123A86' : '#222', fontFamily: 'Pretendard-Light', fontWeight: selectedReason === reason ? 'bold' : 'normal' }}>{reason}</Text>
+                            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#123A86' : '#222', fontFamily: selectedReason === reason ? 'Pretendard-Medium' : 'Pretendard-Light' }}>{reason}</Text>
           </TouchableOpacity>
         ))}
 
@@ -79,7 +79,7 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
         )}
 
                   <TouchableOpacity style={{ backgroundColor: '#123A86', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold' }}>계정 삭제하기</Text>
+                      <Text style={{ color: '#fff', fontFamily: 'Pretendard-Medium' }}>계정 삭제하기</Text>
         </TouchableOpacity>
       </View>
     </View>

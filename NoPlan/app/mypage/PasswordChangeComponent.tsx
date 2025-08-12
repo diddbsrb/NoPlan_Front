@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#123A86', padding: 14, borderRadius: 8, alignItems: 'center',
   },
   buttonText: {
-    color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold',
+                color: '#fff', fontFamily: 'Pretendard-Medium',
   },
 });

@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Light', fontWeight: 'bold', color: '#333', textAlign: 'center' },
+  cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'center' },
   cardSubtitle: { fontSize: 14, color: '#123A86', marginTop: 4, textAlign: 'center' },
 
   star: { fontSize: 24, color: '#ccc' },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
   sheetHeaderText: { flex: 1 },
 
-  sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Light', fontWeight: 'bold', color: '#333', textAlign: 'left' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'left' },
   sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
 
   sheetContent: { paddingHorizontal: 16 },
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   crowdIcon: { fontSize: 16, marginRight: 8 },
-  crowdText: { fontSize: 14, fontFamily: 'Pretendard-Light', fontWeight: '600' },
+  crowdText: { fontSize: 14, fontFamily: 'Pretendard-Medium' },
 
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tag: { backgroundColor: '#e0f7fa', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, margin: 4 },
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: '600' },
+  primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Medium' },
   secondaryButton: {
     flex: 1,
     borderColor: '#123A86',
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Light', fontWeight: '600' },
+  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Medium' },
 
   backBtn: {
     position: 'absolute',
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 16,
   },
 });

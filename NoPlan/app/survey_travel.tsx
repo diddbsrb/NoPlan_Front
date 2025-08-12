@@ -340,8 +340,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 20,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -416,8 +415,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: '#fff',
     fontSize: 18,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   imageSelected: { borderColor: '#123A86' },
 
@@ -452,7 +450,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     color: '#123A86',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   nextButton: {
     backgroundColor: '#123A86',
@@ -462,6 +460,6 @@ const styles = StyleSheet.create({
   },
   nextText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
 });

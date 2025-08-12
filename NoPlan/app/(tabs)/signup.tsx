@@ -120,8 +120,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#123A86',
     marginBottom: 15, // headerTitle과 description 사이 간격 넓힘
     textAlign: 'center',
@@ -151,8 +150,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#fff',
   },
   footerText: {
@@ -162,8 +160,7 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#000',
   },
   errorText: {

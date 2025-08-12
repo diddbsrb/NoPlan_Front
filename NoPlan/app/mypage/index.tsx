@@ -347,8 +347,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 20,
   },
   tabWrapper: {
@@ -372,8 +371,7 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#123A86',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
   scrollContainer: {
     paddingHorizontal: 20,
@@ -394,8 +392,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     // 카드 내부의 일관된 여백을 위해 제목에 padding을 추가합니다.
     padding: 15, 
@@ -437,7 +434,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: 'white',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 10,
   },
 
@@ -463,7 +460,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 15,
   },
   modalCard: {
@@ -481,7 +478,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   summarySection: {
     backgroundColor: '#F8F9FA',
@@ -493,7 +490,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 8,
   },
@@ -505,7 +502,7 @@ const styles = StyleSheet.create({
   },
   visitedPlacesTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 15,
     marginTop: 10,

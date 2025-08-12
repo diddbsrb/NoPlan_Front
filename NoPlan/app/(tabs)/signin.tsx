@@ -166,16 +166,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 12,
     color: '#000',
   },
   blue: {
     color: '#123A86',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Medium',
   },
   subtext: {
     fontSize: 13,
@@ -202,8 +200,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#fff',
   },
   orText: {
@@ -228,8 +225,7 @@ const styles = StyleSheet.create({
   },
   kakaoText: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#3B1E1E',
   },
   footerText: {
@@ -239,8 +235,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#000',
   },
   errorText: {

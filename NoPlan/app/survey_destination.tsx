@@ -155,7 +155,7 @@ export default function SurveyDestination() {
           }
         }}
       >
-        <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
+        <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Medium', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -164,8 +164,7 @@ export default function SurveyDestination() {
 const styles = StyleSheet.create({
   title: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
@@ -214,8 +213,7 @@ const styles = StyleSheet.create({
   optionLabel: {
     position: 'absolute',
     color: '#fff',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 20,
     alignSelf: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',

@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: '#123A86',
     fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+            fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',
     textShadowOffset: { width: 0, height: 1 },

@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#000',
     fontSize: 15,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
 });

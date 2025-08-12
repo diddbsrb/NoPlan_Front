@@ -296,8 +296,7 @@ export default function List() {
 const styles = StyleSheet.create({
   title: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginTop: 32,
     marginBottom: 12,
@@ -343,8 +342,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 20,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 8,
   },
   cardLocationRow: {
@@ -377,8 +375,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 16,
   },
 });

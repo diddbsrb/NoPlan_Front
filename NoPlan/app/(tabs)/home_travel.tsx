@@ -428,7 +428,7 @@ export default function HomeTravel() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, padding: 24 },
-  title: { fontSize: 22, fontFamily: 'Pretendard-Light', fontWeight: 'bold', textAlign: 'center', marginTop: 16, marginBottom: 8 },
+  title: { fontSize: 22, fontFamily: 'Pretendard-Medium', textAlign: 'center', marginTop: 16, marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 12 },
   loading: { textAlign: 'center', margin: 16 },
   error: { color: 'red', textAlign: 'center', margin: 8 },
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     backgroundColor: '#123A86',
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 15,
     paddingHorizontal: 16,
     paddingVertical: 4,
@@ -473,19 +473,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   bottomBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginRight: 8 },
-  bottomBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
+  bottomBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Medium', fontSize: 16 },
   bottomBtnBlue: { backgroundColor: '#123A86', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginLeft: 8 },
-  bottomBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
+  bottomBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Medium', fontSize: 16 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
   modalBox: { backgroundColor: '#fff', borderRadius: 16, padding: 28, alignItems: 'center', width: 280, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-  modalTitle: { fontSize: 18, fontFamily: 'Pretendard-Light', fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
+  modalTitle: { fontSize: 18, fontFamily: 'Pretendard-Medium', marginBottom: 8, textAlign: 'center' },
   modalDesc: { fontSize: 14, color: '#666', marginBottom: 18, textAlign: 'center' },
   modalBtnRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   modalBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginRight: 8 },
-  modalBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
+  modalBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Medium', fontSize: 15 },
   modalBtnBlue: { backgroundColor: '#123A86', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 8 },
-  modalBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
+  modalBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Medium', fontSize: 15 },
 
   // 🆕 추천 섹션 스타일
   recommendationSection: {
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   },
      recommendationButtonText: {
      color: '#fff',
-     fontWeight: 'bold',
+     fontFamily: 'Pretendard-Medium',
      fontSize: 16,
    },
    recommendationButtonDisabled: {

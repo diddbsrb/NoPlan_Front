@@ -115,8 +115,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 10,
   },
   description: {
@@ -139,8 +138,7 @@ const styles = StyleSheet.create({
   kakaoButtonText: {
     color: '#000000',
     fontSize: 16,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   backButton: {
     marginTop: 20,
