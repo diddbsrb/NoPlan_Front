@@ -2,7 +2,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import {
   Image,
   SafeAreaView,
@@ -50,6 +51,18 @@ export default function SurveyTravel() {
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -327,6 +340,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 20,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 24,
@@ -402,6 +416,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: '#fff',
     fontSize: 18,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
   imageSelected: { borderColor: '#A3D8E3' },

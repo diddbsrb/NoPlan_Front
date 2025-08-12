@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ImageBackground, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router'; // ✅ 추가
+import * as Font from 'expo-font';
 
 export default function HomeScreen() {
   const router = useRouter(); // ✅ 라우터 객체 생성
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return null; // 폰트가 로드될 때까지 빈 화면 표시
+  }
 
   return (
     <ImageBackground
@@ -54,7 +70,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Light',
     marginBottom: 8, // 변경: 아래 여백 줄임
     letterSpacing: 2,
     textShadowColor: 'rgba(0,0,0,0.2)',
@@ -64,6 +80,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 13,
     color: '#fff',
+    fontFamily: 'Pretendard-Light',
     textAlign: 'center',
     marginBottom: 32, // 변경: 아래 여백 줄임
     lineHeight: 24,
@@ -74,7 +91,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 10,
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 140,
     alignItems: 'center',
     position: 'absolute',
@@ -88,6 +105,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#000',
     fontSize: 15,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
   },
 });

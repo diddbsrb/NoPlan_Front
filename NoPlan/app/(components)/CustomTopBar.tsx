@@ -1,6 +1,7 @@
 // components/CustomTopBar.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -21,6 +22,18 @@ export default function CustomTopBar({
 }: CustomTopBarProps) {
   const router = useRouter();
   const defaultLogo = require('../../assets/images/noplan_logo_blue.png');
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleProfile = () => {
     if (onProfile) {
@@ -109,6 +122,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     color: '#39939B',
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',

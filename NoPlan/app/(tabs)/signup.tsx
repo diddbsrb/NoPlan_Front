@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import {
   SafeAreaView,
   StyleSheet,
@@ -18,6 +19,18 @@ export default function SignupScreen() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleSignup = async () => {
     setError('');
@@ -107,6 +120,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#80BFE8',
     marginBottom: 15, // headerTitle과 description 사이 간격 넓힘
@@ -137,6 +151,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
     color: '#222',
   },
@@ -147,6 +162,7 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 12,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#000',
   },

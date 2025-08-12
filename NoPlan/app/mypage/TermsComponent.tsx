@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import * as Font from 'expo-font';
 
 interface Props {
     onEdit: () => void;
 }
 
 const TermsComponent: React.FC<Props> = ({ onEdit }) => {
+    const [fontsLoaded, setFontsLoaded] = useState(false);
+
+    // 폰트 로드
+    useEffect(() => {
+        async function loadFonts() {
+            await Font.loadAsync({
+                'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+            });
+            setFontsLoaded(true);
+        }
+        loadFonts();
+    }, []);
+
     return (
         <View style={{ flex: 1, padding: 20 }}>
             <ScrollView style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10, borderWidth: 1, borderColor: '#eee' }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 10 }}>📄 개인정보 처리방침</Text>
+                <Text style={{ fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 14, marginBottom: 10 }}>📄 개인정보 처리방침</Text>
                 <Text style={{ fontSize: 12, color: '#333', lineHeight: 20 }}>
                     📄 개인정보 처리방침
                     [No Plan](이하 "회사")는 이용자의 개인정보를 매우 중요하게 생각하며, 「개인정보 보호법」 등 관련 법령을 준수하여 다음과 같이 개인정보를 수집·이용하고 보호합니다.
@@ -56,7 +70,7 @@ const TermsComponent: React.FC<Props> = ({ onEdit }) => {
                     alignItems: 'center',
                 }}
             >
-                <Text style={{ color: '#0077b6', fontWeight: 'bold' }}>개인정보 수정</Text>
+                <Text style={{ color: '#0077b6', fontFamily: 'Pretendard-Light', fontWeight: 'bold' }}>개인정보 수정</Text>
             </TouchableOpacity>
         </View>
     );

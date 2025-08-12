@@ -1,7 +1,8 @@
 // app/survey_destination.tsx
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
@@ -19,6 +20,18 @@ export default function SurveyDestination() {
   const [selected, setSelected] = useState<number | null>(null);
   const { survey, setSurvey } = useTravelSurvey();
   const [loading, setLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 🆕 자동 추천 타입이 있으면 자동 선택 및 자동 진행
   useFocusEffect(
@@ -142,7 +155,7 @@ export default function SurveyDestination() {
           }
         }}
       >
-        <Text style={{ color: '#A3D8E3', fontWeight: 'bold', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
+        <Text style={{ color: '#A3D8E3', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -151,6 +164,7 @@ export default function SurveyDestination() {
 const styles = StyleSheet.create({
   title: {
     fontSize: 22,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 16,
@@ -200,6 +214,7 @@ const styles = StyleSheet.create({
   optionLabel: {
     position: 'absolute',
     color: '#fff',
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     fontSize: 20,
     alignSelf: 'center',

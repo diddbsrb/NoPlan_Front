@@ -1,5 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   ActivityIndicator,
   Alert,
@@ -39,6 +40,18 @@ export default function List() {
   const [pageIndex, setPageIndex] = useState(0);
   // contentId → bookmarkId 매핑
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // **화면이 포커스될 때마다 북마크 상태 새로고침**
   useFocusEffect(
@@ -283,6 +296,7 @@ export default function List() {
 const styles = StyleSheet.create({
   title: {
     fontSize: 22,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 32,
@@ -329,6 +343,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 20,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     marginBottom: 8,
   },
@@ -362,6 +377,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#fff',
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     fontSize: 16,
   },

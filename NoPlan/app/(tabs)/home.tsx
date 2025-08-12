@@ -1,5 +1,6 @@
 // app/home.tsx
 import React, { useEffect, useRef, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   View,
   Text,
@@ -30,6 +31,18 @@ export default function HomeScreen() {
   const fadeAnim2 = useRef(new Animated.Value(0)).current;
   const isAnimating = useRef(false);
   const router = useRouter();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -158,6 +171,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '500',
     color: '#fff',
     textAlign: 'center',
@@ -173,5 +187,5 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     alignItems: 'center',
   },
-  buttonText: { color: '#000', fontWeight: '600', fontSize: 14 },
+  buttonText: { color: '#000', fontFamily: 'Pretendard-Light', fontWeight: '600', fontSize: 14 },
 });

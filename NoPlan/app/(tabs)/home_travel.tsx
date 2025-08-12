@@ -3,6 +3,7 @@
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   Alert,
   Modal,
@@ -56,6 +57,18 @@ export default function HomeTravel() {
   const [error, setError] = useState<string | null>(null);
   const [recommendationContext, setRecommendationContext] = useState<RecommendationContext | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // sections 상태 변화를 문자열화해서 로그
   useEffect(() => {
@@ -415,7 +428,7 @@ export default function HomeTravel() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, padding: 24 },
-  title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginTop: 16, marginBottom: 8 },
+  title: { fontSize: 22, fontFamily: 'Pretendard-Light', fontWeight: 'bold', textAlign: 'center', marginTop: 16, marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 12 },
   loading: { textAlign: 'center', margin: 16 },
   error: { color: 'red', textAlign: 'center', margin: 8 },
@@ -460,19 +473,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   bottomBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginRight: 8 },
-  bottomBtnTextGray: { color: '#888', fontWeight: 'bold', fontSize: 16 },
+  bottomBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
   bottomBtnBlue: { backgroundColor: '#A3D8E3', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginLeft: 8 },
-  bottomBtnTextBlue: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  bottomBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
   modalBox: { backgroundColor: '#fff', borderRadius: 16, padding: 28, alignItems: 'center', width: 280, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
+  modalTitle: { fontSize: 18, fontFamily: 'Pretendard-Light', fontWeight: 'bold', marginBottom: 8, textAlign: 'center' },
   modalDesc: { fontSize: 14, color: '#666', marginBottom: 18, textAlign: 'center' },
   modalBtnRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   modalBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginRight: 8 },
-  modalBtnTextGray: { color: '#888', fontWeight: 'bold', fontSize: 15 },
+  modalBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
   modalBtnBlue: { backgroundColor: '#A3D8E3', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 8 },
-  modalBtnTextBlue: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  modalBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
 
   // 🆕 추천 섹션 스타일
   recommendationSection: {

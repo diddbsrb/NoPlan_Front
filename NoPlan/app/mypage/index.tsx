@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 
@@ -46,6 +47,18 @@ export default function MyPage() {
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 팝업(Modal) 관리를 위한 상태
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -334,6 +347,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     marginBottom: 20,
   },
@@ -358,6 +372,7 @@ const styles = StyleSheet.create({
   },
   tabTextActive: {
     color: '#0077b6',
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
   },
   scrollContainer: {
@@ -379,6 +394,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     textAlign: 'center',
     // 카드 내부의 일관된 여백을 위해 제목에 padding을 추가합니다.

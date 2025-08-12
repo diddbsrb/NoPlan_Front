@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import { Alert, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { authService } from '../../service/authService';
@@ -26,6 +27,18 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
   const [error, setError] = useState('');
   const router = useRouter();
   const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -229,6 +242,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 15,
     color: '#333',
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
   passwordRow: {
@@ -238,6 +252,7 @@ const styles = StyleSheet.create({
   },
   link: {
     color: '#0077b6',
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
   settingRow: {

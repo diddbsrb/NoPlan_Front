@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import * as Font from 'expo-font';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { useRouter } from 'expo-router';
 import { userService } from '../../service/userService';
@@ -11,6 +12,18 @@ const InfoInputScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const genderOptions = [
     { id: '1', label: '남성', value: 'M' },
@@ -85,6 +98,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     marginBottom: 25,
   },
@@ -126,6 +140,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#000',
+    fontFamily: 'Pretendard-Light',
     fontWeight: '500',
   },
   footer: {

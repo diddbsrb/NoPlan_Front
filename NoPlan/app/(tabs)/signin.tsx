@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import {
     Image,
     SafeAreaView,
@@ -33,6 +34,18 @@ export default function SigninScreen() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { setIsLoggedIn, checkTravelStatus } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // ★★★ expo-auth-session 관련 코드는 모두 삭제되었습니다. ★★★
 
@@ -153,6 +166,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 12,
@@ -160,6 +174,7 @@ const styles = StyleSheet.create({
   },
   blue: {
     color: '#80BFE8',
+    fontFamily: 'Pretendard-Light',
     fontWeight: '700',
   },
   subtext: {
@@ -187,6 +202,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
     color: '#222',
   },
@@ -212,6 +228,7 @@ const styles = StyleSheet.create({
   },
   kakaoText: {
     fontSize: 15,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '600',
     color: '#3B1E1E',
   },
@@ -222,6 +239,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 12,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#000',
   },

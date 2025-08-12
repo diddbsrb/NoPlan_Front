@@ -1,7 +1,8 @@
 // app/(tabs)/summary.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   SafeAreaView,
   ScrollView,
@@ -20,6 +21,18 @@ export default function SummaryScreen() {
     region: string;
   }>();
   const { setIsTraveling } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 🆕 홈으로 돌아가기 버튼 클릭 시 여행 상태 변경
   const handleGoHome = async () => {
@@ -99,6 +112,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#333',
     marginLeft: 8,
@@ -126,6 +140,7 @@ const styles = StyleSheet.create({
   },
   regionText: {
     fontSize: 18,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#4AB7C8',
   },
@@ -150,6 +165,7 @@ const styles = StyleSheet.create({
   },
   messageTitle: {
     fontSize: 20,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 12,
@@ -176,6 +192,7 @@ const styles = StyleSheet.create({
   homeButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
 });
