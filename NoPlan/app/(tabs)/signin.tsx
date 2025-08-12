@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import {
     Image,
     SafeAreaView,
@@ -33,6 +34,18 @@ export default function SigninScreen() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { setIsLoggedIn, checkTravelStatus } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // ★★★ expo-auth-session 관련 코드는 모두 삭제되었습니다. ★★★
 
@@ -148,25 +161,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 28,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 100,
     backgroundColor: '#fff',
   },
   title: {
     fontSize: 22,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 12,
     color: '#000',
   },
   blue: {
-    color: '#80BFE8',
-    fontWeight: '700',
+    color: '#123A86',
+    fontFamily: 'Pretendard-Medium',
   },
   subtext: {
     fontSize: 13,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 50,
     lineHeight: 20,
   },
   input: {
@@ -178,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#D4E8F9',
+    backgroundColor: '#123A86',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -187,8 +201,8 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontFamily: 'Pretendard-Medium',
+    color: '#fff',
   },
   orText: {
     textAlign: 'center',
@@ -212,7 +226,7 @@ const styles = StyleSheet.create({
   },
   kakaoText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#3B1E1E',
   },
   footerText: {
@@ -222,7 +236,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#000',
   },
   errorText: {

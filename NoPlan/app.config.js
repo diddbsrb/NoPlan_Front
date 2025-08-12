@@ -106,6 +106,16 @@ module.exports = ({ config }) => {
           },
         },
       ],
+      [
+        'expo-font',
+        {
+          fonts: [
+            './assets/fonts/Pretendard-Light.otf',
+            './assets/fonts/Pretendard-Medium.otf',
+            './assets/fonts/SpaceMono-Regular.ttf',
+          ],
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

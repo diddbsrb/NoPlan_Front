@@ -1,7 +1,8 @@
 // app/(tabs)/summary.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   SafeAreaView,
   ScrollView,
@@ -20,6 +21,18 @@ export default function SummaryScreen() {
     region: string;
   }>();
   const { setIsTraveling } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 🆕 홈으로 돌아가기 버튼 클릭 시 여행 상태 변경
   const handleGoHome = async () => {
@@ -42,7 +55,7 @@ export default function SummaryScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Ionicons name="checkmark-circle" size={24} color="#4AB7C8" />
+          <Ionicons name="checkmark-circle" size={24} color="#123A86" />
           <Text style={styles.headerTitle}>여행 완료!</Text>
         </View>
       </View>
@@ -99,7 +112,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginLeft: 8,
   },
@@ -126,8 +139,8 @@ const styles = StyleSheet.create({
   },
   regionText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4AB7C8',
+    fontFamily: 'Pretendard-Medium',
+    color: '#123A86',
   },
   summarySection: {
     marginBottom: 8,
@@ -150,7 +163,7 @@ const styles = StyleSheet.create({
   },
   messageTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 12,
     textAlign: 'center',
@@ -168,7 +181,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E0E0E0',
   },
   homeButton: {
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -176,6 +189,6 @@ const styles = StyleSheet.create({
   homeButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
 });

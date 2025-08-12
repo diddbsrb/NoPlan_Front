@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import * as Font from 'expo-font';
 
 interface Props {
   onBack: () => void;
@@ -15,14 +16,26 @@ const reasons = [
 const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [etcReason, setEtcReason] = useState('');
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   return (
     <View style={{ padding: 20 }}>
       <TouchableOpacity onPress={onBack} style={{ marginBottom: 10 }}>
-        <Text style={{ color: '#0077b6' }}>← 뒤로가기</Text>
+        <Text style={{ color: '#123A86' }}>← 뒤로가기</Text>
       </TouchableOpacity>
       <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#ddd' }}>
-        <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10 }}>삭제 전 확인해주세요!</Text>
+        <Text style={{ fontSize: 14, fontFamily: 'Pretendard-Medium', marginBottom: 10 }}>삭제 전 확인해주세요!</Text>
         <Text style={{ fontSize: 12, color: '#888', marginBottom: 20 }}>
           - 계정 삭제 시 모든 데이터가 영구적으로 삭제되며 복구가 불가합니다.
         </Text>
@@ -41,17 +54,17 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
                 height: 20,
                 borderRadius: 10,
                 borderWidth: 2,
-                borderColor: selectedReason === reason ? '#0077b6' : '#ccc',
+                borderColor: selectedReason === reason ? '#123A86' : '#ccc',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 10,
               }}
             >
               {selectedReason === reason && (
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#0077b6' }} />
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#123A86' }} />
               )}
             </View>
-            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#0077b6' : '#222', fontWeight: selectedReason === reason ? 'bold' : 'normal' }}>{reason}</Text>
+                            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#123A86' : '#222', fontFamily: selectedReason === reason ? 'Pretendard-Medium' : 'Pretendard-Light' }}>{reason}</Text>
           </TouchableOpacity>
         ))}
 
@@ -65,8 +78,8 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
           />
         )}
 
-        <TouchableOpacity style={{ backgroundColor: '#0077b6', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: '#fff', fontWeight: 'bold' }}>계정 삭제하기</Text>
+                  <TouchableOpacity style={{ backgroundColor: '#123A86', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
+                      <Text style={{ color: '#fff', fontFamily: 'Pretendard-Medium' }}>계정 삭제하기</Text>
         </TouchableOpacity>
       </View>
     </View>

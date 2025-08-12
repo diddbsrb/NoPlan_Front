@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import {
   SafeAreaView,
   StyleSheet,
@@ -18,6 +19,18 @@ export default function SignupScreen() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleSignup = async () => {
     setError('');
@@ -107,8 +120,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#80BFE8',
+    fontFamily: 'Pretendard-Medium',
+    color: '#123A86',
     marginBottom: 15, // headerTitle과 description 사이 간격 넓힘
     textAlign: 'center',
   },
@@ -128,7 +141,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#D4E8F9',
+    backgroundColor: '#123A86',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -137,8 +150,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontFamily: 'Pretendard-Medium',
+    color: '#fff',
   },
   footerText: {
     fontSize: 12,
@@ -147,7 +160,7 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#000',
   },
   errorText: {

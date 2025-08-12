@@ -3,6 +3,7 @@
 import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as Font from 'expo-font';
 import {
   ActivityIndicator,
   Alert,
@@ -72,6 +73,7 @@ export default function Info() {
     type?: string;
   }>();
 
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const sheetY = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const [isExpanded, setIsExpanded] = useState(false);
   const [detail, setDetail] = useState<TourDetail | null>(null);
@@ -80,6 +82,17 @@ export default function Info() {
 
   const [favorite, setFavorite] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<number | null>(null);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 1) 리스트에서 받은 placesParam 파싱
   const listPlaces: ListPlace[] = useMemo(() => {
@@ -263,7 +276,7 @@ export default function Info() {
   if ((!detail && !current) || !userLoc) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4AB7C8" />
+        <ActivityIndicator size="large" color="#123A86" />
         <Text style={{ marginTop: 16, color: '#666' }}>정보를 불러오는 중...</Text>
       </View>
     );
@@ -513,11 +526,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', textAlign: 'center' },
-  cardSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 4, textAlign: 'center' },
+  cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#123A86', marginTop: 4, textAlign: 'center' },
 
   star: { fontSize: 24, color: '#ccc' },
-  filled: { color: '#4AB7C8' },
+  filled: { color: '#123A86' },
 
   sheet: {
     position: 'absolute',
@@ -541,8 +554,8 @@ const styles = StyleSheet.create({
   },
   sheetHeaderText: { flex: 1 },
 
-  sheetTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'left' },
-  sheetSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 2, textAlign: 'left' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'left' },
+  sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
 
   sheetContent: { paddingHorizontal: 16 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
@@ -561,6 +574,7 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     color: '#666', 
     marginBottom: 4,
+    fontFamily: 'Pretendard-Light',
     fontWeight: '500'
   },
   crowdInfo: {
@@ -568,7 +582,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   crowdIcon: { fontSize: 16, marginRight: 8 },
-  crowdText: { fontSize: 14, fontWeight: '600' },
+  crowdText: { fontSize: 14, fontFamily: 'Pretendard-Medium' },
 
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tag: { backgroundColor: '#e0f7fa', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4, margin: 4 },
@@ -579,23 +593,23 @@ const styles = StyleSheet.create({
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginRight: 8,
   },
-  primaryButtonText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Medium' },
   secondaryButton: {
     flex: 1,
-    borderColor: '#4AB7C8',
+    borderColor: '#123A86',
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginLeft: 8,
   },
-  secondaryButtonText: { fontSize: 16, color: '#4AB7C8', fontWeight: '600' },
+  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Medium' },
 
   backBtn: {
     position: 'absolute',
@@ -605,13 +619,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  backText: { fontSize: 24, color: '#4AB7C8' },
+  backText: { fontSize: 24, color: '#123A86' },
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: 'red', marginBottom: 20 },
   retryButton: {
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -619,7 +633,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 16,
   },
 });

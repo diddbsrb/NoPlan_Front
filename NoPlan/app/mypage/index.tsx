@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 
@@ -46,6 +47,18 @@ export default function MyPage() {
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 팝업(Modal) 관리를 위한 상태
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -165,7 +178,7 @@ export default function MyPage() {
   // 콘텐츠 렌더링 함수
   const renderContent = () => {
     if (isLoading && activeTab !== 'personal') {
-      return <ActivityIndicator size="large" color="#0077b6" style={{ marginTop: 40 }} />;
+      return <ActivityIndicator size="large" color="#123A86" style={{ marginTop: 40 }} />;
     }
 
       // --- 방문한 곳 탭 ---
@@ -334,7 +347,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 20,
   },
   tabWrapper: {
@@ -357,8 +370,8 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   tabTextActive: {
-    color: '#0077b6',
-    fontWeight: '600',
+    color: '#123A86',
+    fontFamily: 'Pretendard-Medium',
   },
   scrollContainer: {
     paddingHorizontal: 20,
@@ -379,7 +392,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     // 카드 내부의 일관된 여백을 위해 제목에 padding을 추가합니다.
     padding: 15, 
@@ -421,7 +434,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: 'white',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 10,
   },
 
@@ -447,7 +460,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 15,
   },
   modalCard: {
@@ -457,7 +470,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#0077b6',
+    backgroundColor: '#123A86',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,
@@ -465,7 +478,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   summarySection: {
     backgroundColor: '#F8F9FA',
@@ -477,7 +490,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 8,
   },
@@ -489,7 +502,7 @@ const styles = StyleSheet.create({
   },
   visitedPlacesTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 15,
     marginTop: 10,

@@ -1,7 +1,8 @@
 // app/survey_destination.tsx
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import * as Font from 'expo-font';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
@@ -19,6 +20,18 @@ export default function SurveyDestination() {
   const [selected, setSelected] = useState<number | null>(null);
   const { survey, setSurvey } = useTravelSurvey();
   const [loading, setLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 🆕 자동 추천 타입이 있으면 자동 선택 및 자동 진행
   useFocusEffect(
@@ -108,7 +121,7 @@ export default function SurveyDestination() {
       <CustomTopBar onBack={() => router.back()} />
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
         <Text style={styles.title}>
-          다음은 <Text style={{ color: '#4AB7C8' }}>어디로</Text> 가볼까요?
+          다음은 <Text style={{ color: '#123A86' }}>어디로</Text> 가볼까요?
         </Text>
         <Text style={styles.desc}>다음 행선지를 선택해주세요.</Text>
         <ScrollView
@@ -142,7 +155,7 @@ export default function SurveyDestination() {
           }
         }}
       >
-        <Text style={{ color: '#A3D8E3', fontWeight: 'bold', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
+        <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Medium', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -151,7 +164,7 @@ export default function SurveyDestination() {
 const styles = StyleSheet.create({
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
@@ -182,7 +195,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedOption: {
-    borderColor: '#A3D8E3',
+    borderColor: '#123A86',
   },
   optionImage: {
     width: '100%',
@@ -200,7 +213,7 @@ const styles = StyleSheet.create({
   optionLabel: {
     position: 'absolute',
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     fontSize: 20,
     alignSelf: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',
@@ -215,6 +228,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#A3D8E3',
+    borderColor: '#123A86',
   },
 });

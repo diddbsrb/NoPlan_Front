@@ -1,6 +1,7 @@
 // components/CustomTopBar.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -21,6 +22,18 @@ export default function CustomTopBar({
 }: CustomTopBarProps) {
   const router = useRouter();
   const defaultLogo = require('../../assets/images/noplan_logo_blue.png');
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleProfile = () => {
     if (onProfile) {
@@ -39,7 +52,7 @@ export default function CustomTopBar({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={32} color="#39939B" />
+          <Ionicons name="chevron-back" size={32} color="#123A86" />
         </TouchableOpacity>
       ) : (
         <View style={styles.iconPlaceholder} />
@@ -62,7 +75,7 @@ export default function CustomTopBar({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#39939B" />
+          <Ionicons name="person-circle-outline" size={32} color="#123A86" />
         </TouchableOpacity>
       ) : (
         <View style={styles.iconPlaceholder} />
@@ -108,8 +121,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    color: '#39939B',
-    fontWeight: '600',
+    color: '#123A86',
+    fontFamily: 'Pretendard-Light',
+            fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',
     textShadowOffset: { width: 0, height: 1 },

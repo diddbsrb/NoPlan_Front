@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import * as Font from 'expo-font';
 import { userService } from '../../service/userService';
 
 const PasswordChangeComponent = ({ onBack }: { onBack: () => void }) => {
@@ -7,6 +8,18 @@ const PasswordChangeComponent = ({ onBack }: { onBack: () => void }) => {
   const [newPassword1, setNewPassword1] = useState('');
   const [newPassword2, setNewPassword2] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   const handleChangePassword = async () => {
     if (newPassword1 !== newPassword2) {
@@ -66,14 +79,14 @@ export default PasswordChangeComponent;
 
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  back: { color: '#0077b6', marginBottom: 20 },
+  back: { color: '#123A86', marginBottom: 20 },
   input: {
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12,
   },
   button: {
-    backgroundColor: '#0077b6', padding: 14, borderRadius: 8, alignItems: 'center',
+    backgroundColor: '#123A86', padding: 14, borderRadius: 8, alignItems: 'center',
   },
   buttonText: {
-    color: '#fff', fontWeight: 'bold',
+                color: '#fff', fontFamily: 'Pretendard-Medium',
   },
 });

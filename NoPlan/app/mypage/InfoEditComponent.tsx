@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
+import * as Font from 'expo-font';
 import { Alert, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { authService } from '../../service/authService';
@@ -26,6 +27,18 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
   const [error, setError] = useState('');
   const router = useRouter();
   const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -167,7 +180,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
             disabled={true} 
             value={isLocationEnabled}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isLocationEnabled ? '#0077b6' : '#f4f3f4'}
+            thumbColor={isLocationEnabled ? '#123A86' : '#f4f3f4'}
             style={{ opacity: 0.7 }} // 비활성화된 느낌을 주기 위해 투명도 조절
           />
         </View>
@@ -180,7 +193,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
             value={isAlarmEnabled}
             onValueChange={() => setIsAlarmEnabled(prev => !prev)}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isAlarmEnabled ? '#0077b6' : '#f4f3f4'}
+            thumbColor={isAlarmEnabled ? '#123A86' : '#f4f3f4'}
           />
         </View>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
@@ -209,7 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   backText: {
-    color: '#0077b6',
+    color: '#123A86',
     fontSize: 14,
   },
   card: {
@@ -229,7 +242,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 15,
     color: '#333',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   passwordRow: {
     marginBottom: 20,
@@ -237,8 +250,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   link: {
-    color: '#0077b6',
-    fontWeight: 'bold',
+    color: '#123A86',
+    fontFamily: 'Pretendard-Medium',
   },
   settingRow: {
     flexDirection: 'row',
@@ -265,7 +278,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   logoutText: {
-    color: '#0077b6',
+    color: '#123A86',
     fontSize: 13,
   },
   deleteButton: {

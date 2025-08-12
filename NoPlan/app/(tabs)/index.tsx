@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ImageBackground, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router'; // ✅ 추가
+import * as Font from 'expo-font';
 
 export default function HomeScreen() {
   const router = useRouter(); // ✅ 라우터 객체 생성
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) {
+    return null; // 폰트가 로드될 때까지 빈 화면 표시
+  }
 
   return (
     <ImageBackground
@@ -18,7 +34,7 @@ export default function HomeScreen() {
           resizeMode="contain"
         />
         <Text style={styles.title}>NO PLAN</Text>
-        <Text style={styles.subtitle}>계획 NO! 출발 NOW!{"\n"}당신만의 즉흥 여행을 시작합니다.</Text>
+        <Text style={styles.subtitle}>실시간 위치와 취향을 분석하는{"\n"}나만의 AI 여행도우미</Text>
 
         <TouchableOpacity
           style={styles.button}
@@ -52,9 +68,9 @@ const styles = StyleSheet.create({
     marginTop: 0,     // 변경: 위 여백 제거
   },
   title: {
-    fontSize: 36,
+    fontSize: 38,
     color: '#fff',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Light',
     marginBottom: 8, // 변경: 아래 여백 줄임
     letterSpacing: 2,
     textShadowColor: 'rgba(0,0,0,0.2)',
@@ -62,8 +78,9 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#fff',
+    fontFamily: 'Pretendard-Light',
     textAlign: 'center',
     marginBottom: 32, // 변경: 아래 여백 줄임
     lineHeight: 24,
@@ -74,7 +91,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 10,
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 140,
     alignItems: 'center',
     position: 'absolute',
@@ -88,6 +105,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#000',
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
 });

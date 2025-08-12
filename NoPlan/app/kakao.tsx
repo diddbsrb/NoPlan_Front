@@ -1,7 +1,8 @@
 // app/kakao.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, View, ActivityIndicator, Alert, TouchableOpacity, Text } from 'react-native';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
@@ -14,6 +15,18 @@ const BACKEND_API_URL = 'https://www.no-plan.cloud/api/v1/users/kakao/';
 export default function KakaoLoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  // 폰트 로드
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
   // 백엔드로 카카오 액세스 토큰을 전송하는 함수
   const sendTokenToBackend = async (accessToken: string) => {
@@ -102,7 +115,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 10,
   },
   description: {
@@ -125,7 +138,7 @@ const styles = StyleSheet.create({
   kakaoButtonText: {
     color: '#000000',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   backButton: {
     marginTop: 20,
