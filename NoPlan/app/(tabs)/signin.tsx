@@ -161,7 +161,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 28,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 100,
     backgroundColor: '#fff',
   },
   title: {
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 50,
     lineHeight: 20,
   },
   input: {

@@ -2,7 +2,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import * as Font from 'expo-font';
 import {
   Image,
@@ -12,6 +12,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import { travelService } from '../service/travelService';
 import CustomTopBar from './(components)/CustomTopBar';
@@ -40,6 +42,33 @@ const COMPANION_OPTIONS = [
   { label: '가족', image: require('../assets/images/가족.jpg') },
 ];
 
+const FEATURE_SLIDES = [
+  {
+    id: 1,
+    title: '사용자님의 위치 수신',
+    icon: '📍',
+    description: '현재 위치를 기반으로 최적의 여행지를 찾아드립니다.'
+  },
+  {
+    id: 2,
+    title: '사용자님의 정보 수신',
+    icon: '👤',
+    description: '개인화된 여행 경험을 위한 정보를 안전하게 수집합니다.'
+  },
+  {
+    id: 3,
+    title: 'AI가 최적의 즉흥 여행지를 추천',
+    icon: '🤖',
+    description: '인공지능이 실시간으로 최적의 여행지를 추천해드립니다.'
+  },
+  {
+    id: 4,
+    title: 'AI가 만들어주는 사용자님만의 여행 요약',
+    icon: '📝',
+    description: '여행 후 AI가 개인화된 여행 요약을 생성해드립니다.'
+  }
+];
+
 export default function SurveyTravel() {
   const router = useRouter();
   const { setSurvey, setIsTraveling } = useTravelSurvey();
@@ -52,6 +81,11 @@ export default function SurveyTravel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  // 슬라이드 모달 관련 상태
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const screenWidth = Dimensions.get('window').width;
 
   // 폰트 로드
   useEffect(() => {
@@ -63,6 +97,24 @@ export default function SurveyTravel() {
     }
     loadFonts();
   }, []);
+
+  // 슬라이드 자동 전환
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % FEATURE_SLIDES.length);
+    }, 3000); // 3초마다 전환
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 슬라이드 애니메이션
+  useEffect(() => {
+    Animated.timing(slideAnimation, {
+      toValue: -(currentSlide * (Dimensions.get('window').width - 40)),
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [currentSlide, slideAnimation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -294,9 +346,47 @@ export default function SurveyTravel() {
   return (
     <SafeAreaView style={styles.container}>
       <CustomTopBar onBack={() => router.back()} />
-      {loading && <Text style={{textAlign:'center',margin:16}}>로딩 중...</Text>}
       {error && <Text style={{color:'red',textAlign:'center',margin:8}}>{error}</Text>}
-      <View style={styles.inner}>{renderStep()}</View>
+      <View style={styles.inner}>
+        {renderStep()}
+        
+        {/* 슬라이드 모달 - 첫 번째 단계에서만 표시 */}
+        {step === 1 && (
+          <View style={styles.slideModalContainer}>
+            <View style={{ overflow: 'hidden', width: Dimensions.get('window').width - 40 }}>
+              <Animated.View 
+                style={[
+                  styles.slideContainer,
+                  {
+                    transform: [{ translateX: slideAnimation }],
+                  },
+                ]}
+              >
+                {FEATURE_SLIDES.map((slide, index) => (
+                  <View key={slide.id} style={styles.slide}>
+                    <Text style={styles.slideIcon}>{slide.icon}</Text>
+                    <Text style={styles.slideTitle}>{slide.title}</Text>
+                    <Text style={styles.slideDescription}>{slide.description}</Text>
+                  </View>
+                ))}
+              </Animated.View>
+            </View>
+            
+            {/* 슬라이드 인디케이터 */}
+            <View style={styles.slideIndicators}>
+              {FEATURE_SLIDES.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.slideIndicator,
+                    { backgroundColor: currentSlide === index ? '#123A86' : '#E0E0E0' },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+      </View>
 
       <View style={styles.progressBarContainer}>
         {[1, 2, 3, 4].map(n => (
@@ -327,7 +417,9 @@ export default function SurveyTravel() {
           onPress={step < 4 ? () => setStep(s => s + 1) : handleComplete}
           disabled={!isNextEnabled() || loading}
         >
-          <Text style={styles.nextText}>{step < 4 ? '다음' : '완료'}</Text>
+          <Text style={styles.nextText}>
+            {loading ? '로딩 중...' : (step < 4 ? '다음' : '완료')}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -343,6 +435,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 24,
+    marginTop: 50,
   },
   desc: {
     fontSize: 14,
@@ -461,5 +554,59 @@ const styles = StyleSheet.create({
   nextText: {
     color: '#fff',
     fontFamily: 'Pretendard-Medium',
+  },
+
+  // 슬라이드 모달 스타일
+  slideModalContainer: {
+    height: 160,
+    marginHorizontal: 20,
+    marginBottom: 30,
+    marginTop: 50,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slideContainer: {
+    flexDirection: 'row',
+    height: '100%',
+    width: (Dimensions.get('window').width - 40) * FEATURE_SLIDES.length,
+  },
+  slide: {
+    width: Dimensions.get('window').width - 40, // screenWidth - marginHorizontal
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  slideIcon: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  slideTitle: {
+    fontSize: 18,
+    fontFamily: 'Pretendard-Medium',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  slideDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  slideIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 8,
+    left: 0,
+    right: 0,
+  },
+  slideIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
   },
 });
