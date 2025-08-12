@@ -1,9 +1,8 @@
 // app/(tabs)/home_travel.tsx
 
-import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -50,12 +49,13 @@ interface RecommendationContext {
 
 export default function HomeTravel() {
   const router = useRouter();
-  const { survey, setSurvey } = useTravelSurvey();
+  const { survey, setSurvey, setIsTraveling, isTraveling } = useTravelSurvey();
   const [showModal, setShowModal] = useState(false);
   const [sections, setSections] = useState<TripSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recommendationContext, setRecommendationContext] = useState<RecommendationContext | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
 
   // sections 상태 변화를 문자열화해서 로그
   useEffect(() => {
@@ -139,6 +139,7 @@ export default function HomeTravel() {
 
   // 자동 추천 처리 함수
   const handleAutoRecommendation = async (type: RecommendationType) => {
+    setRecommendationLoading(true);
     try {
       // 현재 위치 가져오기
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -168,11 +169,13 @@ export default function HomeTravel() {
       };
       setSurvey(newSurvey);
       
-      // 🆕 survey_destination.tsx로 이동하여 일관된 흐름 유지
-      router.push('/survey_destination');
+      // 🆕 survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
+      router.replace({ pathname: '/list', params: { type } });
     } catch (e) {
       console.error('자동 추천 처리 실패:', e);
       Alert.alert('오류', '위치 정보를 가져올 수 없습니다.');
+    } finally {
+      setRecommendationLoading(false);
     }
   };
 
@@ -182,6 +185,12 @@ export default function HomeTravel() {
     setError(null);
 
     try {
+      // 🆕 여행 상태 확인 및 설정
+      if (!isTraveling) {
+        console.log('[home_travel] 여행 상태가 false입니다. true로 설정합니다.');
+        await setIsTraveling(true);
+      }
+      
       // 1) 트립 전체 조회
       const trips = (await travelService.getTripData()) as TripWithDate[];
       console.log('[HomeTravel] trips:', JSON.stringify(trips, null, 2));
@@ -199,6 +208,19 @@ export default function HomeTravel() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
       console.log('[HomeTravel] latest trip:', JSON.stringify(latest, null, 2));
+
+      // 🆕 최신 여행 정보로 survey 상태 업데이트 (adjectives 포함)
+      if (latest) {
+        const updatedSurvey = {
+          ...survey,
+          region: latest.region,
+          transportation: latest.transportation || survey.transportation,
+          companion: latest.companion || survey.companion,
+          adjectives: latest.adjectives || survey.adjectives, // 🆕 adjectives 추가
+        };
+        setSurvey(updatedSurvey);
+        console.log('[HomeTravel] survey 상태 업데이트됨:', updatedSurvey);
+      }
 
       // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
@@ -251,12 +273,14 @@ export default function HomeTravel() {
     }
   };
 
-  // 화면 포커스될 때마다 호출
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [])
-  );
+  // 🆕 컴포넌트 마운트 시에만 실행
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // 🆕 useFocusEffect 제거 - 여행 상태 확인이 불필요함
+  // home_travel 화면에 진입했다는 것 = 이미 여행 중인 상태
+  // fetchData에서 여행 데이터를 가져왔다 = 여행이 존재함
 
   return (
     <View style={styles.container}>
@@ -272,12 +296,21 @@ export default function HomeTravel() {
         {recommendationContext && !loading && !error && (
           <View style={styles.recommendationSection}>
             <Text style={styles.recommendationMessage}>{recommendationContext.message}</Text>
-            <TouchableOpacity
-              style={styles.recommendationButton}
-              onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
-            >
-              <Text style={styles.recommendationButtonText}>{recommendationContext.buttonText}</Text>
-            </TouchableOpacity>
+                         <TouchableOpacity
+               style={[
+                 styles.recommendationButton,
+                 recommendationLoading && styles.recommendationButtonDisabled
+               ]}
+               onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
+               disabled={recommendationLoading || loading}
+             >
+               <Text style={[
+                 styles.recommendationButtonText,
+                 recommendationLoading && styles.recommendationButtonTextDisabled
+               ]}>
+                 {recommendationLoading ? '위치 확인 중...' : recommendationContext.buttonText}
+               </Text>
+             </TouchableOpacity>
           </View>
         )}
 
@@ -348,6 +381,9 @@ export default function HomeTravel() {
                     // 여행 요약 생성
                     const summaryData = await travelService.summarizeTrip(latest.id);
                     
+                    // 🆕 여행 상태 변경은 summary.tsx에서 처리하도록 제거
+                    // await setIsTraveling(false);
+                    
                     // summary.tsx로 이동하면서 요약 데이터 전달
                     router.replace({
                       pathname: '/summary',
@@ -359,6 +395,8 @@ export default function HomeTravel() {
                     });
                   } catch (e) {
                     console.error('여행 요약 생성 실패:', e);
+                    // 🆕 요약 생성 실패 시에도 여행 상태를 false로 설정
+                    await setIsTraveling(false);
                     // 요약 생성 실패 시 바로 홈으로 이동
                     router.replace('/home');
                   }
@@ -459,9 +497,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  recommendationButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
+     recommendationButtonText: {
+     color: '#fff',
+     fontWeight: 'bold',
+     fontSize: 16,
+   },
+   recommendationButtonDisabled: {
+     backgroundColor: '#E0E0E0',
+   },
+   recommendationButtonTextDisabled: {
+     color: '#888',
+   },
+ });

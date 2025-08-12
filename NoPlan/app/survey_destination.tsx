@@ -23,6 +23,15 @@ export default function SurveyDestination() {
   // 🆕 자동 추천 타입이 있으면 자동 선택 및 자동 진행
   useFocusEffect(
     useCallback(() => {
+      // 🆕 현재 survey 상태 로깅 (adjectives 포함)
+      console.log('[survey_destination] 현재 survey 상태:', {
+        adjectives: survey.adjectives,
+        transportation: survey.transportation,
+        companion: survey.companion,
+        region: survey.region,
+        autoRecommendType: survey.autoRecommendType
+      });
+      
       if (survey.autoRecommendType) {
         // 자동 추천 타입에 따른 인덱스 매핑
         const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
@@ -39,7 +48,7 @@ export default function SurveyDestination() {
       } else {
         setSelected(null);
       }
-    }, [survey.autoRecommendType])
+    }, [survey.autoRecommendType, survey.adjectives, survey.transportation, survey.companion, survey.region])
   );
 
   // 🆕 다음 버튼 로직을 함수로 분리
@@ -78,6 +87,7 @@ export default function SurveyDestination() {
         radius,
         transportation: survey.transportation
       });
+      console.log('[survey_destination] Adjectives being set:', adjectives);
       setSurvey(newSurvey);
 
       // 목적지별 API type 매핑

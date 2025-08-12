@@ -1,24 +1,70 @@
 // app/_layout.tsx
 
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { TravelSurveyProvider } from './(components)/TravelSurveyContext';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { TravelSurveyProvider, useTravelSurvey } from './(components)/TravelSurveyContext';
 
 // ★★★ 1. React와 useEffect를 import 합니다. ★★★
 import React, { useEffect } from 'react';
 // ★★★ 2. Firebase 및 푸시 알림 관련 모듈을 import 합니다. ★★★
 import messaging from '@react-native-firebase/messaging';
-import { requestUserPermission, getFCMToken, listenForForegroundMessages } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
+import { getFCMToken, listenForForegroundMessages, requestUserPermission } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
 
 // ★★★ 3. 백그라운드 핸들러는 반드시 컴포넌트 바깥, 파일 최상단에 위치해야 합니다. ★★★
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('백그라운드/종료 상태에서 메시지 처리:', remoteMessage);
 });
 
+// AuthStateHandler 컴포넌트: 앱 시작 시 저장된 인증 상태와 여행 상태를 확인하고 적절한 화면으로 라우팅
+function AuthStateHandler() {
+  const router = useRouter();
+  const { isLoggedIn, isTraveling, loadSavedStates } = useTravelSurvey();
+
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      try {
+        // 저장된 상태 불러오기
+        await loadSavedStates();
+        
+        // SecureStore에서 직접 상태를 다시 확인
+        const savedLoginState = await SecureStore.getItemAsync('isLoggedIn');
+        const savedTravelState = await SecureStore.getItemAsync('isTraveling');
+        
+        console.log('[AuthStateHandler] SecureStore에서 직접 확인한 상태:', { 
+          isLoggedIn: savedLoginState, 
+          isTraveling: savedTravelState 
+        });
+        
+        // 상태에 따른 화면 라우팅
+        if (savedLoginState !== 'true') {
+          // 로그아웃 상태: (tabs) 그룹의 기본 화면으로 이동
+          console.log('[AuthStateHandler] 로그아웃 상태 -> (tabs) 기본 화면');
+          router.replace('/(tabs)' as any);
+        } else if (savedTravelState === 'true') {
+          // 로그인 상태 + 여행 중: home_travel 화면
+          console.log('[AuthStateHandler] 로그인 상태 + 여행 중 -> home_travel 화면');
+          router.replace('home_travel' as any);
+        } else {
+          // 로그인 상태 + 여행 중 아님: home 화면
+          console.log('[AuthStateHandler] 로그인 상태 + 여행 중 아님 -> home 화면');
+          router.replace('home' as any);
+        }
+      } catch (error) {
+        console.error('[AuthStateHandler] 인증 상태 확인 실패:', error);
+        // 에러 발생 시 기본 화면으로
+        router.replace('/(tabs)' as any);
+      }
+    };
+    checkAuthAndRedirect();
+  }, []); // 🆕 빈 의존성 배열로 수정하여 무한 루프 방지
+  
+  return null;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -53,10 +99,17 @@ export default function RootLayout() {
   return (
     <TravelSurveyProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AuthStateHandler />
         <Stack>
           {/* 탭 내비: 헤더 숨김 */}
           <Stack.Screen
             name="(tabs)"
+            options={{ headerShown: false }}
+          />
+
+          {/* index 화면을 명시적으로 등록 */}
+          <Stack.Screen
+            name="index"
             options={{ headerShown: false }}
           />
 

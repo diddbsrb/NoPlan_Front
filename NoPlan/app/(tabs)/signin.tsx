@@ -1,16 +1,17 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Image,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 import * as SecureStore from 'expo-secure-store';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
 
 // 백엔드 응답 타입 (기존과 동일)
@@ -31,6 +32,7 @@ export default function SigninScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { setIsLoggedIn, checkTravelStatus } = useTravelSurvey();
 
   // ★★★ expo-auth-session 관련 코드는 모두 삭제되었습니다. ★★★
 
@@ -49,6 +51,11 @@ export default function SigninScreen() {
       await SecureStore.setItemAsync('accessToken', access);
       await SecureStore.setItemAsync('refreshToken', refresh); // 리프레시 토큰 저장
 
+      // 로그인 상태를 true로 설정
+      await setIsLoggedIn(true);
+      
+      // 로그인 후 여행 상태 확인
+      await checkTravelStatus();
 
       if (user.is_info_exist) {
         router.replace('/(tabs)/home');

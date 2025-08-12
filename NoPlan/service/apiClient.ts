@@ -1,14 +1,13 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-
 export const apiClient = axios.create({
   baseURL: 'https://www.no-plan.cloud/api/v1',
   timeout: 10000,
 });
 
 apiClient.interceptors.request.use(
-  async (config) => {
+  async (config: any) => {
     // 헤더 객체가 없을 경우를 대비해 초기화합니다.
     if (!config.headers) {
       config.headers = axios.AxiosHeaders.from();
@@ -74,7 +73,7 @@ apiClient.interceptors.response.use(
         });
 
         // 새로 발급받은 Access Token을 가져옵니다.
-        const newAccessToken = response.data.access;
+        const newAccessToken = (response.data as any).access;
 
         // 새로운 Access Token을 SecureStore에 저장합니다.
         await SecureStore.setItemAsync('accessToken', newAccessToken);

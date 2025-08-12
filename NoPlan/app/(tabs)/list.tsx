@@ -1,18 +1,18 @@
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { bookmarkService } from '../../service/bookmarkService';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { bookmarkService } from '../../service/bookmarkService';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../../assets/images/식당.jpg'),
@@ -25,8 +25,13 @@ export default function List() {
   const router = useRouter();
   const { type } = useLocalSearchParams();
   const {
-    survey: { mapX, mapY, radius, adjectives },
+    survey,
+    setSurvey,
   } = useTravelSurvey();
+  const { mapX, mapY, radius, adjectives } = survey;
+  
+  // 🆕 type 파라미터가 없으면 autoRecommendType 사용
+  const finalType = type || survey.autoRecommendType || 'restaurants';
 
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,6 +56,30 @@ export default function List() {
         }
       })();
     }, [])
+  );
+
+  // 🆕 화면이 포커스될 때마다 survey 상태 로깅 및 autoRecommendType 처리
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[list.tsx] 화면 포커스됨 - 현재 survey 상태:', {
+        transportation: survey.transportation,
+        companion: survey.companion,
+        region: survey.region,
+        mapX: survey.mapX,
+        mapY: survey.mapY,
+        radius: survey.radius,
+        autoRecommendType: survey.autoRecommendType,
+        finalType
+      });
+      
+      // 🆕 autoRecommendType이 있으면 자동으로 API 호출
+      if (survey.autoRecommendType && survey.mapX && survey.mapY && survey.radius) {
+        console.log('[list.tsx] autoRecommendType 감지됨, 자동 API 호출 시작:', survey.autoRecommendType);
+        console.log('[list.tsx] finalType:', finalType);
+        // autoRecommendType이 있으면 useEffect에서 자동으로 API 호출됨
+        // 여기서는 로깅만 하고 실제 처리는 useEffect에서 진행
+      }
+    }, [survey, finalType])
   );
 
   const toggleFavorite = async (item: any) => {
@@ -88,16 +117,18 @@ export default function List() {
   useEffect(() => {
     console.log('[list.tsx] useEffect triggered with:', {
       type,
+      finalType,
       mapX,
       mapY,
-      radius,
-      adjectives
+      radius
     });
     
-    if (!type || mapX == null || mapY == null || radius == null) {
-      console.log('[list.tsx] Missing required params:', { type, mapX, mapY, radius });
+    if (!finalType || mapX == null || mapY == null || radius == null) {
+      console.log('[list.tsx] Missing required params:', { finalType, mapX, mapY, radius });
       return;
     }
+    
+    console.log('[list.tsx] All required params present, proceeding with API call');
 
     let cancelled = false;
 
@@ -110,9 +141,14 @@ export default function List() {
         mapY: mapY.toString(),
         radius: radius.toString(),
       });
-      if (adjectives) params.append('adjectives', adjectives);
+      
+             // adjectives가 존재하고 비어있지 않을 때만 추가
+       if (adjectives && adjectives.trim() !== '') {
+         params.append('adjectives', adjectives.trim());
+         console.log('[list.tsx] adjectives 파라미터 추가됨:', adjectives.trim());
+       }
 
-      const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
+      const apiUrl = `https://no-plan.cloud/api/v1/tours/${finalType}/?${params.toString()}`;
       console.log('[list.tsx] API URL:', apiUrl);
       
       try {
@@ -122,6 +158,14 @@ export default function List() {
         if (!cancelled) {
           setPlaces(Array.isArray(data) ? data : []);
           setPageIndex(0);
+          
+          // 🆕 autoRecommendType이 있었으면 API 호출 완료 후 제거
+          if (survey.autoRecommendType) {
+            console.log('[list.tsx] autoRecommendType 제거 중:', survey.autoRecommendType);
+            const { autoRecommendType, ...surveyWithoutAuto } = survey;
+            setSurvey(surveyWithoutAuto);
+            console.log('[list.tsx] autoRecommendType 제거 완료');
+          }
         }
       } catch (e) {
         console.error('[list.tsx] API error:', e);
@@ -133,7 +177,16 @@ export default function List() {
 
     fetchPlaces();
     return () => { cancelled = true; };
-  }, [type, mapX, mapY, radius, adjectives]);
+  }, [finalType, mapX, mapY, radius]);
+
+  // 🆕 autoRecommendType이 변경될 때만 API 호출
+  useEffect(() => {
+    if (survey.autoRecommendType && mapX && mapY && radius) {
+      console.log('[list.tsx] autoRecommendType 변경 감지, 자동 API 호출:', survey.autoRecommendType);
+      // autoRecommendType이 있으면 자동으로 API 호출
+      // 기존 useEffect에서 처리되므로 여기서는 로깅만
+    }
+  }, [survey.autoRecommendType, mapX, mapY, radius]);
 
   const handleRetry = () => {
     setPageIndex(prev => (prev + 1) % totalPages);
@@ -171,7 +224,8 @@ export default function List() {
                     pathname: '/info',
                     params: { 
                       contentid: item.contentid, 
-                      places: JSON.stringify(places) 
+                      places: JSON.stringify(places),
+                      type: finalType
                     },
                   });
                 } catch (error) {
@@ -180,15 +234,15 @@ export default function List() {
                 }
               }}
             >
-              <Image
-                source={
-                  item.firstimage
-                    ? { uri: item.firstimage }
-                    : DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES]
-                }
-                style={styles.cardImage}
-                resizeMode="cover"
-              />
+                             <Image
+                 source={
+                   item.firstimage
+                     ? { uri: item.firstimage }
+                     : DEFAULT_IMAGES[finalType as keyof typeof DEFAULT_IMAGES]
+                 }
+                 style={styles.cardImage}
+                 resizeMode="cover"
+               />
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
