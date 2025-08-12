@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   blue: {
-    color: '#80BFE8',
+    color: '#123A86',
     fontFamily: 'Pretendard-Light',
     fontWeight: '700',
   },
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#D4E8F9',
+    backgroundColor: '#123A86',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Pretendard-Light',
     fontWeight: '600',
-    color: '#222',
+    color: '#fff',
   },
   orText: {
     textAlign: 'center',

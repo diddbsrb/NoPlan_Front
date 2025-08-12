@@ -276,7 +276,7 @@ export default function Info() {
   if ((!detail && !current) || !userLoc) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4AB7C8" />
+        <ActivityIndicator size="large" color="#123A86" />
         <Text style={{ marginTop: 16, color: '#666' }}>정보를 불러오는 중...</Text>
       </View>
     );
@@ -527,10 +527,10 @@ const styles = StyleSheet.create({
   },
   cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Light', fontWeight: 'bold', color: '#333', textAlign: 'center' },
-  cardSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 4, textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#123A86', marginTop: 4, textAlign: 'center' },
 
   star: { fontSize: 24, color: '#ccc' },
-  filled: { color: '#4AB7C8' },
+  filled: { color: '#123A86' },
 
   sheet: {
     position: 'absolute',
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   sheetHeaderText: { flex: 1 },
 
   sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Light', fontWeight: 'bold', color: '#333', textAlign: 'left' },
-  sheetSubtitle: { fontSize: 14, color: '#4AB7C8', marginTop: 2, textAlign: 'left' },
+  sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
 
   sheetContent: { paddingHorizontal: 16 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -602,14 +602,14 @@ const styles = StyleSheet.create({
   primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: '600' },
   secondaryButton: {
     flex: 1,
-    borderColor: '#4AB7C8',
+    borderColor: '#123A86',
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginLeft: 8,
   },
-  secondaryButtonText: { fontSize: 16, color: '#4AB7C8', fontFamily: 'Pretendard-Light', fontWeight: '600' },
+  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Light', fontWeight: '600' },
 
   backBtn: {
     position: 'absolute',
@@ -619,13 +619,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  backText: { fontSize: 24, color: '#4AB7C8' },
+  backText: { fontSize: 24, color: '#123A86' },
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: 'red', marginBottom: 20 },
   retryButton: {
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

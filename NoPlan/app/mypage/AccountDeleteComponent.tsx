@@ -32,7 +32,7 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
   return (
     <View style={{ padding: 20 }}>
       <TouchableOpacity onPress={onBack} style={{ marginBottom: 10 }}>
-        <Text style={{ color: '#0077b6' }}>← 뒤로가기</Text>
+        <Text style={{ color: '#123A86' }}>← 뒤로가기</Text>
       </TouchableOpacity>
       <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, borderWidth: 1, borderColor: '#ddd' }}>
         <Text style={{ fontSize: 14, fontFamily: 'Pretendard-Light', fontWeight: 'bold', marginBottom: 10 }}>삭제 전 확인해주세요!</Text>
@@ -54,17 +54,17 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
                 height: 20,
                 borderRadius: 10,
                 borderWidth: 2,
-                borderColor: selectedReason === reason ? '#0077b6' : '#ccc',
+                borderColor: selectedReason === reason ? '#123A86' : '#ccc',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 10,
               }}
             >
               {selectedReason === reason && (
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#0077b6' }} />
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#123A86' }} />
               )}
             </View>
-            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#0077b6' : '#222', fontFamily: 'Pretendard-Light', fontWeight: selectedReason === reason ? 'bold' : 'normal' }}>{reason}</Text>
+            <Text style={{ fontSize: 13, color: selectedReason === reason ? '#123A86' : '#222', fontFamily: 'Pretendard-Light', fontWeight: selectedReason === reason ? 'bold' : 'normal' }}>{reason}</Text>
           </TouchableOpacity>
         ))}
 
@@ -78,7 +78,7 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
           />
         )}
 
-        <TouchableOpacity style={{ backgroundColor: '#0077b6', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
+                  <TouchableOpacity style={{ backgroundColor: '#123A86', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold' }}>계정 삭제하기</Text>
         </TouchableOpacity>
       </View>

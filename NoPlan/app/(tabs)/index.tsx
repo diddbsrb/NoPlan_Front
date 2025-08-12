@@ -34,7 +34,7 @@ export default function HomeScreen() {
           resizeMode="contain"
         />
         <Text style={styles.title}>NO PLAN</Text>
-        <Text style={styles.subtitle}>계획 NO! 출발 NOW!{"\n"}당신만의 즉흥 여행을 시작합니다.</Text>
+        <Text style={styles.subtitle}>실시간 위치와 취향을 분석하는{"\n"}나만의 AI 여행도우미</Text>
 
         <TouchableOpacity
           style={styles.button}
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     marginTop: 0,     // 변경: 위 여백 제거
   },
   title: {
-    fontSize: 36,
+    fontSize: 38,
     color: '#fff',
     fontFamily: 'Pretendard-Light',
     marginBottom: 8, // 변경: 아래 여백 줄임
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#fff',
     fontFamily: 'Pretendard-Light',
     textAlign: 'center',

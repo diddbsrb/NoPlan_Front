@@ -136,7 +136,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#4AB7C8' }}>키워드</Text>를 선택해주세요.
+              이번 여행의 <Text style={{ color: '#123A86' }}>키워드</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               원하는 여행 스타일 1~3개 선택 {'\n'}(최대 3개)
@@ -171,7 +171,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#4AB7C8' }}>방식</Text>을 선택해주세요.
+              이번 여행의 <Text style={{ color: '#123A86' }}>방식</Text>을 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               NO PLAN이 거리를 고려해 최적의 여행지를 찾아드립니다.
@@ -207,7 +207,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#4AB7C8' }}>동반자</Text>를 선택해주세요.
+              이번 여행의 <Text style={{ color: '#123A86' }}>동반자</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               NO PLAN이 여행 인원에 따른 최적의 여행지를 찾아드립니다.
@@ -304,7 +304,7 @@ export default function SurveyTravel() {
             key={n}
             style={[
               styles.progressBar,
-              { backgroundColor: step === n ? '#A3D8E3' : '#E0E0E0' },
+              { backgroundColor: step === n ? '#123A86' : '#E0E0E0' },
             ]}
           />
         ))}
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 8,
   },
-  circleSelected: { backgroundColor: '#A3D8E3' },
+  circleSelected: { backgroundColor: '#123A86' },
 
   scrollView: { width: '100%' },
   travelTypeGrid: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
-  imageSelected: { borderColor: '#A3D8E3' },
+  imageSelected: { borderColor: '#123A86' },
 
   progressBarContainer: {
     flexDirection: 'row',
@@ -448,14 +448,14 @@ const styles = StyleSheet.create({
   backButton: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#A3D8E3',
+    borderColor: '#123A86',
   },
   backText: {
-    color: '#A3D8E3',
+    color: '#123A86',
     fontWeight: 'bold',
   },
   nextButton: {
-    backgroundColor: '#A3D8E3',
+    backgroundColor: '#123A86',
   },
   nextDisabled: {
     backgroundColor: '#E0E0E0',

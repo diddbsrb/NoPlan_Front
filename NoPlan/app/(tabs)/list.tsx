@@ -210,11 +210,11 @@ export default function List() {
       <CustomTopBar onBack={() => router.replace('/home_travel')} />
       <View style={{ flex: 1, paddingHorizontal: 16 }}>
         <Text style={styles.title}>
-          이런 곳 <Text style={{ color: '#4AB7C8' }}>어떠세요?</Text>
+          이런 곳 <Text style={{ color: '#123A86' }}>어떠세요?</Text>
         </Text>
         <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
 
-        {loading && <ActivityIndicator style={{ margin: 24 }} size="large" color="#A3D8E3" />}
+                  {loading && <ActivityIndicator style={{ margin: 24 }} size="large" color="#123A86" />}
         {error && <Text style={{ color: 'red', textAlign: 'center', margin: 12 }}>{error}</Text>}
 
         <FlatList
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
   filled: {
-    color: '#4AB7C8',
+    color: '#123A86',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   retryButton: {
-    backgroundColor: '#A3D8E3',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 36,

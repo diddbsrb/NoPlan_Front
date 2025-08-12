@@ -70,7 +70,7 @@ const TermsComponent: React.FC<Props> = ({ onEdit }) => {
                     alignItems: 'center',
                 }}
             >
-                <Text style={{ color: '#0077b6', fontFamily: 'Pretendard-Light', fontWeight: 'bold' }}>개인정보 수정</Text>
+                <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Light', fontWeight: 'bold' }}>개인정보 수정</Text>
             </TouchableOpacity>
         </View>
     );

@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
-    color: '#80BFE8',
+    color: '#123A86',
     marginBottom: 15, // headerTitle과 description 사이 간격 넓힘
     textAlign: 'center',
   },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#D4E8F9',
+    backgroundColor: '#123A86',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Pretendard-Light',
     fontWeight: '600',
-    color: '#222',
+    color: '#fff',
   },
   footerText: {
     fontSize: 12,

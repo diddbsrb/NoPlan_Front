@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
 
   sectionHeader: { marginTop: 18, marginBottom: 8, alignItems: 'flex-start' },
   sectionHeaderText: {
-    backgroundColor: '#A3D8E3',
+    backgroundColor: '#123A86',
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 15,
@@ -448,14 +448,14 @@ const styles = StyleSheet.create({
 
   timelineRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   timelineCol: { width: 24, alignItems: 'center' },
-  timelineCircle: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#A3D8E3', marginTop: 4, marginBottom: 2 },
+  timelineCircle: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#123A86', marginTop: 4, marginBottom: 2 },
   timelineLine: { width: 2, height: 36, backgroundColor: '#E0E0E0' },
   timelineContent: { flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: 4 },
-  timelineTime: { fontSize: 13, color: '#3CB4C7', width: 64, marginRight: 6 },
+  timelineTime: { fontSize: 13, color: '#123A86', width: 64, marginRight: 6 },
   timelineBox: {
     flex: 1,
     borderWidth: 2,
-    borderColor: '#A3D8E3',
+    borderColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   bottomBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginRight: 8 },
   bottomBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
-  bottomBtnBlue: { backgroundColor: '#A3D8E3', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginLeft: 8 },
+  bottomBtnBlue: { backgroundColor: '#123A86', borderRadius: 8, paddingVertical: 14, paddingHorizontal: 24, marginLeft: 8 },
   bottomBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 16 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' },
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   modalBtnRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   modalBtnGray: { backgroundColor: '#E0E0E0', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginRight: 8 },
   modalBtnTextGray: { color: '#888', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
-  modalBtnBlue: { backgroundColor: '#A3D8E3', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 8 },
+  modalBtnBlue: { backgroundColor: '#123A86', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 8 },
   modalBtnTextBlue: { color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold', fontSize: 15 },
 
   // 🆕 추천 섹션 스타일
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#A3D8E3',
+    borderColor: '#123A86',
   },
   recommendationMessage: {
     fontSize: 16,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   recommendationButton: {
-    backgroundColor: '#A3D8E3',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,

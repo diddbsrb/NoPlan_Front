@@ -55,7 +55,7 @@ export default function SummaryScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Ionicons name="checkmark-circle" size={24} color="#4AB7C8" />
+          <Ionicons name="checkmark-circle" size={24} color="#123A86" />
           <Text style={styles.headerTitle}>여행 완료!</Text>
         </View>
       </View>
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
-    color: '#4AB7C8',
+    color: '#123A86',
   },
   summarySection: {
     marginBottom: 8,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E0E0E0',
   },
   homeButton: {
-    backgroundColor: '#4AB7C8',
+    backgroundColor: '#123A86',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

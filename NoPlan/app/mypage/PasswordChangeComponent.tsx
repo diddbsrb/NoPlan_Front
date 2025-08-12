@@ -79,12 +79,12 @@ export default PasswordChangeComponent;
 
 const styles = StyleSheet.create({
   container: { padding: 20 },
-  back: { color: '#0077b6', marginBottom: 20 },
+  back: { color: '#123A86', marginBottom: 20 },
   input: {
     borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12,
   },
   button: {
-    backgroundColor: '#0077b6', padding: 14, borderRadius: 8, alignItems: 'center',
+    backgroundColor: '#123A86', padding: 14, borderRadius: 8, alignItems: 'center',
   },
   buttonText: {
     color: '#fff', fontFamily: 'Pretendard-Light', fontWeight: 'bold',

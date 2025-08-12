@@ -180,7 +180,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
             disabled={true} 
             value={isLocationEnabled}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isLocationEnabled ? '#0077b6' : '#f4f3f4'}
+            thumbColor={isLocationEnabled ? '#123A86' : '#f4f3f4'}
             style={{ opacity: 0.7 }} // 비활성화된 느낌을 주기 위해 투명도 조절
           />
         </View>
@@ -193,7 +193,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
             value={isAlarmEnabled}
             onValueChange={() => setIsAlarmEnabled(prev => !prev)}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isAlarmEnabled ? '#0077b6' : '#f4f3f4'}
+            thumbColor={isAlarmEnabled ? '#123A86' : '#f4f3f4'}
           />
         </View>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   backText: {
-    color: '#0077b6',
+    color: '#123A86',
     fontSize: 14,
   },
   card: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   link: {
-    color: '#0077b6',
+    color: '#123A86',
     fontFamily: 'Pretendard-Light',
     fontWeight: 'bold',
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   logoutText: {
-    color: '#0077b6',
+    color: '#123A86',
     fontSize: 13,
   },
   deleteButton: {

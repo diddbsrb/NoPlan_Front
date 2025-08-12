@@ -178,7 +178,7 @@ export default function MyPage() {
   // 콘텐츠 렌더링 함수
   const renderContent = () => {
     if (isLoading && activeTab !== 'personal') {
-      return <ActivityIndicator size="large" color="#0077b6" style={{ marginTop: 40 }} />;
+      return <ActivityIndicator size="large" color="#123A86" style={{ marginTop: 40 }} />;
     }
 
       // --- 방문한 곳 탭 ---
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   tabTextActive: {
-    color: '#0077b6',
+    color: '#123A86',
     fontFamily: 'Pretendard-Light',
     fontWeight: '600',
   },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#0077b6',
+    backgroundColor: '#123A86',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,
