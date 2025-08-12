@@ -1,13 +1,13 @@
 // components/InfoEditComponent.tsx
 
-import React, { useState, useEffect , useCallback } from 'react';
-import { View, Text, TouchableOpacity, Switch, StyleSheet, Image, Alert } from 'react-native';
-import { userService } from '../../service/userService';
-import { authService } from '../../service/authService';
 import * as Location from 'expo-location';
-import { useFocusEffect } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Image, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { authService } from '../../service/authService';
+import { userService } from '../../service/userService';
 
 console.log('🧩 InfoEditComponent 렌더됨');
 
@@ -25,6 +25,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -99,14 +100,23 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
       
               // 1. 서버에 refresh 토큰 만료 요청
               await authService.logout();
-      
-              // 2. 클라이언트 기기에서 토큰 삭제
+              
+              // 2. 여행 상태를 false로 설정
+              await setIsTraveling(false);
+              
+              // 3. 로그인 상태를 false로 설정
+              await setIsLoggedIn(false);
+              
+              // 4. 클라이언트 기기에서 토큰 삭제
               await SecureStore.deleteItemAsync('accessToken');
               await SecureStore.deleteItemAsync('refreshToken');
               
+              // 5. 여행 상태 재확인 및 동기화
+              await checkTravelStatus();
+              
               console.log('로컬 토큰 삭제 완료. 초기 화면으로 이동합니다.');
-              // 3. 초기 화면으로 이동
-              router.replace('/'); 
+              // 6. 초기 화면으로 이동 (기본 화면)
+              router.replace('/' as any); 
       
             } catch (error) {
               console.error('전체 로그아웃 처리 중 오류 발생:', error);

@@ -1,18 +1,18 @@
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  Alert,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { bookmarkService } from '../../service/bookmarkService';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { bookmarkService } from '../../service/bookmarkService';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../../assets/images/식당.jpg'),
@@ -25,8 +25,9 @@ export default function List() {
   const router = useRouter();
   const { type } = useLocalSearchParams();
   const {
-    survey: { mapX, mapY, radius, adjectives },
+    survey,
   } = useTravelSurvey();
+  const { mapX, mapY, radius, adjectives } = survey;
 
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,21 @@ export default function List() {
         }
       })();
     }, [])
+  );
+
+  // 🆕 화면이 포커스될 때마다 survey 상태 로깅
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[list.tsx] 화면 포커스됨 - 현재 survey 상태:', {
+        adjectives: survey.adjectives,
+        transportation: survey.transportation,
+        companion: survey.companion,
+        region: survey.region,
+        mapX: survey.mapX,
+        mapY: survey.mapY,
+        radius: survey.radius
+      });
+    }, [survey])
   );
 
   const toggleFavorite = async (item: any) => {
@@ -94,10 +110,19 @@ export default function List() {
       adjectives
     });
     
+    // survey 전체 상태도 로깅
+    console.log('[list.tsx] Full survey state:', survey);
+    console.log('[list.tsx] Adjectives type:', typeof adjectives);
+    console.log('[list.tsx] Adjectives length:', adjectives ? adjectives.length : 'undefined');
+    console.log('[list.tsx] Adjectives trimmed:', adjectives ? adjectives.trim() : 'undefined');
+    
     if (!type || mapX == null || mapY == null || radius == null) {
       console.log('[list.tsx] Missing required params:', { type, mapX, mapY, radius });
       return;
     }
+    
+    // adjectives는 선택사항이므로 체크하지 않음
+    console.log('[list.tsx] All required params present, proceeding with API call');
 
     let cancelled = false;
 
@@ -110,7 +135,16 @@ export default function List() {
         mapY: mapY.toString(),
         radius: radius.toString(),
       });
-      if (adjectives) params.append('adjectives', adjectives);
+      
+      // adjectives가 존재하고 비어있지 않을 때만 추가
+      if (adjectives && adjectives.trim() !== '') {
+        // survey_travel.tsx에서 설정한 키워드들을 그대로 전달
+        params.append('adjectives', adjectives.trim());
+        console.log('[list.tsx] Adding adjectives to params:', adjectives.trim());
+        console.log('[list.tsx] Adjectives source: survey_travel.tsx KEYWORD_OPTIONS');
+      } else {
+        console.log('[list.tsx] No adjectives provided, proceeding without keywords');
+      }
 
       const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
       console.log('[list.tsx] API URL:', apiUrl);
@@ -133,7 +167,7 @@ export default function List() {
 
     fetchPlaces();
     return () => { cancelled = true; };
-  }, [type, mapX, mapY, radius, adjectives]);
+  }, [type, mapX, mapY, radius, adjectives, survey]);
 
   const handleRetry = () => {
     setPageIndex(prev => (prev + 1) % totalPages);

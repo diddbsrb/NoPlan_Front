@@ -1,15 +1,16 @@
 // app/(tabs)/summary.tsx
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
   SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 
 export default function SummaryScreen() {
   const router = useRouter();
@@ -18,6 +19,24 @@ export default function SummaryScreen() {
     summary: string;
     region: string;
   }>();
+  const { setIsTraveling } = useTravelSurvey();
+
+  // 🆕 홈으로 돌아가기 버튼 클릭 시 여행 상태 변경
+  const handleGoHome = async () => {
+    try {
+      console.log('[summary.tsx] 홈으로 돌아가기 시작');
+      // 여행 상태를 false로 변경
+      await setIsTraveling(false);
+      console.log('[summary.tsx] 여행 상태를 false로 변경 완료');
+      
+      // 홈으로 이동
+      router.replace('/home');
+    } catch (error) {
+      console.error('[summary.tsx] 여행 상태 변경 실패:', error);
+      // 실패 시에도 홈으로 이동
+      router.replace('/home');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -53,7 +72,7 @@ export default function SummaryScreen() {
       <View style={styles.bottomSection}>
         <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => router.replace('/home')}
+          onPress={handleGoHome}
         >
           <Text style={styles.homeButtonText}>홈으로 돌아가기</Text>
         </TouchableOpacity>
