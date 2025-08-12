@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  Linking,
 } from 'react-native';
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
@@ -66,6 +67,10 @@ export default function MyPage() {
     contents: VisitedContent[];
     tripInfo?: Trip;
   } | null>(null);
+  
+  // 북마크 상세 정보 모달 상태
+  const [isBookmarkModalVisible, setIsBookmarkModalVisible] = useState(false);
+  const [selectedBookmark, setSelectedBookmark] = useState<BookmarkResponse | null>(null);
 
   // 사용자 이름 불러오기
   useEffect(() => {
@@ -135,41 +140,53 @@ export default function MyPage() {
     setIsModalVisible(true);
   };
 
-  // ★★★ 핵심 1: 북마크 삭제를 처리하는 함수 추가 ★★★
+  // 북마크 카드 클릭 시 팝업을 여는 함수
+  const handleBookmarkPress = (bookmark: BookmarkResponse) => {
+    setSelectedBookmark(bookmark);
+    setIsBookmarkModalVisible(true);
+  };
+
+  // 길찾기 함수
+  const handleNavigation = () => {
+    if (!selectedBookmark) return;
+    
+    const placeName = selectedBookmark.title;
+    const encodedPlaceName = encodeURIComponent(placeName);
+    const kakaoMapUrl = `https://map.kakao.com/link/search/${encodedPlaceName}`;
+    
+    Linking.openURL(kakaoMapUrl);
+  };
+
+  // 북마크 삭제를 처리하는 함수
   const handleDeleteBookmark = async (bookmarkId: number) => {
-    // 사용자에게 정말 삭제할 것인지 확인을 받습니다.
     Alert.alert(
-      "위시리스트 삭제",
-      "이 항목을 위시리스트에서 삭제하시겠습니까?",
+      "북마크 취소",
+      "북마크를 취소하시겠습니까?",
       [
-        // '아니오' 버튼
         {
           text: "아니오",
           style: "cancel"
         },
-        // '예' 버튼
         { 
           text: "예", 
           onPress: async () => {
             setIsLoading(true);
             try {
-              // bookmarkService를 호출하여 API 요청을 보냅니다.
               await bookmarkService.deleteBookmark(bookmarkId);
               
-              // API 요청 성공 시, 화면의 목록(상태)에서도 해당 항목을 제거합니다.
               setBookmarks(currentBookmarks => 
                 currentBookmarks.filter(bookmark => bookmark.id !== bookmarkId)
               );
-              Alert.alert("성공", "위시리스트에서 삭제되었습니다.");
+              Alert.alert("성공", "북마크가 취소되었습니다.");
 
             } catch (error) {
               console.error("북마크 삭제 실패:", error);
-              Alert.alert("오류", "삭제 중 문제가 발생했습니다.");
+              Alert.alert("오류", "취소 중 문제가 발생했습니다.");
             } finally {
               setIsLoading(false);
             }
           },
-          style: "destructive" // '예' 버튼을 빨간색으로 표시 (iOS)
+          style: "destructive"
         }
       ]
     );
@@ -220,19 +237,35 @@ export default function MyPage() {
       });
     }
   
-      // --- 위시리스트 탭 ---
+      // --- 북마크 탭 ---
       if (activeTab === 'wishlist') {
         if (bookmarks.length === 0) {
-          return <Text style={styles.placeholderText}>위시리스트(북마크)가 비어있어요.</Text>;
+          return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
         }
         return bookmarks.map((bookmark) => {
           const imageUrl = bookmark.firstImage ? bookmark.firstImage : PLACEHOLDER_IMAGE_URL;
           return (
-            // ★★★ View에 card 스타일 적용 ★★★
-            <View key={bookmark.id} style={styles.card}>
-              <Text style={styles.cardTitle}>{bookmark.title}</Text>
-              <Text style={styles.locationText}>{bookmark.addr1}</Text>
-              {/* ★★★ wishlistImageBox 스타일 적용 ★★★ */}
+            <TouchableOpacity 
+              key={bookmark.id} 
+              style={styles.card}
+              onPress={() => handleBookmarkPress(bookmark)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardTitle}>{bookmark.title}</Text>
+                  <Text style={styles.locationText}>{bookmark.addr1}</Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={(e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+                    handleDeleteBookmark(bookmark.id);
+                  }}
+                  style={styles.starButton}
+                >
+                  <Text style={styles.star}>★</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.wishlistImageBox}>
                 <Image
                   source={{ uri: imageUrl }}
@@ -240,13 +273,7 @@ export default function MyPage() {
                   resizeMode="cover"
                 />
               </View>
-              <TouchableOpacity 
-                style={styles.deleteButton} 
-                onPress={() => handleDeleteBookmark(bookmark.id)}
-              >
-                <Text style={styles.deleteButtonText}>위시리스트에서 삭제</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           );
         });
       }
@@ -279,7 +306,7 @@ export default function MyPage() {
         {(['visited', 'wishlist', 'personal'] as const).map((tab) => (
           <TouchableOpacity key={tab} style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]} onPress={() => setActiveTab(tab)}>
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {{ visited: '방문한 곳', wishlist: '위시리스트', personal: '개인정보 관리' }[tab]}
+              {{ visited: '방문한 곳', wishlist: '북마크', personal: '개인정보 관리' }[tab]}
             </Text>
           </TouchableOpacity>
         ))}
@@ -327,6 +354,70 @@ export default function MyPage() {
             <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
               <Text style={styles.closeButtonText}>닫기</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* --- 북마크 상세 정보 팝업 (Modal) --- */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isBookmarkModalVisible}
+        onRequestClose={() => setIsBookmarkModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {/* 헤더 영역 */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{selectedBookmark?.title}</Text>
+              <TouchableOpacity 
+                style={styles.closeXButton} 
+                onPress={() => setIsBookmarkModalVisible(false)}
+              >
+                <Text style={styles.closeXText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.bookmarkModalScroll}>
+              {/* 주소 */}
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>주소</Text>
+                <Text style={styles.infoText}>{selectedBookmark?.addr1}</Text>
+              </View>
+
+              {/* 해시태그 */}
+              {selectedBookmark?.hashtags && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.infoLabel}>해시태그</Text>
+                  <View style={styles.tagsRow}>
+                    {selectedBookmark.hashtags.split('#').map((tag, index) => {
+                      const trimmedTag = tag.trim();
+                      if (trimmedTag.length > 0) {
+                        return (
+                          <View key={index} style={styles.tag}>
+                            <Text style={styles.tagText}>#{trimmedTag}</Text>
+                          </View>
+                        );
+                      }
+                      return null;
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* 추천 이유 */}
+              {selectedBookmark?.recommendReason && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.infoLabel}>추천 이유</Text>
+                  <Text style={styles.infoText}>{selectedBookmark.recommendReason}</Text>
+                </View>
+              )}
+
+              {/* 길찾기 버튼 */}
+              <TouchableOpacity style={styles.navigationButton} onPress={handleNavigation}>
+                <Text style={styles.navigationButtonText}>길찾기</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -380,29 +471,36 @@ const styles = StyleSheet.create({
 
   // --- 핵심 수정: 카드 스타일 ---
   card: {
-    marginBottom: 20,
-    backgroundColor: '#fff', // 카드에 배경색을 주어 독립된 요소로 만듭니다.
+    marginBottom: 15,
+    backgroundColor: '#fff',
     borderRadius: 16,
-    // 그림자 효과를 추가하여 입체감을 줍니다.
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  cardTextContainer: {
+    flex: 1,
+  },
   cardTitle: {
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
-    textAlign: 'center',
-    // 카드 내부의 일관된 여백을 위해 제목에 padding을 추가합니다.
-    padding: 15, 
+    textAlign: 'left',
+    marginBottom: 4,
   },
   locationText: {
     fontSize: 13,
     color: '#888',
-    // 제목과의 간격을 위해 padding top을 제거하고 bottom만 남깁니다.
-    paddingBottom: 15,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   imageBox: {
     width: '100%', // 카드 너비에 꽉 채웁니다.
@@ -417,16 +515,26 @@ const styles = StyleSheet.create({
   // 이 스타일을 위시리스트의 imageBox에 적용합니다.
   wishlistImageBox: {
     width: '100%',
-    height: 180,
+    height: 140,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
     height: '100%',
   },
+  starButton: {
+    padding: 8,
+  },
+  star: {
+    fontSize: 24,
+    color: '#123A86',
+  },
   deleteButton: {
     marginTop: 15,
-    marginBottom: 10, // 카드 하단 여백 추가
-    alignSelf: 'center', // 버튼을 중앙에 위치시킴
+    marginBottom: 10,
+    alignSelf: 'center',
     paddingVertical: 8,
     paddingHorizontal: 20,
     backgroundColor: '#ff4d4d',
@@ -461,7 +569,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
-    marginBottom: 15,
+    flex: 1,
+    textAlign: 'left',
   },
   modalCard: {
     marginBottom: 20,
@@ -506,5 +615,75 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15,
     marginTop: 10,
+  },
+  
+  // 북마크 모달 스타일
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
+  },
+  closeXButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeXText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  bookmarkModalScroll: {
+    maxHeight: 400,
+    width: '100%',
+  },
+  infoSection: {
+    marginBottom: 20,
+    width: '100%',
+  },
+  infoLabel: {
+    fontSize: 14,
+    fontFamily: 'Pretendard-Medium',
+    color: '#333',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  tag: {
+    backgroundColor: '#e0f7fa',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    margin: 4,
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#00796b',
+  },
+  navigationButton: {
+    backgroundColor: '#123A86',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  navigationButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Pretendard-Medium',
   },
 });

@@ -8,6 +8,8 @@ export interface BookmarkCreate {
   firstImage: string
   addr1: string
   overview: string
+  hashtags?: string
+  recommendReason?: string
 }
 
 export interface BookmarkResponse {
@@ -18,6 +20,8 @@ export interface BookmarkResponse {
   firstImage: string
   addr1: string
   overview: string
+  hashtags?: string
+  recommendReason?: string
   createdAt: string
 }
 
@@ -28,6 +32,8 @@ function toSnakePayload(data: BookmarkCreate) {
     first_image: data.firstImage,
     addr1: data.addr1,
     overview: data.overview,
+    hashtags: data.hashtags,
+    recommend_reason: data.recommendReason,
   }
 }
 
@@ -40,6 +46,8 @@ function toCamelResponse(item: any): BookmarkResponse {
     firstImage: item.first_image,
     addr1: item.addr1,
     overview: item.overview,
+    hashtags: item.hashtags,
+    recommendReason: item.recommend_reason,
     createdAt: item.created_at,
   }
 }

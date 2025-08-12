@@ -234,7 +234,9 @@ export default function Info() {
       '';
     const title = current?.title || '제목 없음';
     const addr1 = current?.addr1 || '';
-    const overview = current?.recommend_reason || '';
+    const overview = detail?.overview || ''; // detail API에서 가져온 overview 사용
+    const hashtags = current?.hashtags || '';
+    const recommendReason = current?.recommend_reason || '';
 
     try {
       if (!favorite) {
@@ -244,6 +246,8 @@ export default function Info() {
           firstImage: imageUri,
           addr1,
           overview,
+          hashtags,
+          recommendReason,
         });
         setBookmarkId(res.id);
         setFavorite(true);
