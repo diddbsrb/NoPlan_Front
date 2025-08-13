@@ -83,6 +83,23 @@ export const travelService = {
     }
   },
 
+  /**
+   * (신규 추가) 특정 여행(trip)을 삭제합니다.
+   * @param tripId 삭제할 여행의 ID
+   */
+  deleteTrip: async (tripId: number): Promise<void> => {
+    const url = `/users/trips/${tripId}/`;
+    console.log(`[travelService] DELETE ${url}`);
+    try {
+      // DELETE 요청은 성공 시 보통 204 No Content를 반환하므로 응답 데이터가 없습니다.
+      await apiClient.delete(url);
+      console.log(`[travelService] Trip ID: ${tripId} 삭제 성공`);
+    } catch (err: any) {
+      console.error(`❌ Trip ID: ${tripId} 삭제 실패:`, err.response?.data || err.message);
+      throw err;
+    }
+  },
+
   // ---------------------------------------
   // (2) VisitedContent 관련 신규/확장 API
   // ---------------------------------------
@@ -110,7 +127,8 @@ export const travelService = {
       const res = await apiClient.get<VisitedContent[]>(url,);
       console.log('[travelService] response.data:', res.data);  // ← 응답 데이터 로그
       return res.data;
-    } catch (err: any) {
+    } catch (err: any)
+{
       console.error(`❌ trip=${tripId} 방문 콘텐츠 조회 실패:`, err.response?.data || err.message);
       throw err;
     }

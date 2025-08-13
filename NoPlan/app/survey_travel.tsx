@@ -14,6 +14,7 @@ import {
   View,
   Dimensions,
   Animated,
+  
 } from 'react-native';
 import { travelService } from '../service/travelService';
 import CustomTopBar from './(components)/CustomTopBar';
