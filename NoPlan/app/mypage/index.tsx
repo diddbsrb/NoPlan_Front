@@ -20,6 +20,10 @@ import CustomTopBar from '../(components)/CustomTopBar';
 import { userService } from '../../service/userService';
 import { travelService, VisitedContent, Trip } from '../../service/travelService';
 import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
+// ★★★ 핵심 1: 로그아웃을 위한 모든 서비스/모듈 import ★★★
+import { authService } from '../../service/authService';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import * as SecureStore from 'expo-secure-store';
 
 // --- 분리된 컴포넌트 import ---
 import TermsComponent from './TermsComponent';
@@ -27,7 +31,6 @@ import InfoEditComponent from './InfoEditComponent';
 import PasswordChangeComponent from './PasswordChangeComponent';
 import AccountDeleteComponent from './AccountDeleteComponent';
 
-// trip_id를 키로 가지는 그룹화된 데이터 타입 정의
 type VisitedTrips = {
   [key: string]: {
     contents: VisitedContent[];
@@ -35,22 +38,22 @@ type VisitedTrips = {
   };
 };
 
-// ★★★ 비어있는 이미지를 대체할 이미지 URL 상수 ★★★
 const PLACEHOLDER_IMAGE_URL = 'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzA3MzBfOTAg%2FMDAxNjkwNjkyMTAzNTk0.fDiLNQxsSwWoqhWaPPENCgnOfw7rBkyA-u8IBq_bqwMg.V7vOgU00XrpbXakUxyF2OLBpxt56NpcmVdNulowZaUIg.JPEG.10sunmusa%2F100a10000000oik97DA2B_C_760_506_Q70.jpg&type=a340';
 
 export default function MyPage() {
   const router = useRouter();
+  // ★★★ 핵심 2: 로그아웃 시 필요한 모든 context 함수 가져오기 ★★★
+  const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
+
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
   const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('terms');
   
-  // --- 상태 관리 ---
   const [userName, setUserName] = useState('회원');
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
   const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
@@ -61,18 +64,15 @@ export default function MyPage() {
     loadFonts();
   }, []);
 
-  // 팝업(Modal) 관리를 위한 상태
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<{
     contents: VisitedContent[];
     tripInfo?: Trip;
   } | null>(null);
   
-  // 북마크 상세 정보 모달 상태
   const [isBookmarkModalVisible, setIsBookmarkModalVisible] = useState(false);
   const [selectedBookmark, setSelectedBookmark] = useState<BookmarkResponse | null>(null);
 
-  // 사용자 이름 불러오기
   useEffect(() => {
     const fetchUserName = async () => {
       try {
@@ -85,7 +85,6 @@ export default function MyPage() {
     fetchUserName();
   }, []);
 
-  // 탭 변경 시 데이터 동적 로딩
   useEffect(() => {
     const fetchDataForTab = async () => {
       if (activeTab !== 'personal') {
@@ -99,9 +98,8 @@ export default function MyPage() {
             travelService.getTripData()
           ]);
           
-          // ★★★ 핵심 수정 1: 실제 데이터 필드명인 'trip'으로 그룹화합니다 ★★★
           const groupedData = visitedData.reduce((acc, content) => {
-            const key = content.trip; // 'trip_id'가 아닌 'trip'
+            const key = content.trip; 
             if (!acc[key]) {
               acc[key] = { contents: [], tripInfo: undefined };
             }
@@ -109,7 +107,6 @@ export default function MyPage() {
             return acc;
           }, {} as VisitedTrips);
 
-          // trip 정보 추가
           tripsData.forEach(trip => {
             if (groupedData[trip.id]) {
               groupedData[trip.id].tripInfo = trip;
@@ -134,51 +131,116 @@ export default function MyPage() {
     fetchDataForTab();
   }, [activeTab]);
 
-  // 여행 카드 클릭 시 팝업을 여는 함수
   const handleTripPress = (tripId: string) => {
     setSelectedTrip(visitedTrips[tripId]);
     setIsModalVisible(true);
   };
 
-  // 북마크 카드 클릭 시 팝업을 여는 함수
   const handleBookmarkPress = (bookmark: BookmarkResponse) => {
     setSelectedBookmark(bookmark);
     setIsBookmarkModalVisible(true);
   };
 
-  // 길찾기 함수
   const handleNavigation = () => {
     if (!selectedBookmark) return;
-    
     const placeName = selectedBookmark.title;
     const encodedPlaceName = encodeURIComponent(placeName);
     const kakaoMapUrl = `https://map.kakao.com/link/search/${encodedPlaceName}`;
-    
     Linking.openURL(kakaoMapUrl);
   };
 
-  // 북마크 삭제를 처리하는 함수
+  // ★★★ 핵심 3: InfoEditComponent와 동일하게 수정된 로그아웃 함수 ★★★
+  const handleLogout = () => {
+    Alert.alert(
+      "로그아웃",
+      "정말 로그아웃 하시겠습니까?",
+      [
+        {
+          text: "취소",
+          style: "cancel"
+        },
+        { 
+          text: "로그아웃",
+          onPress: async () => {
+            try {
+              // 1. 서버에 로그아웃 요청 (리프레시 토큰 만료)
+              await authService.logout();
+              
+              // 2. 여행 상태를 false로 설정
+              await setIsTraveling(false);
+              
+              // 3. 로그인 상태를 false로 설정
+              await setIsLoggedIn(false);
+              
+              // 4. 기기에서 토큰 삭제
+              await SecureStore.deleteItemAsync('accessToken');
+              await SecureStore.deleteItemAsync('refreshToken');
+              
+              // 5. 여행 상태 재확인 (필수)
+              await checkTravelStatus();
+              
+              // 6. 초기 화면(로그인)으로 이동
+              router.replace('/(tabs)/signin'); // 또는 앱의 시작점인 '/'
+      
+            } catch (error) {
+              console.error('로그아웃 처리 중 오류 발생:', error);
+              Alert.alert("오류", "로그아웃 중 문제가 발생했습니다.");
+            }
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  };
+
+
+  const handleDeleteTrip = async (tripId: string) => {
+    Alert.alert(
+      "여행 기록 삭제",
+      "이 여행에 대한 모든 기록이 삭제됩니다. 정말 삭제하시겠습니까?",
+      [
+        { text: "취소", style: "cancel" },
+        { 
+          text: "삭제", 
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              await travelService.deleteTrip(Number(tripId));
+              setVisitedTrips(currentTrips => {
+                const newTrips = { ...currentTrips };
+                delete newTrips[tripId];
+                return newTrips;
+              });
+              Alert.alert("성공", "여행 기록이 삭제되었습니다.");
+            } catch (error) {
+              console.error("여행 기록 삭제 실패:", error);
+              Alert.alert("오류", "삭제 중 문제가 발생했습니다.");
+            } finally {
+              setIsLoading(false);
+            }
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
+
   const handleDeleteBookmark = async (bookmarkId: number) => {
     Alert.alert(
       "북마크 취소",
       "북마크를 취소하시겠습니까?",
       [
-        {
-          text: "아니오",
-          style: "cancel"
-        },
+        { text: "아니오", style: "cancel" },
         { 
           text: "예", 
           onPress: async () => {
             setIsLoading(true);
             try {
               await bookmarkService.deleteBookmark(bookmarkId);
-              
               setBookmarks(currentBookmarks => 
                 currentBookmarks.filter(bookmark => bookmark.id !== bookmarkId)
               );
               Alert.alert("성공", "북마크가 취소되었습니다.");
-
             } catch (error) {
               console.error("북마크 삭제 실패:", error);
               Alert.alert("오류", "취소 중 문제가 발생했습니다.");
@@ -192,17 +254,15 @@ export default function MyPage() {
     );
   };
 
-  // 콘텐츠 렌더링 함수
   const renderContent = () => {
     if (isLoading && activeTab !== 'personal') {
       return <ActivityIndicator size="large" color="#123A86" style={{ marginTop: 40 }} />;
     }
 
-      // --- 방문한 곳 탭 ---
       if (activeTab === 'visited') {
         const tripIds = Object.keys(visitedTrips);
         if (tripIds.length === 0) {
-          return <Text style={styles.placeholderText}>아직 방문 기록이 없어요.</Text>;
+          return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
         }
         
         return tripIds.map((tripId) => {
@@ -211,33 +271,35 @@ export default function MyPage() {
           const firstContent = tripContents[0];
           const imageUrl = firstContent.first_image ? firstContent.first_image : PLACEHOLDER_IMAGE_URL;
   
-           // ★★★ 핵심 1: 날짜를 이용한 새로운 제목 생성 ★★★
-        // created_at 문자열로 Date 객체를 만듭니다.
-        const tripDate = new Date(firstContent.created_at);
-        // "YYYY년 M월 D일" 형식으로 날짜를 보기 좋게 포맷합니다.
-        const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
-        // 새로운 제목을 설정합니다.
-        const newTitle = `${formattedDate}의 여행`;
+          const tripDate = new Date(firstContent.created_at);
+          const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
+          const newTitle = `${formattedDate}의 여행`;
 
-        return (
-          <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
-            {/* ★★★ 핵심 2: 새로 만든 제목과 부제목을 적용합니다 ★★★ */}
-            <Text style={styles.cardTitle}>{newTitle}</Text>
-            <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
-            
-            <View style={styles.imageBox}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            </View>
-          </TouchableOpacity>
-        );
-      });
-    }
+          return (
+            <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardTitle}>{newTitle}</Text>
+                  <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTrip(tripId);
+                  }}
+                  style={styles.deleteTripButton}
+                >
+                  <Text style={styles.deleteTripButtonText}>삭제</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.wishlistImageBox}>
+                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+              </View>
+            </TouchableOpacity>
+          );
+        });
+      }
   
-      // --- 북마크 탭 ---
       if (activeTab === 'wishlist') {
         if (bookmarks.length === 0) {
           return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
@@ -245,41 +307,24 @@ export default function MyPage() {
         return bookmarks.map((bookmark) => {
           const imageUrl = bookmark.firstImage ? bookmark.firstImage : PLACEHOLDER_IMAGE_URL;
           return (
-            <TouchableOpacity 
-              key={bookmark.id} 
-              style={styles.card}
-              onPress={() => handleBookmarkPress(bookmark)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardTextContainer}>
                   <Text style={styles.cardTitle}>{bookmark.title}</Text>
                   <Text style={styles.locationText}>{bookmark.addr1}</Text>
                 </View>
-                <TouchableOpacity 
-                  onPress={(e) => {
-                    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
-                    handleDeleteBookmark(bookmark.id);
-                  }}
-                  style={styles.starButton}
-                >
+                <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteBookmark(bookmark.id); }} style={styles.starButton}>
                   <Text style={styles.star}>★</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.wishlistImageBox}>
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
               </View>
             </TouchableOpacity>
           );
         });
       }
   
-
-    // --- 개인정보 관리 탭 ---
     if (activeTab === 'personal') {
       return (
         <>
@@ -306,39 +351,36 @@ export default function MyPage() {
         {(['visited', 'wishlist', 'personal'] as const).map((tab) => (
           <TouchableOpacity key={tab} style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]} onPress={() => setActiveTab(tab)}>
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {{ visited: '방문한 곳', wishlist: '북마크', personal: '개인정보 관리' }[tab]}
+              {{ visited: '나의 여행', wishlist: '북마크', personal: '개인정보 관리' }[tab]}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {renderContent()}
-      </ScrollView>
+      <View style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {renderContent()}
+        </ScrollView>
+      </View>
+      
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>로그아웃</Text>
+      </TouchableOpacity>
 
-      {/* --- 방문 기록 상세 팝업 (Modal) --- */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+      {/* --- Modals --- */}
+      <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>여행 기록 상세보기</Text>
             <ScrollView>
-              {/* 여행 요약 섹션 */}
               {selectedTrip?.tripInfo?.summary && (
                 <View style={styles.summarySection}>
                   <Text style={styles.summaryTitle}>여행 요약</Text>
                   <Text style={styles.summaryText}>{selectedTrip.tripInfo.summary}</Text>
                 </View>
               )}
-              
-              {/* 방문한 장소들 */}
               <Text style={styles.visitedPlacesTitle}>방문한 장소들</Text>
               {selectedTrip?.contents.map((content) => {
-                // ★★★ 핵심 수정 3: 팝업 내부의 이미지도 안전하게 처리합니다 ★★★
                 const imageUrl = content.first_image ? content.first_image : PLACEHOLDER_IMAGE_URL;
                 return (
                   <View key={content.content_id} style={styles.modalCard}>
@@ -358,34 +400,20 @@ export default function MyPage() {
         </View>
       </Modal>
 
-      {/* --- 북마크 상세 정보 팝업 (Modal) --- */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isBookmarkModalVisible}
-        onRequestClose={() => setIsBookmarkModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={isBookmarkModalVisible} onRequestClose={() => setIsBookmarkModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            {/* 헤더 영역 */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{selectedBookmark?.title}</Text>
-              <TouchableOpacity 
-                style={styles.closeXButton} 
-                onPress={() => setIsBookmarkModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.closeXButton} onPress={() => setIsBookmarkModalVisible(false)}>
                 <Text style={styles.closeXText}>✕</Text>
               </TouchableOpacity>
             </View>
-            
             <ScrollView style={styles.bookmarkModalScroll}>
-              {/* 주소 */}
               <View style={styles.infoSection}>
                 <Text style={styles.infoLabel}>주소</Text>
                 <Text style={styles.infoText}>{selectedBookmark?.addr1}</Text>
               </View>
-
-              {/* 해시태그 */}
               {selectedBookmark?.hashtags && (
                 <View style={styles.infoSection}>
                   <Text style={styles.infoLabel}>해시태그</Text>
@@ -404,16 +432,12 @@ export default function MyPage() {
                   </View>
                 </View>
               )}
-
-              {/* 추천 이유 */}
               {selectedBookmark?.recommendReason && (
                 <View style={styles.infoSection}>
                   <Text style={styles.infoLabel}>추천 이유</Text>
                   <Text style={styles.infoText}>{selectedBookmark.recommendReason}</Text>
                 </View>
               )}
-
-              {/* 길찾기 버튼 */}
               <TouchableOpacity style={styles.navigationButton} onPress={handleNavigation}>
                 <Text style={styles.navigationButtonText}>길찾기</Text>
               </TouchableOpacity>
@@ -427,14 +451,15 @@ export default function MyPage() {
 
 const screenWidth = Dimensions.get('window').width;
 
-// ★★★ 이 부분을 전체 교체하세요 ★★★
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F9FA'
   },
   titleWrapper: {
     paddingHorizontal: 20,
     paddingTop: 20,
+    backgroundColor: '#F8F9FA'
   },
   title: {
     fontSize: 18,
@@ -446,12 +471,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 20,
     paddingHorizontal: 10,
+    backgroundColor: '#F8F9FA'
   },
   tabButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 15,
-    backgroundColor: '#f0f0f0',
   },
   tabButtonActive: {
     backgroundColor: '#d6ebf8',
@@ -468,8 +493,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 30,
   },
-
-  // --- 핵심 수정: 카드 스타일 ---
   card: {
     marginBottom: 15,
     backgroundColor: '#fff',
@@ -490,6 +513,7 @@ const styles = StyleSheet.create({
   },
   cardTextContainer: {
     flex: 1,
+    marginRight: 10,
   },
   cardTitle: {
     fontSize: 16,
@@ -502,17 +526,6 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'left',
   },
-  imageBox: {
-    width: '100%', // 카드 너비에 꽉 채웁니다.
-    height: 180,
-    // 이미지 박스 자체에 둥근 모서리를 적용합니다 (위쪽만).
-    // 이렇게 하면 제목 부분과 부드럽게 이어집니다.
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: 'hidden', // 이미지가 둥근 모서리를 넘지 않도록 합니다.
-  },
-  // 위시리스트 카드 내부의 이미지 박스는 제목/주소 아래에 위치하므로 둥글 필요가 없습니다.
-  // 이 스타일을 위시리스트의 imageBox에 적용합니다.
   wishlistImageBox: {
     width: '100%',
     height: 140,
@@ -531,22 +544,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#123A86',
   },
-  deleteButton: {
-    marginTop: 15,
-    marginBottom: 10,
-    alignSelf: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    backgroundColor: '#ff4d4d',
-    borderRadius: 20,
+  deleteTripButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#FEEBEB',
+    borderRadius: 15,
   },
-  deleteButtonText: {
-    color: 'white',
+  deleteTripButtonText: {
+    color: '#E53E3E',
+    fontSize: 12,
     fontFamily: 'Pretendard-Medium',
-    fontSize: 10,
   },
-
-  // --- 나머지 스타일 (기존과 동일) ---
   placeholderText: {
     textAlign: 'center',
     marginTop: 40,
@@ -572,10 +580,17 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'left',
   },
+  imageBox: {
+    width: '100%',
+    height: 180,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 10,
+  },
   modalCard: {
     marginBottom: 20,
     width: '100%',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   closeButton: {
     marginTop: 20,
@@ -615,9 +630,8 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15,
     marginTop: 10,
+    alignSelf: 'flex-start'
   },
-  
-  // 북마크 모달 스타일
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -685,5 +699,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
+  },
+  logoutButton: {
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+    backgroundColor: '#F8F9FA'
+  },
+  logoutButtonText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 14,
   },
 });
