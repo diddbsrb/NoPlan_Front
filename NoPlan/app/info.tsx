@@ -1,7 +1,6 @@
 // Info.tsx
 
 import * as Font from 'expo-font';
-import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -48,16 +47,7 @@ interface ListPlace {
   };
 }
 
-interface TourDetail {
-  mapx: string;
-  mapy: string;
-  firstimage?: string;
-  firstimage2?: string;
-  title?: string;
-  addr1?: string;
-  overview?: string;
-  contentid?: string;
-}
+// 🆕 TourDetail 인터페이스 제거 - current 데이터만 사용
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_EXPANDED = 100;
@@ -75,9 +65,9 @@ export default function Info() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const sheetY = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
   const [isExpanded, setIsExpanded] = useState(false);
-  const [detail, setDetail] = useState<TourDetail | null>(null);
+  // 🆕 detail 상태 제거 - current 데이터만 사용
   const [error, setError] = useState<string | null>(null);
-  const [userLoc, setUserLoc] = useState<{ latitude: number; longitude: number } | null>(null);
+  // 🆕 위치 권한 제거 - current의 좌표만 사용
 
   const [favorite, setFavorite] = useState(false);
   const [bookmarkId, setBookmarkId] = useState<number | null>(null);
@@ -107,76 +97,11 @@ export default function Info() {
   // 2) 현재 contentid에 해당하는 항목
   const current = listPlaces.find(p => p.contentid === contentid);
 
-  // 3) 상세 API 호출
-  useEffect(() => {
-    if (!contentid) {
-      setError('콘텐츠 ID가 없습니다.');
-      return;
-    }
-    
-    let isMounted = true;
-    
-    console.log('[info.tsx] Fetching detail for contentid:', contentid);
-    const apiUrl = `https://no-plan.cloud/api/v1/tours/detail/${contentid}/`;
-    console.log('[info.tsx] API URL:', apiUrl);
-    
-    fetch(apiUrl)
-      .then(res => {
-        console.log('[info.tsx] Response status:', res.status);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then((data: TourDetail) => {
-        console.log('[info.tsx] Detail data received:', data);
-        if (isMounted) {
-          setDetail(data);
-        }
-      })
-      .catch((error) => {
-        console.error('[info.tsx] Detail API error:', error);
-        if (isMounted) {
-          setError(`상세 정보를 불러오지 못했습니다: ${error.message}`);
-        }
-      });
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [contentid]);
+  // 🆕 Detail API 호출 제거 - current 데이터만 사용
 
-  // 4) 위치 권한/좌표 조회
-  useEffect(() => {
-    let isMounted = true;
-    
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          if (isMounted) {
-            setError('위치 권한이 필요합니다.');
-          }
-          return;
-        }
-        const loc = await Location.getCurrentPositionAsync({});
-        if (isMounted) {
-          setUserLoc({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-        }
-      } catch (error) {
-        console.error('[info.tsx] Location error:', error);
-        if (isMounted) {
-          setError('위치 정보를 가져오지 못했습니다.');
-        }
-      }
-    })();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // 🆕 위치 권한/좌표 조회 제거 - current의 좌표만 사용
 
-  // 5) 화면이 포커스될 때마다 북마크 상태 새로고침
+  // 3) 화면이 포커스될 때마다 북마크 상태 새로고침
   useFocusEffect(
     useCallback(() => {
       let isMounted = true;
@@ -205,7 +130,7 @@ export default function Info() {
     }, [contentid])
   );
 
-  // 6) 바텀시트 PanResponder
+  // 4) 바텀시트 PanResponder
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10,
@@ -228,12 +153,10 @@ export default function Info() {
     const imageUri =
       current?.firstimage ||
       current?.firstimage2 ||
-      detail?.firstimage ||
-      detail?.firstimage2 ||
       '';
     const title = current?.title || '제목 없음';
     const addr1 = current?.addr1 || '';
-    const overview = detail?.overview || ''; // detail API에서 가져온 overview 사용
+    const overview = ''; // 🆕 overview는 detail에만 있으므로 빈 문자열 사용
     const hashtags = current?.hashtags || '';
     const recommendReason = current?.recommend_reason || '';
 
@@ -276,7 +199,7 @@ export default function Info() {
   }
   
   // 데이터가 없고 위치 정보도 없는 경우 로딩 표시
-  if ((!detail && !current) || !userLoc) {
+  if (!current) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#123A86" />
@@ -286,32 +209,30 @@ export default function Info() {
   }
 
   // 화면에 사용할 데이터 결정
-  console.log('[info.tsx] Data processing:', { current, detail });
+  console.log('[info.tsx] Data processing:', { current });
   
   const imageUri =
     current?.firstimage ||
     current?.firstimage2 ||
-    detail?.firstimage ||
-    detail?.firstimage2 ||
     '';
   
   // 기본 이미지 설정
   const defaultImage = type ? DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES] : DEFAULT_IMAGES.restaurants;
-  const title = current?.title || detail?.title || '제목 없음';
-  const addr1 = current?.addr1 || detail?.addr1 || '';
+  const title = current?.title || '제목 없음';
+  const addr1 = current?.addr1 || '';
   const recommendReason = current?.recommend_reason || '';
-  const overview = detail?.overview || '';
+  const overview = '';
   const rawHashtags = current?.hashtags || '';
   const hashtags = rawHashtags
     .split('#')
     .map(t => t.trim())
     .filter(t => t.length > 0);
   
-  // 좌표 처리 - detail에서 가져온 경우 문자열을 숫자로 변환
+  // 좌표 처리 - current에서 가져온 경우 문자열을 숫자로 변환
   let latitude: number, longitude: number;
   try {
-    latitude = parseFloat(current?.mapy ?? detail?.mapy ?? '0');
-    longitude = parseFloat(current?.mapx ?? detail?.mapx ?? '0');
+    latitude = parseFloat(current?.mapy ?? '0');
+    longitude = parseFloat(current?.mapx ?? '0');
     console.log('[info.tsx] Coordinates:', { latitude, longitude });
   } catch (error) {
     console.error('[info.tsx] Coordinate parsing error:', error);
@@ -370,7 +291,7 @@ export default function Info() {
                 addr1,
                 mapx: `${longitude}`,
                 mapy: `${latitude}`,
-                overview: overview,
+                overview: '', // 🆕 overview는 detail에만 있으므로 빈 문자열 사용
                 hashtags: rawHashtags,
                 recommend_reason: recommendReason,
                 category, // 🆕 카테고리 정보 추가
