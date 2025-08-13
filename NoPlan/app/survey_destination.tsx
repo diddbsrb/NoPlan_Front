@@ -1,8 +1,8 @@
 // app/survey_destination.tsx
+import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState, useEffect } from 'react';
-import * as Font from 'expo-font';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
@@ -33,7 +33,7 @@ export default function SurveyDestination() {
     loadFonts();
   }, []);
 
-  // 🆕 자동 추천 타입이 있으면 자동 선택 및 자동 진행
+  // 🆕 화면이 포커스될 때마다 survey 상태 로깅
   useFocusEffect(
     useCallback(() => {
       // 🆕 현재 survey 상태 로깅 (adjectives 포함)
@@ -41,27 +41,12 @@ export default function SurveyDestination() {
         adjectives: survey.adjectives,
         transportation: survey.transportation,
         companion: survey.companion,
-        region: survey.region,
-        autoRecommendType: survey.autoRecommendType
+        region: survey.region
       });
       
-      if (survey.autoRecommendType) {
-        // 자동 추천 타입에 따른 인덱스 매핑
-        const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
-        const autoIndex = typeMap.indexOf(survey.autoRecommendType);
-        if (autoIndex !== -1) {
-          setSelected(autoIndex);
-          console.log(`[survey_destination] 자동 선택: ${survey.autoRecommendType} -> 인덱스 ${autoIndex}`);
-          
-          // 🆕 자동으로 다음 버튼 클릭 효과
-          setTimeout(() => {
-            handleNextButton(autoIndex);
-          }, 500); // 0.5초 후 자동 진행
-        }
-      } else {
-        setSelected(null);
-      }
-    }, [survey.autoRecommendType, survey.adjectives, survey.transportation, survey.companion, survey.region])
+      // 🆕 수동 선택 화면이므로 자동 진행 없음
+      setSelected(null);
+    }, [survey.adjectives, survey.transportation, survey.companion, survey.region])
   );
 
   // 🆕 다음 버튼 로직을 함수로 분리
@@ -84,7 +69,7 @@ export default function SurveyDestination() {
       // 키워드 설정
       const adjectives = survey.adjectives || '';
 
-      // autoRecommendType을 제외한 새로운 survey 객체 생성
+      // 🆕 수동 선택 시 autoRecommendType 제거하여 자동 추천과 구분
       const { autoRecommendType, ...surveyWithoutAuto } = survey;
       const newSurvey: TravelSurveyData = {
         ...surveyWithoutAuto,
@@ -92,7 +77,10 @@ export default function SurveyDestination() {
         mapY: location.coords.latitude,
         radius,
         adjectives,
+        // autoRecommendType은 제거됨 (수동 선택임을 명시)
       };
+      
+      console.log('[survey_destination] 🎯 수동 선택 처리');
       console.log('[survey_destination] setSurvey request body:', newSurvey);
       console.log('[survey_destination] Location data:', {
         longitude: location.coords.longitude,

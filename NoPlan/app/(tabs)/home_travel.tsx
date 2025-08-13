@@ -1,9 +1,9 @@
 // app/(tabs)/home_travel.tsx
 
+import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -20,7 +20,6 @@ import {
   Trip,
   VisitedContent,
 } from '../../service/travelService';
-import { categoryMapping, VisitedContentWithCategory } from '../../utils/categoryMapping';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -76,7 +75,7 @@ export default function HomeTravel() {
   }, [sections]);
 
   // 추천 컨텍스트 생성 함수
-  const getRecommendationContext = (visitedContents: VisitedContentWithCategory[]): RecommendationContext => {
+  const getRecommendationContext = (visitedContents: VisitedContentWithDate[]): RecommendationContext => {
     const now = new Date();
     const hour = now.getHours();
     
@@ -104,7 +103,10 @@ export default function HomeTravel() {
     
     // 마지막 방문지의 카테고리 기반 추천
     const lastVisited = visitedContents[visitedContents.length - 1];
+    // 🆕 데이터베이스의 category 필드 사용
     const lastCategory = lastVisited.category || 'attractions'; // 기본값
+    
+    console.log(`[HomeTravel] 마지막 방문지 카테고리: ${lastCategory} (${lastVisited.title})`);
     
     switch (lastCategory) {
       case 'restaurants':
@@ -171,7 +173,7 @@ export default function HomeTravel() {
       };
       const radius = radiusMap[survey.transportation || '대중교통'] || 500;
       
-      // survey context 업데이트 (자동 추천 타입 포함)
+      // 🆕 survey context 업데이트 (자동 추천 타입 포함)
       const newSurvey: TravelSurveyData = {
         ...survey,
         mapX: location.coords.longitude,
@@ -180,7 +182,18 @@ export default function HomeTravel() {
         adjectives: survey.adjectives || '',
         autoRecommendType: type, // 🆕 자동 추천 타입 저장
       };
+      
+      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> autoRecommendType으로 설정`);
+      console.log(`[HomeTravel] 새로운 survey 상태:`, JSON.stringify(newSurvey, null, 2));
+      console.log(`[HomeTravel] 이 값이 info.tsx에서 방문 기록 저장 시 category로 사용됩니다.`);
+      
       setSurvey(newSurvey);
+      
+      // 🆕 survey 상태 설정 후 최종 확인
+      console.log(`[HomeTravel] 🎯 list.tsx로 이동 전 최종 확인:`);
+      console.log(`[HomeTravel] - autoRecommendType: ${type}`);
+      console.log(`[HomeTravel] - 이동할 경로: /list?type=${type}`);
+      console.log(`[HomeTravel] - list.tsx에서 finalType = survey.autoRecommendType이 될 예정`);
       
       // 🆕 survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
       router.replace({ pathname: '/list', params: { type } });
@@ -206,7 +219,6 @@ export default function HomeTravel() {
       
       // 1) 트립 전체 조회
       const trips = (await travelService.getTripData()) as TripWithDate[];
-      console.log('[HomeTravel] trips:', JSON.stringify(trips, null, 2));
 
       if (!trips.length) {
         console.warn('[HomeTravel] 트립이 없습니다');
@@ -220,7 +232,6 @@ export default function HomeTravel() {
         .sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
-      console.log('[HomeTravel] latest trip:', JSON.stringify(latest, null, 2));
 
       // 🆕 최신 여행 정보로 survey 상태 업데이트 (adjectives 포함)
       if (latest) {
@@ -232,18 +243,12 @@ export default function HomeTravel() {
           adjectives: latest.adjectives || survey.adjectives, // 🆕 adjectives 추가
         };
         setSurvey(updatedSurvey);
-        console.log('[HomeTravel] survey 상태 업데이트됨:', updatedSurvey);
       }
 
       // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
-      console.log('[HomeTravel] allVisited raw:', JSON.stringify(allVisited, null, 2));
 
       const visited = allVisited.filter((c) => c.trip === latest.id);
-      console.log(
-        `[HomeTravel] filtered visited (trip === ${latest.id}):`,
-        JSON.stringify(visited, null, 2)
-      );
 
       if (!visited.length) {
         console.warn('[HomeTravel] 해당 trip의 방문지가 없습니다');
@@ -253,10 +258,9 @@ export default function HomeTravel() {
       visited.sort((a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
-      console.log('[HomeTravel] sorted visited:', JSON.stringify(visited, null, 2));
 
-      // 🆕 카테고리 정보 추가
-      const visitedWithCategories = await categoryMapping.getVisitedCategories(visited);
+      // 🆕 카테고리 정보는 이미 데이터베이스에 저장되어 있음
+      const visitedWithCategories = visited;
       console.log('[HomeTravel] visitedWithCategories:', JSON.stringify(visitedWithCategories, null, 2));
 
       // 🆕 추천 컨텍스트 생성
