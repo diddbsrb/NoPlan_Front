@@ -15,7 +15,10 @@ import React, { useEffect } from 'react';
 import messaging from '@react-native-firebase/messaging';
 import { getFCMToken, listenForForegroundMessages, requestUserPermission } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
 
-// ★★★ 3. 백그라운드 핸들러는 반드시 컴포넌트 바깥, 파일 최상단에 위치해야 합니다. ★★★
+// ★★★ 3. AuthProvider를 import 합니다. ★★★
+import { AuthProvider } from './(contexts)/AuthContext';
+
+// ★★★ 4. 백그라운드 핸들러는 반드시 컴포넌트 바깥, 파일 최상단에 위치해야 합니다. ★★★
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('백그라운드/종료 상태에서 메시지 처리:', remoteMessage);
 });
@@ -72,7 +75,7 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // ★★★ 4. 푸시 알림 설정을 위한 useEffect 훅을 추가합니다. ★★★
+  // ★★★ 5. 푸시 알림 설정을 위한 useEffect 훅을 추가합니다. ★★★
   useEffect(() => {
     // 앱이 필요한 폰트나 리소스를 모두 로드한 후에 푸시 알림 설정을 시작하는 것이 좋습니다.
     if (loaded) {
@@ -97,54 +100,58 @@ export default function RootLayout() {
 
   // 기존의 UI 구조는 그대로 유지합니다.
   return (
-    <TravelSurveyProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthStateHandler />
-        <Stack>
-          {/* 탭 내비: 헤더 숨김 */}
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false }}
-          />
+    // ★★★ 6. AuthProvider로 앱 전체를 감싸줍니다. ★★★
+    // 이제 앱의 모든 곳에서 useAuth() 훅을 통해 로그인 상태를 공유할 수 있습니다.
+    <AuthProvider>
+      <TravelSurveyProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AuthStateHandler />
+          <Stack>
+            {/* 탭 내비: 헤더 숨김 */}
+            <Stack.Screen
+              name="(tabs)"
+              options={{ headerShown: false }}
+            />
 
-          {/* index 화면을 명시적으로 등록 */}
-          <Stack.Screen
-            name="index"
-            options={{ headerShown: false }}
-          />
+            {/* index 화면을 명시적으로 등록 */}
+            <Stack.Screen
+              name="index"
+              options={{ headerShown: false }}
+            />
 
-          {/* 설문 화면: 기본 헤더 숨김 */}
-          <Stack.Screen
-            name="survey_travel"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="survey_destination"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="mypage"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="info"
-            options={{ headerShown: false }}
-          />
-          
-          {/* ★★★ 카카오 로그인 웹뷰 화면을 스택에 등록하는 것을 잊지 마세요. ★★★ */}
-          <Stack.Screen
-            name="kakao"
-            options={{ title: '카카오 로그인' }} // 헤더가 보이도록 설정 (뒤로가기 등)
-          />
+            {/* 설문 화면: 기본 헤더 숨김 */}
+            <Stack.Screen
+              name="survey_travel"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="survey_destination"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="mypage"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="info"
+              options={{ headerShown: false }}
+            />
+            
+            {/* ★★★ 카카오 로그인 웹뷰 화면을 스택에 등록하는 것을 잊지 마세요. ★★★ */}
+            <Stack.Screen
+              name="kakao"
+              options={{ title: '카카오 로그인' }} // 헤더가 보이도록 설정 (뒤로가기 등)
+            />
 
-          {/* Not Found */}
-          <Stack.Screen
-            name="+not-found"
-            options={{ title: 'Not Found' }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </TravelSurveyProvider>
+            {/* Not Found */}
+            <Stack.Screen
+              name="+not-found"
+              options={{ title: 'Not Found' }}
+            />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </TravelSurveyProvider>
+    </AuthProvider>
   );
 }

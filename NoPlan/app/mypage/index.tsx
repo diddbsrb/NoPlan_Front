@@ -20,8 +20,8 @@ import CustomTopBar from '../(components)/CustomTopBar';
 import { userService } from '../../service/userService';
 import { travelService, VisitedContent, Trip } from '../../service/travelService';
 import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
-// ★★★ 핵심 1: 로그아웃을 위한 모든 서비스/모듈 import ★★★
-import { authService } from '../../service/authService';
+// ★★★ 핵심 1: AuthContext import 추가 ★★★
+import { useAuth } from '../(contexts)/AuthContext';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import * as SecureStore from 'expo-secure-store';
 
@@ -42,8 +42,8 @@ const PLACEHOLDER_IMAGE_URL = 'https://search.pstatic.net/common/?src=http%3A%2F
 
 export default function MyPage() {
   const router = useRouter();
-  // ★★★ 핵심 2: 로그아웃 시 필요한 모든 context 함수 가져오기 ★★★
-  const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
+  // ★★★ 핵심 2: AuthContext에서 logout 함수 가져오기 ★★★
+  const { logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
   const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('terms');
@@ -149,7 +149,7 @@ export default function MyPage() {
     Linking.openURL(kakaoMapUrl);
   };
 
-  // ★★★ 핵심 3: InfoEditComponent와 동일하게 수정된 로그아웃 함수 ★★★
+  // ★★★ 핵심 3: AuthContext를 사용하는 로그아웃 함수 ★★★
   const handleLogout = () => {
     Alert.alert(
       "로그아웃",
@@ -163,24 +163,11 @@ export default function MyPage() {
           text: "로그아웃",
           onPress: async () => {
             try {
-              // 1. 서버에 로그아웃 요청 (리프레시 토큰 만료)
-              await authService.logout();
+              // AuthContext의 logout 함수 사용 (모든 정리 작업을 자동으로 처리)
+              await logout();
               
-              // 2. 여행 상태를 false로 설정
-              await setIsTraveling(false);
-              
-              // 3. 로그인 상태를 false로 설정
-              await setIsLoggedIn(false);
-              
-              // 4. 기기에서 토큰 삭제
-              await SecureStore.deleteItemAsync('accessToken');
-              await SecureStore.deleteItemAsync('refreshToken');
-              
-              // 5. 여행 상태 재확인 (필수)
-              await checkTravelStatus();
-              
-              // 6. 초기 화면(로그인)으로 이동
-              router.replace('/(tabs)/signin'); // 또는 앱의 시작점인 '/'
+              // 홈 화면으로 이동
+              router.replace('/');
       
             } catch (error) {
               console.error('로그아웃 처리 중 오류 발생:', error);

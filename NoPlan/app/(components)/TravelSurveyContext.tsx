@@ -119,31 +119,6 @@ export function TravelSurveyProvider({ children }: { children: ReactNode }) {
         setIsLoggedInState(true);
         console.log('[TravelSurveyContext] 저장된 로그인 상태: 로그인됨');
         
-        // 로그인된 경우 토큰 유효성 확인 및 apiClient 준비
-        try {
-          const accessToken = await SecureStore.getItemAsync('accessToken');
-          if (accessToken) {
-            // apiClient를 호출하여 토큰 준비 (실제 API 호출은 하지 않고 토큰 검증만)
-            console.log('[TravelSurveyContext] 로그인 상태에서 토큰 확인 및 apiClient 준비');
-            // 간단한 헤더 확인 요청으로 토큰 유효성 검증
-            await apiClient.get('/users/me/', { 
-              timeout: 5000,
-              validateStatus: () => true // 모든 상태 코드를 성공으로 처리
-            });
-          } else {
-            console.log('[TravelSurveyContext] 액세스 토큰이 없습니다. 로그인 상태를 false로 설정');
-            setIsLoggedInState(false);
-            await SecureStore.setItemAsync('isLoggedIn', 'false');
-            return;
-          }
-        } catch (tokenError) {
-          console.error('[TravelSurveyContext] 토큰 검증 실패:', tokenError);
-          // 토큰이 유효하지 않으면 로그인 상태를 false로 설정
-          setIsLoggedInState(false);
-          await SecureStore.setItemAsync('isLoggedIn', 'false');
-          return;
-        }
-
         // 여행 상태 확인 및 로깅
         if (savedTravelState === 'true') {
           setIsTravelingState(true);
