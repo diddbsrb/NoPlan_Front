@@ -3,11 +3,15 @@
 import { apiClient } from './apiClient';
 
 // 사용자 정보에 대한 인터페이스 정의
+// ★★★★★★★★★★★★★★★★★★★★★★★★
+// ★★★ 여기에 is_kakao_linked 를 추가하는 것이 핵심입니다. ★★★
+// ★★★★★★★★★★★★★★★★★★★★★★★★
 export interface UserInfo {
   id: number;
   name: string | null;
   email: string;
   is_info_exist: boolean;
+  is_kakao_linked: boolean; // 👈 이 필드를 추가합니다.
 }
 
 export const userService = {
@@ -19,12 +23,12 @@ export const userService = {
   },
 
   /**
-   * 기본 사용자 정보 조회 (이름, 이메일)
+   * 기본 사용자 정보 조회 (이름, 이메일, 카카오 연동 여부 등)
    * @returns Promise<UserInfo> - 사용자 정보 객체를 반환합니다.
    */
   getUserInfo: async (): Promise<UserInfo> => {
     try {
-      // apiClient.get의 반환 타입에서 실제 데이터 타입을 명시해줍니다.
+      // 이제 apiClient.get의 제네릭 타입이 올바르므로 데이터가 누락되지 않습니다.
       const res = await apiClient.get<UserInfo>('/users/me/');
       console.log('📦 userService 응답 (res.data):', res.data);
       

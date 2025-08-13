@@ -8,6 +8,11 @@ import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import { login } from '@react-native-seoul/kakao-login';
 
+// ★★★ 1. useAuth 훅을 import 합니다. ★★★
+import { useAuth } from './(contexts)/AuthContext';
+// UserInfo 타입을 사용하기 위해 import 합니다.
+import { UserInfo } from '../service/userService';
+
 // 백엔드 API URL (환경 변수로 관리하는 것을 권장)
 // 예: const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const BACKEND_API_URL = 'https://www.no-plan.cloud/api/v1/users/kakao/';
@@ -16,6 +21,8 @@ export default function KakaoLoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  // ★★★ 2. AuthContext에서 login 함수를 가져옵니다. (authLogin으로 별칭 부여) ★★★
+  const { login: authLogin } = useAuth();
 
   // 폰트 로드
   useEffect(() => {
@@ -39,15 +46,22 @@ export default function KakaoLoginScreen() {
 
       console.log('백엔드로부터 최종 JWT 응답 수신:', response.data);
 
-      const { access, refresh } = response.data;
-      if (access) {
-        await SecureStore.setItemAsync('accessToken', access);
-        if (refresh) {
-          await SecureStore.setItemAsync('refreshToken', refresh);
+      // ★★★ 3. 백엔드 응답에서 user 객체까지 모두 추출합니다. ★★★
+      const { access, refresh, user } = response.data as { access: string; refresh: string; user: UserInfo };
+      
+      if (access && user) {
+        // ★★★ 4. Context의 login 함수를 호출하여 전역 상태를 업데이트하고 토큰을 저장합니다. ★★★
+        await authLogin(access, refresh, user);
+        
+        // ★★★ 5. 이제 user 객체를 통해 is_info_exist를 바로 사용할 수 있습니다. ★★★
+        if (user.is_info_exist) {
+          router.replace('/(tabs)/home');
+        } else {
+          router.replace('/(tabs)/user_info');
         }
-        router.replace('/(tabs)/home');
+
       } else {
-        throw new Error('백엔드로부터 유효한 토큰을 받지 못했습니다.');
+        throw new Error('백엔드로부터 유효한 토큰 또는 사용자 정보를 받지 못했습니다.');
       }
     } catch (error) {
       console.error('백엔드로 토큰 전송 중 에러 발생:', error);

@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 
 import * as SecureStore from 'expo-secure-store';
-import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+// ★★★ AuthContext import 추가 ★★★
+import { useAuth } from '../(contexts)/AuthContext';
 import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
 
 // 백엔드 응답 타입 (기존과 동일)
@@ -24,6 +25,7 @@ interface LoginResponse {
     name: string;
     email: string;
     is_info_exist: boolean;
+    is_kakao_linked?: boolean; // ★★★ is_kakao_linked 속성 추가 ★★★
   };
 }
 
@@ -33,8 +35,10 @@ export default function SigninScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { setIsLoggedIn, checkTravelStatus } = useTravelSurvey();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  // ★★★ AuthContext에서 login 함수 가져오기 ★★★
+  const { login } = useAuth();
 
   // 폰트 로드
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function SigninScreen() {
 
   // ★★★ expo-auth-session 관련 코드는 모두 삭제되었습니다. ★★★
 
-  // 이메일 로그인 함수 (기존과 동일)
+  // 이메일 로그인 함수 (AuthContext 사용)
   const handleEmailLogin = async () => {
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
@@ -61,14 +65,11 @@ export default function SigninScreen() {
       const res = await authService.signIn(email, password);
       const { access, refresh, user } = res.data as LoginResponse;
       
-      await SecureStore.setItemAsync('accessToken', access);
-      await SecureStore.setItemAsync('refreshToken', refresh); // 리프레시 토큰 저장
-
-      // 로그인 상태를 true로 설정
-      await setIsLoggedIn(true);
-      
-      // 로그인 후 여행 상태 확인
-      await checkTravelStatus();
+      // ★★★ AuthContext의 login 함수 사용 ★★★
+      await login(access, refresh, {
+        ...user,
+        is_kakao_linked: user.is_kakao_linked ?? false // ★★★ 기본값 false로 설정 ★★★
+      });
 
       if (user.is_info_exist) {
         router.replace('/(tabs)/home');
@@ -161,26 +162,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 28,
-    justifyContent: 'flex-end',
-    paddingBottom: 100,
+    justifyContent: 'center',
     backgroundColor: '#fff',
   },
   title: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '600',
     textAlign: 'center',
     marginBottom: 12,
     color: '#000',
   },
   blue: {
-    color: '#123A86',
-    fontFamily: 'Pretendard-Medium',
+    color: '#80BFE8',
+    fontWeight: '700',
   },
   subtext: {
     fontSize: 13,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 50,
+    marginBottom: 30,
     lineHeight: 20,
   },
   input: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#D4E8F9',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Medium',
-    color: '#fff',
+    fontWeight: '600',
+    color: '#222',
   },
   orText: {
     textAlign: 'center',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   kakaoText: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '600',
     color: '#3B1E1E',
   },
   footerText: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: 'bold',
     color: '#000',
   },
   errorText: {
