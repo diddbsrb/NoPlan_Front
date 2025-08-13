@@ -1,9 +1,9 @@
 // Info.tsx
 
+import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as Font from 'expo-font';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -22,7 +22,6 @@ import MapView, { Marker } from 'react-native-maps';
 
 import { bookmarkService } from '../service/bookmarkService';
 import { CreateVisitedContentDto, travelService } from '../service/travelService';
-import { categoryMapping } from '../utils/categoryMapping';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../assets/images/식당.jpg'),
@@ -323,6 +322,13 @@ export default function Info() {
   // 방문 체크 처리
   const handleVisit = () => {
     console.log('▶ handleVisit 호출!');
+    console.log('[info] 🎯 방문 기록 저장 시작');
+    console.log('[info] 전달받은 파라미터:', {
+      contentid,
+      type,
+      placesParam: placesParam ? '존재함' : '없음'
+    });
+    
     Alert.alert(
       '방문했어요',
       '이 장소를 방문 목록에 추가하시겠습니까?',
@@ -336,12 +342,27 @@ export default function Info() {
               const trips = await travelService.getTripData();
               const latest = trips.sort((a, b) => b.id - a.id)[0];
 
-              // 🆕 카테고리 판단 및 저장
-              const category = categoryMapping.determineCategory(title, recommendReason);
-              await categoryMapping.saveCategory(Number(contentid), category);
-              console.log(`[info] 카테고리 저장: ${title} -> ${category}`);
+              // 🆕 카테고리 결정: list.tsx에서 전달받은 type 파라미터 사용
+              let category: 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
+              
+              // list.tsx에서 이미 finalType을 결정하여 type으로 전달했으므로 이를 사용
+              if (type && ['restaurants', 'cafes', 'attractions', 'accommodations'].includes(type)) {
+                category = type as 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
+                console.log(`[info] 🎯 카테고리 결정: ${category}`);
+                console.log(`[info] list.tsx에서 전달받은 type: ${type}`);
+                console.log(`[info] 이 값이 데이터베이스의 category 필드에 저장됩니다.`);
+              } 
+              // 기본값 사용 (type이 없는 경우)
+              else {
+                category = 'attractions';
+                console.log(`[info] 기본 카테고리 사용: ${category}`);
+                console.log(`[info] type 파라미터가 없어 기본값을 사용합니다.`);
+                console.log(`[info] type 파라미터:`, type);
+              }
 
-              // DTO 구성
+              console.log(`[info] 최종 결정된 카테고리: ${category} (${title})`);
+
+              // DTO 구성 - 카테고리 정보 포함
               const dto: CreateVisitedContentDto = {
                 content_id: Number(contentid),
                 title,
@@ -352,7 +373,10 @@ export default function Info() {
                 overview: overview,
                 hashtags: rawHashtags,
                 recommend_reason: recommendReason,
+                category, // 🆕 카테고리 정보 추가
               };
+
+              console.log(`[info] 방문 기록 DTO 생성 완료:`, JSON.stringify(dto, null, 2));
 
               // POST 요청
               await travelService.createVisitedContent(latest.id, dto);

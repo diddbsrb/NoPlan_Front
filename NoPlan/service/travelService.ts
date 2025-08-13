@@ -32,6 +32,7 @@ export interface VisitedContent {
   hashtags: string;          // 해시태그 문자열 (예: "#역사#문화")
   recommend_reason: string;  // 추천 이유
   created_at: string;        // 등록 일시
+  category?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations'; // 🆕 카테고리 필드 추가
 }
 
 /**
@@ -47,6 +48,7 @@ export interface CreateVisitedContentDto {
   overview: string;
   hashtags?: string;
   recommend_reason?: string;
+  category?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations'; // 🆕 카테고리 필드 추가
 }
 
 export const travelService = {
