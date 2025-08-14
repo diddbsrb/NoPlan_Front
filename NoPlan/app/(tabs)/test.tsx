@@ -5,22 +5,22 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { memo, useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
-    travelService,
-    Trip,
-    VisitedContent,
+  travelService,
+  Trip,
+  VisitedContent,
 } from '../../service/travelService';
 
 interface TripWithDate extends Trip {
@@ -35,6 +35,12 @@ interface TripItem {
   place: string;
   category?: string;
   image?: string;
+  // 추가 속성들도 포함
+  address?: string;
+  overview?: string;
+  hashtags?: string;
+  recommendReason?: string;
+  coordinates?: { x: string; y: string };
 }
 interface TripSection {
   date: string;
@@ -61,6 +67,7 @@ export default function HomeTravel() {
   const [recommendationContext, setRecommendationContext] = useState<RecommendationContext | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<TripItem | null>(null);
 
   // 폰트 로드
   useEffect(() => {
@@ -94,7 +101,7 @@ export default function HomeTravel() {
         currentTime: now,
         lastVisitedType: null,
         recommendationType: 'accommodations',
-        message: '하루가 가고 있어요!\n숙소는 정하셨나요?',
+        message: '하루가 가고 있어요! 숙소는 정하셨나요?',
         buttonText: '숙소 추천받기'
       };
     }
@@ -269,7 +276,13 @@ export default function HomeTravel() {
             time: c.created_at.split('T')[1].slice(0, 5),
             place: c.title,
             category: c.category,
-            image: c.first_image,
+            image: c.first_image || undefined, // 빈 문자열이면 undefined로 설정하여 기본 이미지 사용
+            // 추가 속성들도 포함
+            address: c.addr1,
+            overview: c.overview,
+            hashtags: c.hashtags,
+            recommendReason: c.recommend_reason,
+            coordinates: { x: c.mapx, y: c.mapy },
           })),
         },
       ];
@@ -288,6 +301,48 @@ export default function HomeTravel() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // 카테고리별 기본 이미지 설정 (CardItem과 공유)
+  const getDefaultImage = (category?: string) => {
+    const DEFAULT_IMAGES = {
+      restaurants: require('../../assets/images/restaurants_icon.png'),
+      cafes: require('../../assets/images/cafes_icon.png'),
+      accommodations: require('../../assets/images/accommodations_icon.png'),
+      attractions: require('../../assets/images/attractions_icon.png'),
+    };
+
+    if (!category) return DEFAULT_IMAGES.attractions;
+    
+    switch (category) {
+      case 'restaurants':
+        return DEFAULT_IMAGES.restaurants;
+      case 'cafes':
+        return DEFAULT_IMAGES.cafes;
+      case 'accommodations':
+        return DEFAULT_IMAGES.accommodations;
+      case 'attractions':
+      default:
+        return DEFAULT_IMAGES.attractions;
+    }
+  };
+
+  // 카테고리를 한글로 매핑 (CardItem과 공유)
+  const getCategoryDisplayName = (category?: string) => {
+    if (!category) return '방문지';
+    
+    switch (category) {
+      case 'restaurants':
+        return '식당';
+      case 'cafes':
+        return '카페';
+      case 'accommodations':
+        return '숙소';
+      case 'attractions':
+        return '관광지';
+      default:
+        return '방문지';
+    }
+  };
 
   if (!fontsLoaded) {
     return (
@@ -313,12 +368,12 @@ export default function HomeTravel() {
 
          {/* 중앙 아바타 - 히어로 하단에 겹치도록 */}
          <View style={styles.avatarWrap}>
-           <View style={styles.avatarRing}>
-             <Image
-               source={{ uri: 'https://picsum.photos/80' }}
-               style={styles.avatar}
-             />
-           </View>
+                       <View style={styles.avatarRing}>
+              <Image
+                source={require('../../assets/images/noplan_logo_blue.png')}
+                style={styles.avatar}
+              />
+            </View>
            <Text style={styles.avatarCaption} numberOfLines={0}>
              {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
            </Text>
@@ -352,9 +407,15 @@ export default function HomeTravel() {
           {loading && <Text style={styles.loadingText}>로딩 중...</Text>}
           {error && <Text style={styles.errorText}>{error}</Text>}
           
-          {!loading && !error && sections.length > 0 && sections[0].data.map((item, index) => (
-            <CardItem key={index} item={item} />
-          ))}
+                     {!loading && !error && sections.length > 0 && sections[0].data.map((item, index) => (
+             <CardItem 
+               key={index} 
+               item={item} 
+               onPress={() => setSelectedItem(item)}
+               getDefaultImage={getDefaultImage}
+               getCategoryDisplayName={getCategoryDisplayName}
+             />
+           ))}
           
           {!loading && !error && sections.length === 0 && (
             <Text style={styles.emptyText}>아직 방문한 장소가 없습니다.</Text>
@@ -387,57 +448,138 @@ export default function HomeTravel() {
         </View>
       </View>
 
-      {/* 종료 모달 */}
-      <Modal
-        visible={showModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>여행을 종료하시겠어요?</Text>
-            <Text style={styles.modalDesc}>여행 이력은 마이페이지에 저장됩니다.</Text>
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity style={styles.modalBtnGray} onPress={() => setShowModal(false)}>
-                <Text style={styles.modalBtnTextGray}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalBtnBlue}
-                onPress={async () => {
-                  setShowModal(false);
-                  try {
-                    // 최신 trip 가져오기
-                    const trips = await travelService.getTripData();
-                    const latest = trips.sort((a, b) => b.id - a.id)[0];
-                    
-                    // 여행 요약 생성
-                    const summaryData = await travelService.summarizeTrip(latest.id);
-                    
-                    // summary.tsx로 이동하면서 요약 데이터 전달
-                    router.replace({
-                      pathname: '/summary',
-                      params: { 
-                        tripId: latest.id.toString(),
-                        summary: summaryData.summary,
-                        region: latest.region
-                      }
-                    });
-                  } catch (e) {
-                    console.error('여행 요약 생성 실패:', e);
-                    // 요약 생성 실패 시에도 여행 상태를 false로 설정
-                    await setIsTraveling(false);
-                    // 요약 생성 실패 시 바로 홈으로 이동
-                    router.replace('/home');
-                  }
-                }}
-              >
-                <Text style={styles.modalBtnTextBlue}>여행 종료</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+             {/* 종료 모달 */}
+       <Modal
+         visible={showModal}
+         transparent
+         animationType="fade"
+         onRequestClose={() => setShowModal(false)}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalBox}>
+             <Text style={styles.modalTitle}>여행을 종료하시겠어요?</Text>
+             <Text style={styles.modalDesc}>여행 이력은 마이페이지에 저장됩니다.</Text>
+             <View style={styles.modalBtnRow}>
+               <TouchableOpacity style={styles.modalBtnGray} onPress={() => setShowModal(false)}>
+                 <Text style={styles.modalBtnTextGray}>취소</Text>
+               </TouchableOpacity>
+               <TouchableOpacity
+                 style={styles.modalBtnBlue}
+                 onPress={async () => {
+                   setShowModal(false);
+                   try {
+                     // 최신 trip 가져오기
+                     const trips = await travelService.getTripData();
+                     const latest = trips.sort((a, b) => b.id - a.id)[0];
+                     
+                     // 여행 요약 생성
+                     const summaryData = await travelService.summarizeTrip(latest.id);
+                     
+                     // summary.tsx로 이동하면서 요약 데이터 전달
+                     router.replace({
+                       pathname: '/summary',
+                       params: { 
+                         tripId: latest.id.toString(),
+                         summary: summaryData.summary,
+                         region: latest.region
+                       }
+                     });
+                   } catch (e) {
+                     console.error('여행 요약 생성 실패:', e);
+                     // 요약 생성 실패 시에도 여행 상태를 false로 설정
+                     await setIsTraveling(false);
+                     // 요약 생성 실패 시 바로 홈으로 이동
+                     router.replace('/home');
+                   }
+                 }}
+               >
+                 <Text style={styles.modalBtnTextBlue}>여행 종료</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+         </View>
+       </Modal>
+
+       {/* 장소 상세 정보 모달 */}
+       <Modal
+         visible={!!selectedItem}
+         transparent
+         animationType="fade"
+         onRequestClose={() => setSelectedItem(null)}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.placeDetailModal}>
+             {/* 상단 이미지 영역 */}
+             <View style={styles.placeImageContainer}>
+               <Image 
+                 source={selectedItem?.image ? { uri: selectedItem.image } : getDefaultImage(selectedItem?.category)} 
+                 style={styles.placeImage}
+                 resizeMode="cover"
+               />
+               <TouchableOpacity 
+                 style={styles.closeButton} 
+                 onPress={() => setSelectedItem(null)}
+               >
+                 <Text style={styles.closeButtonText}>×</Text>
+               </TouchableOpacity>
+             </View>
+
+             {/* 상세 정보 영역 */}
+             <ScrollView style={styles.placeDetailContent}>
+               <View style={styles.placeHeader}>
+                 <Text style={styles.placeTitle}>{selectedItem?.place}</Text>
+                 <Text style={styles.placeCategory}>
+                   {getCategoryDisplayName(selectedItem?.category)}
+                 </Text>
+               </View>
+
+               {/* 방문 시간 */}
+               <View style={styles.placeInfoRow}>
+                 <Text style={styles.placeInfoLabel}>방문 시간</Text>
+                 <Text style={styles.placeInfoValue}>{selectedItem?.time}</Text>
+               </View>
+
+               {/* 주소 */}
+               {selectedItem?.address && (
+                 <View style={styles.placeInfoRow}>
+                   <Text style={styles.placeInfoLabel}>주소</Text>
+                   <Text style={styles.placeInfoValue}>{selectedItem.address}</Text>
+                 </View>
+               )}
+
+               {/* 추천 이유 */}
+               {selectedItem?.recommendReason && (
+                 <View style={styles.placeInfoRow}>
+                   <Text style={styles.placeInfoLabel}>추천 이유</Text>
+                   <Text style={styles.placeInfoValue}>{selectedItem.recommendReason}</Text>
+                 </View>
+               )}
+
+               {/* 해시태그 */}
+               {selectedItem?.hashtags && (
+                 <View style={styles.placeInfoRow}>
+                   <Text style={styles.placeInfoLabel}>해시태그</Text>
+                   <View style={styles.hashtagsContainer}>
+                     {selectedItem.hashtags.split('#').filter(tag => tag.trim()).map((tag, index) => (
+                       <View key={index} style={styles.hashtag}>
+                         <Text style={styles.hashtagText}>#{tag.trim()}</Text>
+                       </View>
+                     ))}
+                   </View>
+                 </View>
+               )}
+
+               {/* 설명 */}
+               {selectedItem?.overview && (
+                 <View style={styles.placeInfoRow}>
+                   <Text style={styles.placeInfoLabel}>설명</Text>
+                   <Text style={styles.placeInfoValue}>{selectedItem.overview}</Text>
+                 </View>
+               )}
+             </ScrollView>
+           </View>
+         </View>
+       </Modal>
     </SafeAreaView>
   );
 }
@@ -455,27 +597,38 @@ const TabItem = memo(({ label, active = false }: { label: string; active?: boole
   );
 });
 
-const CardItem = memo(({ item }: { item: TripItem }) => {
+const CardItem = memo(({ 
+  item, 
+  onPress, 
+  getDefaultImage, 
+  getCategoryDisplayName 
+}: { 
+  item: TripItem; 
+  onPress: () => void;
+  getDefaultImage: (category?: string) => any;
+  getCategoryDisplayName: (category?: string) => string;
+}) => {
+
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.cardLeft}>
         <Image 
-          source={{ uri: item.image || 'https://picsum.photos/56' }} 
+          source={item.image ? { uri: item.image } : getDefaultImage(item.category)} 
           style={styles.cardThumb} 
         />
       </View>
       <View style={styles.cardMid}>
         <Text style={styles.cardTitle} numberOfLines={1}>{item.place}</Text>
         <Text style={styles.cardSubtitle} numberOfLines={1}>
-          {item.time} • {item.category || '방문지'}
+          {item.time} • {getCategoryDisplayName(item.category)}
         </Text>
       </View>
-      <TouchableOpacity style={styles.cardRight} activeOpacity={0.8}>
+      <View style={styles.cardRight}>
         <View style={styles.chevWrap}>
           <Text style={styles.chevText}>›</Text>
         </View>
-      </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableOpacity>
   );
 });
 
@@ -523,13 +676,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
   },
-  title: {
-    textAlign: 'center',
-    color: '#F4F7FB',
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '800',
-  },
+     title: {
+     textAlign: 'center',
+     color: '#F4F7FB',
+     fontSize: 20,
+     lineHeight: 28,
+     fontWeight: '800',
+     marginBottom: 30, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
+   },
   subtitle: {
     textAlign: 'center',
     color: '#AFC2E2',
@@ -727,5 +881,91 @@ const styles = StyleSheet.create({
     color: '#fff', 
     fontFamily: 'Pretendard-Medium', 
     fontSize: 15 
+  },
+
+  // 장소 상세 정보 모달 스타일
+  placeDetailModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    margin: 20,
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  placeImageContainer: {
+    position: 'relative',
+    height: 200,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
+  placeImage: {
+    width: '100%',
+    height: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  placeDetailContent: {
+    padding: 20,
+  },
+  placeHeader: {
+    marginBottom: 20,
+  },
+  placeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#123A86',
+    marginBottom: 8,
+  },
+  placeCategory: {
+    fontSize: 16,
+    color: '#666',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  placeInfoRow: {
+    marginBottom: 16,
+  },
+  placeInfoLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+  },
+  placeInfoValue: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+  },
+  hashtagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  hashtag: {
+    backgroundColor: '#e0f7fa',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  hashtagText: {
+    fontSize: 14,
+    color: '#00796b',
   },
 });
