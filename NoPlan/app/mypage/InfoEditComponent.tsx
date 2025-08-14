@@ -10,6 +10,7 @@ import { userService } from '../../service/userService';
 import { authService } from '../../service/authService';
 // ★★★ 경로가 수정되었습니다. (../가 두 개에서 한 개로 변경) ★★★
 import { useAuth } from '../(contexts)/AuthContext';
+import messaging from '@react-native-firebase/messaging';
 
 console.log('🧩 InfoEditComponent 렌더됨');
 
@@ -43,19 +44,40 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
 
   // ★★★ userService.getUserInfo() 호출을 제거하고 AuthContext의 userInfo만 사용합니다. ★★★
   
+  // 권한 상태 확인 함수를 별도로 분리
+  const checkPermissions = async () => {
+    try {
+      // 위치 권한 확인
+      const { status } = await Location.getForegroundPermissionsAsync();
+      console.log('📍 현재 위치 권한 상태:', status);
+      setIsLocationEnabled(status === Location.PermissionStatus.GRANTED);
+      
+      // 알림 권한 확인
+      const authStatus = await messaging().hasPermission();
+      const isNotificationEnabled = 
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      console.log('🔔 현재 알림 권한 상태:', authStatus);
+      setIsAlarmEnabled(isNotificationEnabled);
+    } catch (error) {
+      console.log('권한 확인 실패:', error);
+      setIsAlarmEnabled(false);
+    }
+  };
+
+  // 화면 포커스 시 권한 상태 확인
   useFocusEffect(
     useCallback(() => {
-      const checkLocationPermission = async () => {
-        const { status } = await Location.getForegroundPermissionsAsync();
-        console.log('📍 화면 포커스됨. 현재 위치 권한 상태:', status);
-        
-        setIsLocationEnabled(status === Location.PermissionStatus.GRANTED);
-      };
-
-      checkLocationPermission();
-      
+      console.log('🔄 화면 포커스됨 - 권한 상태 확인 시작');
+      checkPermissions();
     }, [])
   );
+
+  // 컴포넌트 마운트 시에도 권한 상태 확인
+  useEffect(() => {
+    console.log('🚀 컴포넌트 마운트됨 - 권한 상태 확인 시작');
+    checkPermissions();
+  }, []);
   
   /**
    * *** 변경점 2: 위치 설정 토글 클릭 시 알림을 띄우는 함수 ***
@@ -72,8 +94,43 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
         },
         { 
           text: "설정으로 이동",
-          // '설정으로 이동'을 누르면 앱의 설정 화면을 엽니다.
-          onPress: () => Linking.openSettings(),
+          onPress: async () => {
+            await Linking.openSettings();
+            // 설정 화면에서 돌아온 후 잠시 대기 후 권한 상태 재확인
+            setTimeout(() => {
+              console.log('📍 설정 화면에서 돌아옴 - 위치 권한 상태 재확인');
+              checkPermissions();
+            }, 500);
+          },
+          style: 'default'
+        }
+      ]
+    );
+  };
+
+  /**
+   * *** 알림 설정 토글 클릭 시 설정 화면으로 유도하는 함수 ***
+   * 사용자가 직접 알림 권한을 변경할 수 있도록 디바이스 설정 화면으로 안내합니다.
+   */
+  const handleNotificationSettingPress = () => {
+    Alert.alert(
+      "알림 설정 안내",
+      "알림 설정을 변경하시려면 기기의 설정 메뉴로 이동해야 합니다. 설정 화면으로 이동하시겠습니까?",
+      [
+        {
+          text: "취소",
+          style: "cancel"
+        },
+        { 
+          text: "설정으로 이동",
+          onPress: async () => {
+            await Linking.openSettings();
+            // 설정 화면에서 돌아온 후 잠시 대기 후 권한 상태 재확인
+            setTimeout(() => {
+              console.log('🔔 설정 화면에서 돌아옴 - 알림 권한 상태 재확인');
+              checkPermissions();
+            }, 500);
+          },
           style: 'default'
         }
       ]
@@ -220,15 +277,16 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 현재 위치 기반으로 더 나은 추천을 위해 수집됩니다.</Text>
         
-        <View style={styles.settingRow}>
+        <TouchableOpacity onPress={handleNotificationSettingPress} style={styles.settingRow}>
           <Text style={styles.label}>알림 설정</Text>
           <Switch
+            disabled={true}
             value={isAlarmEnabled}
-            onValueChange={() => setIsAlarmEnabled(prev => !prev)}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
             thumbColor={isAlarmEnabled ? '#123A86' : '#f4f3f4'}
+            style={{ opacity: 0.7 }}
           />
-        </View>
+        </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
         
         {/* ★★★ 로그아웃 버튼 추가 ★★★ */}
