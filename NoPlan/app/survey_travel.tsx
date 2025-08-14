@@ -14,11 +14,14 @@ import {
   View,
   Dimensions,
   Animated,
-  
+  Alert,
+  Linking,
 } from 'react-native';
 import { travelService } from '../service/travelService';
 import CustomTopBar from './(components)/CustomTopBar';
 import { useTravelSurvey } from './(components)/TravelSurveyContext';
+import { requestUserPermission } from '../utils/pushNotificationHelper';
+import messaging from '@react-native-firebase/messaging';
 
 // 기존 headerShown 옵션은 레이아웃에서 관리하므로 제거/주석 처리
 // export const options = {
@@ -88,6 +91,38 @@ export default function SurveyTravel() {
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const screenWidth = Dimensions.get('window').width;
 
+  // 알림 권한 상태 확인 및 설정 안내 함수
+  const checkNotificationPermission = async () => {
+    try {
+      const authStatus = await messaging().hasPermission();
+      const isNotificationEnabled = 
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      
+      console.log('🔔 현재 알림 권한 상태:', authStatus);
+      
+      if (!isNotificationEnabled) {
+        Alert.alert(
+          "알림 권한 설정",
+          "더 나은 서비스 이용을 위해 알림 권한을 허용해주세요. 설정 화면으로 이동하시겠습니까?",
+          [
+            {
+              text: "나중에",
+              style: "cancel"
+            },
+            { 
+              text: "설정으로 이동",
+              onPress: () => Linking.openSettings(),
+              style: 'default'
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.log('알림 권한 확인 실패:', error);
+    }
+  };
+
   // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
@@ -127,6 +162,18 @@ export default function SurveyTravel() {
       setError(null);
       setLoading(true);
       (async () => {
+        // 알림 권한 요청 (위치 권한과 완전히 독립적으로 실행)
+        try {
+          await requestUserPermission();
+          // 알림 권한 요청 후 권한 상태 확인 및 설정 안내
+          setTimeout(() => {
+            checkNotificationPermission();
+          }, 1000); // 1초 후에 권한 상태 확인
+        } catch (e) {
+          console.log('알림 권한 요청 실패:', e);
+          // 알림 권한 실패는 앱 동작에 영향을 주지 않으므로 무시
+        }
+        
         try {
           // 위치 권한 요청 및 위치 획득
           let { status } = await Location.requestForegroundPermissionsAsync();
@@ -135,6 +182,7 @@ export default function SurveyTravel() {
             setLoading(false);
             return;
           }
+          
           let location = await Location.getCurrentPositionAsync({});
           setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
           // 지역명 조회
