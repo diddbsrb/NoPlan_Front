@@ -16,10 +16,10 @@ import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { bookmarkService } from '../../service/bookmarkService';
 
 const DEFAULT_IMAGES = {
-  restaurants: require('../../assets/images/식당.jpg'),
-  cafes: require('../../assets/images/카페.jpg'),
-  accommodations: require('../../assets/images/숙소.jpg'),
-  attractions: require('../../assets/images/관광지.jpg'),
+  restaurants: require('../../assets/images/restaurants_icon.png'),
+  cafes: require('../../assets/images/cafes_icon.png'),
+  accommodations: require('../../assets/images/accommodations_icon.png'),
+  attractions: require('../../assets/images/attractions_icon.png'),
 };
 
 export default function List() {
@@ -128,6 +128,7 @@ export default function List() {
           overview: overview,
           hashtags: item.hashtags || '',
           recommendReason: item.recommend_reason || '',
+          category: finalType as 'restaurants' | 'cafes' | 'attractions' | 'accommodations',
         });
         setFavorites(prev => ({ ...prev, [contentId]: res.id }));
         Alert.alert('북마크', '북마크에 추가되었습니다.');
@@ -279,8 +280,11 @@ export default function List() {
                      ? { uri: item.firstimage }
                      : DEFAULT_IMAGES[finalType as keyof typeof DEFAULT_IMAGES]
                  }
-                 style={styles.cardImage}
-                 resizeMode="cover"
+                 style={[
+                   styles.cardImage,
+                   !item.firstimage && styles.defaultIconImage
+                 ]}
+                 resizeMode={item.firstimage ? "cover" : "center"}
                />
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
@@ -369,6 +373,12 @@ const styles = StyleSheet.create({
     height: 120,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+  },
+  defaultIconImage: {
+    backgroundColor: '#f8f9fa',
+    padding: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardContent: {
     padding: 16,

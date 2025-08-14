@@ -23,10 +23,10 @@ import { bookmarkService } from '../service/bookmarkService';
 import { CreateVisitedContentDto, travelService } from '../service/travelService';
 
 const DEFAULT_IMAGES = {
-  restaurants: require('../assets/images/식당.jpg'),
-  cafes: require('../assets/images/카페.jpg'),
-  accommodations: require('../assets/images/숙소.jpg'),
-  attractions: require('../assets/images/관광지.jpg'),
+  restaurants: require('../assets/images/restaurants_icon.png'),
+  cafes: require('../assets/images/cafes_icon.png'),
+  accommodations: require('../assets/images/accommodations_icon.png'),
+  attractions: require('../assets/images/attractions_icon.png'),
 };
 
 interface ListPlace {
@@ -162,6 +162,20 @@ export default function Info() {
 
     try {
       if (!favorite) {
+        // 🆕 카테고리 결정: list.tsx에서 전달받은 type 파라미터 사용
+        let category: 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
+        
+        // list.tsx에서 이미 finalType을 결정하여 type으로 전달했으므로 이를 사용
+        if (type && ['restaurants', 'cafes', 'attractions', 'accommodations'].includes(type)) {
+          category = type as 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
+          console.log(`[info] 🎯 북마크 카테고리 결정: ${category}`);
+        } 
+        // 기본값 사용 (type이 없는 경우)
+        else {
+          category = 'attractions';
+          console.log(`[info] 기본 북마크 카테고리 사용: ${category}`);
+        }
+
         const res = await bookmarkService.addBookmark({
           contentId: Number(contentid),
           title,
@@ -170,6 +184,7 @@ export default function Info() {
           overview,
           hashtags,
           recommendReason,
+          category,
         });
         setBookmarkId(res.id);
         setFavorite(true);
@@ -321,8 +336,11 @@ export default function Info() {
       <View style={styles.imageContainer}>
         <Image 
           source={imageUri ? { uri: imageUri } : defaultImage} 
-          style={styles.image} 
-          resizeMode="cover" 
+          style={[
+            styles.image,
+            !imageUri && styles.defaultIconImage
+          ]} 
+          resizeMode={imageUri ? "cover" : "center"} 
         />
       </View>
 
@@ -463,6 +481,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   image: { width: '100%', height: '100%' },
+  defaultIconImage: {
+    backgroundColor: '#f8f9fa',
+    padding: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   card: {
     position: 'absolute',

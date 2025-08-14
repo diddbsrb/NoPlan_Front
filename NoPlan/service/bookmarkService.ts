@@ -10,6 +10,7 @@ export interface BookmarkCreate {
   overview: string
   hashtags?: string
   recommendReason?: string
+  category?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations'
 }
 
 export interface BookmarkResponse {
@@ -22,6 +23,7 @@ export interface BookmarkResponse {
   overview: string
   hashtags?: string
   recommendReason?: string
+  category?: string
   createdAt: string
 }
 
@@ -34,6 +36,7 @@ function toSnakePayload(data: BookmarkCreate) {
     overview: data.overview,
     hashtags: data.hashtags,
     recommend_reason: data.recommendReason,
+    category: data.category,
   }
 }
 
@@ -48,6 +51,7 @@ function toCamelResponse(item: any): BookmarkResponse {
     overview: item.overview,
     hashtags: item.hashtags,
     recommendReason: item.recommend_reason,
+    category: item.category,
     createdAt: item.created_at,
   }
 }
