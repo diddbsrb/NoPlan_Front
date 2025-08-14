@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import * as Font from 'expo-font';
-import { RadioGroup } from 'react-native-radio-buttons-group';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { RadioGroup } from 'react-native-radio-buttons-group';
 import { userService } from '../../service/userService';
 
 const InfoInputScreen = () => {
@@ -37,7 +37,7 @@ const InfoInputScreen = () => {
     const gender = selected?.value || '';
     try {
       await userService.updateInfo(name, Number(age), gender);
-      router.push('/(tabs)/home');
+      router.replace('/app_guide');
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.detail) {
         setError(err.response.data.detail);
