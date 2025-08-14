@@ -38,6 +38,14 @@ type VisitedTrips = {
   };
 };
 
+// 카테고리별 기본 아이콘
+const DEFAULT_ICONS = {
+  restaurants: require('../../assets/images/restaurants_icon.png'),
+  cafes: require('../../assets/images/cafes_icon.png'),
+  accommodations: require('../../assets/images/accommodations_icon.png'),
+  attractions: require('../../assets/images/attractions_icon.png'),
+};
+
 const PLACEHOLDER_IMAGE_URL = 'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzA3MzBfOTAg%2FMDAxNjkwNjkyMTAzNTk0.fDiLNQxsSwWoqhWaPPENCgnOfw7rBkyA-u8IBq_bqwMg.V7vOgU00XrpbXakUxyF2OLBpxt56NpcmVdNulowZaUIg.JPEG.10sunmusa%2F100a10000000oik97DA2B_C_760_506_Q70.jpg&type=a340';
 
 export default function MyPage() {
@@ -256,7 +264,15 @@ export default function MyPage() {
           const tripData = visitedTrips[tripId];
           const tripContents = tripData.contents;
           const firstContent = tripContents[0];
-          const imageUrl = firstContent.first_image ? firstContent.first_image : PLACEHOLDER_IMAGE_URL;
+          // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
+          let imageSource;
+          if (firstContent.first_image) {
+            imageSource = { uri: firstContent.first_image };
+          } else if (firstContent.category && DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS]) {
+            imageSource = DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS];
+          } else {
+            imageSource = DEFAULT_ICONS.attractions; // 기본값
+          }
   
           const tripDate = new Date(firstContent.created_at);
           const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
@@ -280,7 +296,14 @@ export default function MyPage() {
                 </TouchableOpacity>
               </View>
               <View style={styles.wishlistImageBox}>
-                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+                <Image 
+                  source={imageSource} 
+                  style={[
+                    styles.image,
+                    !firstContent.first_image && styles.defaultIconImage
+                  ]} 
+                  resizeMode={firstContent.first_image ? "cover" : "center"} 
+                />
               </View>
             </TouchableOpacity>
           );
@@ -292,7 +315,16 @@ export default function MyPage() {
           return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
         }
         return bookmarks.map((bookmark) => {
-          const imageUrl = bookmark.firstImage ? bookmark.firstImage : PLACEHOLDER_IMAGE_URL;
+          // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
+          let imageSource;
+          if (bookmark.firstImage) {
+            imageSource = { uri: bookmark.firstImage };
+          } else if (bookmark.category && DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS]) {
+            imageSource = DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS];
+          } else {
+            imageSource = DEFAULT_ICONS.attractions; // 기본값
+          }
+          
           return (
             <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
               <View style={styles.cardHeader}>
@@ -305,7 +337,14 @@ export default function MyPage() {
                 </TouchableOpacity>
               </View>
               <View style={styles.wishlistImageBox}>
-                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+                <Image 
+                  source={imageSource} 
+                  style={[
+                    styles.image,
+                    !bookmark.firstImage && styles.defaultIconImage
+                  ]} 
+                  resizeMode={bookmark.firstImage ? "cover" : "center"} 
+                />
               </View>
             </TouchableOpacity>
           );
@@ -368,13 +407,29 @@ export default function MyPage() {
               )}
               <Text style={styles.visitedPlacesTitle}>방문한 장소들</Text>
               {selectedTrip?.contents.map((content) => {
-                const imageUrl = content.first_image ? content.first_image : PLACEHOLDER_IMAGE_URL;
+                // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
+                let imageSource;
+                if (content.first_image) {
+                  imageSource = { uri: content.first_image };
+                } else if (content.category && DEFAULT_ICONS[content.category as keyof typeof DEFAULT_ICONS]) {
+                  imageSource = DEFAULT_ICONS[content.category as keyof typeof DEFAULT_ICONS];
+                } else {
+                  imageSource = DEFAULT_ICONS.attractions; // 기본값
+                }
+                
                 return (
                   <View key={content.content_id} style={styles.modalCard}>
                     <Text style={styles.cardTitle}>{content.title}</Text>
                     <Text style={styles.locationText}>{content.addr1}</Text>
                     <View style={styles.imageBox}>
-                      <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+                      <Image 
+                        source={imageSource} 
+                        style={[
+                          styles.image,
+                          !content.first_image && styles.defaultIconImage
+                        ]} 
+                        resizeMode={content.first_image ? "cover" : "center"} 
+                      />
                     </View>
                   </View>
                 );
@@ -397,6 +452,31 @@ export default function MyPage() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.bookmarkModalScroll}>
+              {/* 북마크 이미지 추가 */}
+              {selectedBookmark && (
+                <View style={styles.bookmarkImageContainer}>
+                  {(() => {
+                    let imageSource;
+                    if (selectedBookmark.firstImage) {
+                      imageSource = { uri: selectedBookmark.firstImage };
+                    } else if (selectedBookmark.category && DEFAULT_ICONS[selectedBookmark.category as keyof typeof DEFAULT_ICONS]) {
+                      imageSource = DEFAULT_ICONS[selectedBookmark.category as keyof typeof DEFAULT_ICONS];
+                    } else {
+                      imageSource = DEFAULT_ICONS.attractions; // 기본값
+                    }
+                    return (
+                      <Image 
+                        source={imageSource} 
+                        style={[
+                          styles.bookmarkModalImage,
+                          !selectedBookmark.firstImage && styles.defaultIconImage
+                        ]} 
+                        resizeMode={selectedBookmark.firstImage ? "cover" : "center"} 
+                      />
+                    );
+                  })()}
+                </View>
+              )}
               <View style={styles.infoSection}>
                 <Text style={styles.infoLabel}>주소</Text>
                 <Text style={styles.infoText}>{selectedBookmark?.addr1}</Text>
@@ -523,6 +603,12 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  defaultIconImage: {
+    backgroundColor: '#f8f9fa',
+    padding: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   starButton: {
     padding: 8,
@@ -686,6 +772,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
+  },
+  bookmarkImageContainer: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  bookmarkModalImage: {
+    width: '100%',
+    height: '100%',
   },
   logoutButton: {
     paddingVertical: 15,
