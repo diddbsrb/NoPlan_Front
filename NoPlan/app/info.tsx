@@ -168,12 +168,11 @@ export default function Info() {
         // list.tsx에서 이미 finalType을 결정하여 type으로 전달했으므로 이를 사용
         if (type && ['restaurants', 'cafes', 'attractions', 'accommodations'].includes(type)) {
           category = type as 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
-          console.log(`[info] 🎯 북마크 카테고리 결정: ${category}`);
+          console.log(`[info] 북마크 카테고리: ${category}`);
         } 
         // 기본값 사용 (type이 없는 경우)
         else {
           category = 'attractions';
-          console.log(`[info] 기본 북마크 카테고리 사용: ${category}`);
         }
 
         const res = await bookmarkService.addBookmark({
@@ -224,7 +223,6 @@ export default function Info() {
   }
 
   // 화면에 사용할 데이터 결정
-  console.log('[info.tsx] Data processing:', { current });
   
   const imageUri =
     current?.firstimage ||
@@ -248,7 +246,7 @@ export default function Info() {
   try {
     latitude = parseFloat(current?.mapy ?? '0');
     longitude = parseFloat(current?.mapx ?? '0');
-    console.log('[info.tsx] Coordinates:', { latitude, longitude });
+    // 좌표 파싱 완료
   } catch (error) {
     console.error('[info.tsx] Coordinate parsing error:', error);
     latitude = 37.5665; // 서울 기본 좌표
@@ -257,13 +255,7 @@ export default function Info() {
 
   // 방문 체크 처리
   const handleVisit = () => {
-    console.log('▶ handleVisit 호출!');
-    console.log('[info] 🎯 방문 기록 저장 시작');
-    console.log('[info] 전달받은 파라미터:', {
-      contentid,
-      type,
-      placesParam: placesParam ? '존재함' : '없음'
-    });
+    console.log('[info] 방문 기록 저장 시작');
     
     Alert.alert(
       '방문했어요',
@@ -284,19 +276,14 @@ export default function Info() {
               // list.tsx에서 이미 finalType을 결정하여 type으로 전달했으므로 이를 사용
               if (type && ['restaurants', 'cafes', 'attractions', 'accommodations'].includes(type)) {
                 category = type as 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
-                console.log(`[info] 🎯 카테고리 결정: ${category}`);
-                console.log(`[info] list.tsx에서 전달받은 type: ${type}`);
-                console.log(`[info] 이 값이 데이터베이스의 category 필드에 저장됩니다.`);
+                console.log(`[info] 카테고리: ${category}`);
               } 
               // 기본값 사용 (type이 없는 경우)
               else {
                 category = 'attractions';
-                console.log(`[info] 기본 카테고리 사용: ${category}`);
-                console.log(`[info] type 파라미터가 없어 기본값을 사용합니다.`);
-                console.log(`[info] type 파라미터:`, type);
               }
 
-              console.log(`[info] 최종 결정된 카테고리: ${category} (${title})`);
+              console.log(`[info] 최종 카테고리: ${category}`);
 
               // DTO 구성 - 카테고리 정보 포함
               const dto: CreateVisitedContentDto = {
@@ -312,7 +299,7 @@ export default function Info() {
                 category, // 🆕 카테고리 정보 추가
               };
 
-              console.log(`[info] 방문 기록 DTO 생성 완료:`, JSON.stringify(dto, null, 2));
+              console.log(`[info] 방문 기록 DTO 생성 완료`);
 
               // POST 요청
               await travelService.createVisitedContent(latest.id, dto);
