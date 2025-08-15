@@ -1,6 +1,6 @@
 // app/(tabs)/app_guide.tsx
 import * as Font from 'expo-font';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   SafeAreaView,
@@ -15,6 +15,7 @@ import CustomTopBar from '../(components)/CustomTopBar';
 
 export default function AppGuide() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const [step, setStep] = useState(1);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   
@@ -109,12 +110,18 @@ export default function AppGuide() {
   };
 
   const handleStartTravel = () => {
-    router.replace('/survey_travel');
+    router.replace('/home');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <CustomTopBar onBack={() => router.back()} />
+      <CustomTopBar onBack={() => {
+        if (from === 'home_travel') {
+          router.push('/(tabs)/home_travel');
+        } else {
+          router.back();
+        }
+      }} />
       <View style={styles.inner}>
         {renderStep()}
         

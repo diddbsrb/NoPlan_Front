@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'left' },
   sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
 
-  sheetContent: { paddingHorizontal: 16 },
+  sheetContent: { paddingHorizontal: 16, paddingBottom: 50 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
 
   // 혼잡도 스타일 추가
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
 
   mapPreview: { width: '100%', height: 400, borderRadius: 12, overflow: 'hidden', marginBottom: 16 },
 
-  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
   primaryButton: {
     flex: 1,
     backgroundColor: '#123A86',
