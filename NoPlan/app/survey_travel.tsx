@@ -27,8 +27,15 @@ import { useTravelSurvey } from './(components)/TravelSurveyContext';
 // };
 
 const KEYWORD_OPTIONS = [
-  '고즈넉한', '낭만적인', '모던한', '힙한', '고급스러운',
-  '전통적인', '활동적인', '산뜻한', '정겨운',
+  { label: '고즈넉한', icon: require('../assets/images/adjectives/icon_고즈넉한.png') },
+  { label: '낭만적인', icon: require('../assets/images/adjectives/icon_낭만적인.png') },
+  { label: '모던한', icon: require('../assets/images/adjectives/icon_모던한.png') },
+  { label: '힙한', icon: require('../assets/images/adjectives/icon_힙한.png') },
+  { label: '고급스러운', icon: require('../assets/images/adjectives/icon_고급스러운.png') },
+  { label: '전통적인', icon: require('../assets/images/adjectives/icon_전통적인.png') },
+  { label: '활동적인', icon: require('../assets/images/adjectives/icon_활동적인.png') },
+  { label: '산뜻한', icon: require('../assets/images/adjectives/icon_산뜻한.png') },
+  { label: '정겨운', icon: require('../assets/images/adjectives/icon_정겨운.png') },
 ];
 
 const TRAVEL_TYPE_OPTIONS = [
@@ -188,7 +195,7 @@ export default function SurveyTravel() {
             <View style={styles.circleGrid}>
               {KEYWORD_OPTIONS.map((opt, idx) => (
                 <TouchableOpacity
-                  key={opt}
+                  key={opt.label}
                   style={[
                     styles.circle,
                     selectedKeywords.includes(idx) && styles.circleSelected,
@@ -199,12 +206,20 @@ export default function SurveyTravel() {
                     !selectedKeywords.includes(idx)
                   }
                 >
+                  <Image 
+                    source={opt.icon} 
+                    style={styles.keywordIcon} 
+                    resizeMode="contain"
+                  />
                   <Text
-                    style={{
-                      color: selectedKeywords.includes(idx) ? '#fff' : '#333',
-                    }}
+                    style={[
+                      styles.keywordLabel,
+                      {
+                        color: selectedKeywords.includes(idx) ? '#fff' : '#333',
+                      }
+                    ]}
                   >
-                    {opt}
+                    {opt.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -297,7 +312,7 @@ export default function SurveyTravel() {
     setError(null);
     try {
       // adjectives: 선택된 키워드
-      const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx]).join(',');
+      const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx].label).join(',');
       
       await travelService.createTripWithAuth(
         region,
@@ -402,18 +417,37 @@ const styles = StyleSheet.create({
   circleGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
   },
   circle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E0E0E0',
+    width: '30%',
+    aspectRatio: 1,
+    borderRadius: 16,
+    backgroundColor: '#F8F9FA',
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 8,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    paddingVertical: 8,
   },
-  circleSelected: { backgroundColor: '#123A86' },
+  circleSelected: { 
+    backgroundColor: '#123A86',
+    borderColor: '#123A86',
+  },
+  keywordIcon: {
+    width: 40,
+    height: 40,
+    marginBottom: 6,
+  },
+  keywordLabel: {
+    fontSize: 11,
+    fontFamily: 'Pretendard-Medium',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
 
   scrollView: { width: '100%' },
   travelTypeGrid: {
