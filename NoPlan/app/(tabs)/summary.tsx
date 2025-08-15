@@ -1,8 +1,8 @@
 // app/(tabs)/summary.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
 import * as Font from 'expo-font';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -108,7 +108,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingTop: 50,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
+    paddingTop: 32,
   },
   summaryCard: {
     backgroundColor: '#F8F9FA',
