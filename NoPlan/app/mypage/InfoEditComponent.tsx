@@ -18,9 +18,10 @@ interface Props {
   onBack: () => void;
   onPassword: () => void;
   onDelete: () => void;
+  onTerms: () => void;
 }
 
-const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) => {
+const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTerms }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(true);
   const [isAlarmEnabled, setIsAlarmEnabled] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
@@ -209,9 +210,6 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
   if (!userInfo) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backText}>← 뒤로가기</Text>
-        </TouchableOpacity>
         <View style={styles.card}>
           <Text style={styles.errorText}>사용자 정보를 불러올 수 없습니다.</Text>
           <TouchableOpacity onPress={() => router.replace('/')} style={styles.retryButton}>
@@ -226,10 +224,6 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backText}>← 뒤로가기</Text>
-      </TouchableOpacity>
-
       <View style={styles.card}>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이름</Text>
@@ -289,6 +283,11 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete }) =>
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
         
+        <TouchableOpacity onPress={onTerms} style={styles.termsRow}>
+          <Text style={styles.label}>개인정보 처리방침</Text>
+          <Text style={styles.link}>보기</Text>
+        </TouchableOpacity>
+        
         {/* ★★★ 로그아웃 버튼 추가 ★★★ */}
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>로그아웃</Text>
@@ -308,13 +307,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     flex: 1,
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  backText: {
-    color: '#123A86',
-    fontSize: 14,
   },
   card: {
     backgroundColor: '#fff',
@@ -401,5 +393,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontFamily: 'Pretendard-Medium',
+  },
+  termsRow: {
+    marginTop: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
