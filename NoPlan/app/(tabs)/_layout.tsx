@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/HapticTab';
@@ -36,13 +35,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="signin"
         options={{
           title: 'Sign In',
@@ -71,13 +63,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="survey_travel"
-        options={{
-          title: 'Survey Travel',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="home_travel"
         options={{
           title: 'Home Travel',
@@ -85,24 +70,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="survey_destination"
-        options={{
-          title: 'Survey Destination',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="mappin.and.ellipse" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="list"
         options={{
           title: 'List',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="info"
-        options={{
-          title: 'Info',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="info.circle" color={color} />,
         }}
       />
     </Tabs>

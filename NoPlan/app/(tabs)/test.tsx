@@ -28,7 +28,7 @@ export default function TestScreen() {
       alert('점심 알림 테스트 완료! 알림을 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 점심 알림 테스트 실패:', error);
-      alert(`점심 알림 테스트 실패: ${error.message}`);
+      alert(`점심 알림 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -40,7 +40,7 @@ export default function TestScreen() {
       alert('주말 여행 알림 테스트 완료! 알림을 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 주말 여행 알림 테스트 실패:', error);
-      alert(`주말 여행 알림 테스트 실패: ${error.message}`);
+      alert(`주말 여행 알림 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -52,7 +52,7 @@ export default function TestScreen() {
       alert('여행 추천 알림 테스트 완료! 알림을 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 여행 추천 알림 테스트 실패:', error);
-      alert(`여행 추천 알림 테스트 실패: ${error.message}`);
+      alert(`여행 추천 알림 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -62,8 +62,10 @@ export default function TestScreen() {
       await scheduleWeekdayLunchNotification();
       await scheduleWeekendTravelNotification();
       console.log('스케줄된 알림 설정 완료');
+      alert('스케줄된 알림 설정 완료!');
     } catch (error) {
       console.error('스케줄된 알림 설정 실패:', error);
+      alert(`스케줄된 알림 설정 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -71,8 +73,10 @@ export default function TestScreen() {
     try {
       await schedulePostTravelRecommendation();
       console.log('여행 완료 후 알림 스케줄링 완료 (48시간 후)');
+      alert('여행 완료 후 알림 스케줄링 완료 (48시간 후)!');
     } catch (error) {
       console.error('여행 완료 후 알림 스케줄링 실패:', error);
+      alert(`여행 완료 후 알림 스케줄링 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
