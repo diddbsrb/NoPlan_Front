@@ -10,10 +10,18 @@ import 'react-native-reanimated';
 import { TravelSurveyProvider, useTravelSurvey } from './(components)/TravelSurveyContext';
 
 // ★★★ 1. React와 useEffect를 import 합니다. ★★★
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 // ★★★ 2. Firebase 및 푸시 알림 관련 모듈을 import 합니다. ★★★
 import messaging from '@react-native-firebase/messaging';
-import { getFCMToken, listenForForegroundMessages, requestUserPermission } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
+import notifee from '@notifee/react-native';
+import { 
+  getFCMToken, 
+  listenForForegroundMessages, 
+  requestUserPermission,
+  createNotificationChannels,
+  scheduleWeekdayLunchNotification,
+  scheduleWeekendTravelNotification
+} from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
 import { AuthProvider } from './(contexts)/AuthContext';
@@ -43,20 +51,14 @@ function AuthStateHandler() {
           isTraveling: savedTravelState 
         });
         
-        // 상태에 따른 화면 라우팅
+        // ★★★ AuthContext에서 이미 라우팅을 처리하므로 여기서는 기본 화면만 처리 ★★★
+        // AuthContext에서 토큰 검증 후 적절한 화면으로 라우팅하므로
+        // 여기서는 로그아웃 상태일 때만 기본 화면으로 이동
         if (savedLoginState !== 'true') {
-          // 로그아웃 상태: (tabs) 그룹의 기본 화면으로 이동
           console.log('[AuthStateHandler] 로그아웃 상태 -> (tabs) 기본 화면');
           router.replace('/(tabs)' as any);
-        } else if (savedTravelState === 'true') {
-          // 로그인 상태 + 여행 중: home_travel 화면
-          console.log('[AuthStateHandler] 로그인 상태 + 여행 중 -> home_travel 화면');
-          router.replace('home_travel' as any);
-        } else {
-          // 로그인 상태 + 여행 중 아님: home 화면
-          console.log('[AuthStateHandler] 로그인 상태 + 여행 중 아님 -> home 화면');
-          router.replace('home' as any);
         }
+        // 로그인 상태는 AuthContext에서 처리하므로 여기서는 추가 라우팅하지 않음
       } catch (error) {
         console.error('[AuthStateHandler] 인증 상태 확인 실패:', error);
         // 에러 발생 시 기본 화면으로
@@ -82,6 +84,26 @@ export default function RootLayout() {
       const setupNotifications = async () => {
         await requestUserPermission();
         await getFCMToken();
+        await createNotificationChannels();
+        
+        // ★★★ 알림 스케줄링은 한 번만 실행하도록 개선 ★★★
+        // 이미 스케줄링된 알림이 있는지 확인 후 없으면 새로 스케줄링
+        try {
+          const scheduledNotifications = await notifee.getTriggerNotificationIds();
+          console.log('현재 스케줄된 알림들:', scheduledNotifications);
+          
+          if (!scheduledNotifications.includes('weekday-lunch')) {
+            await scheduleWeekdayLunchNotification();
+          }
+          if (!scheduledNotifications.includes('weekend-travel')) {
+            await scheduleWeekendTravelNotification();
+          }
+        } catch (error) {
+          console.error('알림 스케줄링 확인 실패:', error);
+          // 에러 발생 시 기본적으로 스케줄링 시도
+          await scheduleWeekdayLunchNotification();
+          await scheduleWeekendTravelNotification();
+        }
       };
 
       setupNotifications();

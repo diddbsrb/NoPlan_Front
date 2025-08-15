@@ -12,6 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+// ★★★ 여행 완료 후 알림 스케줄링을 위한 import 추가 ★★★
+import { schedulePostTravelRecommendation } from '../../utils/pushNotificationHelper';
 
 export default function SummaryScreen() {
   const router = useRouter();
@@ -38,6 +40,11 @@ export default function SummaryScreen() {
   const handleGoHome = async () => {
     try {
       console.log('[summary.tsx] 홈으로 돌아가기 시작');
+      
+      // ★★★ 여행 완료 후 이틀 뒤 추천 알림 스케줄링 ★★★
+      await schedulePostTravelRecommendation();
+      console.log('[summary.tsx] 여행 완료 후 추천 알림 스케줄링 완료');
+      
       // 여행 상태를 false로 변경
       await setIsTraveling(false);
       console.log('[summary.tsx] 여행 상태를 false로 변경 완료');

@@ -61,9 +61,8 @@ module.exports = ({ config }) => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.donggguk.noplan',
-      // ▼▼▼ [수정됨] iOS용 Google Maps API 키 설정 추가 ▼▼▼
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY, // 여기에 발급받은 API 키를 붙여넣으세요.
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
       },
     },
     android: {
@@ -73,11 +72,8 @@ module.exports = ({ config }) => {
       },
       package: 'com.donggguk.noplan',
       googleServicesFile: './google-services.json',
-      // ▼▼▼ [수정됨] Android용 Google Maps API 키 설정 추가 ▼▼▼
       config: {
-        googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY // 여기에 발급받은 API 키를 붙여넣으세요.
-        }
+        googleMaps: { apiKey: process.env.GOOGLE_MAPS_API_KEY },
       },
     },
     web: {
@@ -90,6 +86,9 @@ module.exports = ({ config }) => {
       withForcedKotlinVersion,
       'expo-router',
       'expo-secure-store',
+      // ★★★ Firebase 알림 플러그인 추가 ★★★
+      '@react-native-firebase/app',
+      '@react-native-firebase/messaging',
       [
         '@react-native-seoul/kakao-login',
         {
@@ -103,6 +102,10 @@ module.exports = ({ config }) => {
             repositories: [
               { url: 'https://devrepo.kakao.com/nexus/content/groups/public/' },
             ],
+            // ★★★ 기본 빌드 설정 추가 ★★★
+            compileSdkVersion: 34,
+            targetSdkVersion: 34,
+            minSdkVersion: 23,
           },
         },
       ],
@@ -117,16 +120,10 @@ module.exports = ({ config }) => {
         },
       ],
     ],
-    experiments: {
-      typedRoutes: true,
-    },
+    experiments: { typedRoutes: true },
     extra: {
-      router: {
-        origin: false,
-      },
-      eas: {
-        projectId: '7fb126e9-50a3-4269-9fcf-a94c9280eafb',
-      },
+      router: { origin: false },
+      eas: { projectId: '7fb126e9-50a3-4269-9fcf-a94c9280eafb' },
     },
   };
 
