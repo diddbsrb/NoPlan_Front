@@ -439,13 +439,24 @@ export default function HomeTravel() {
              {error && <Text style={styles.errorText}>{error}</Text>}
              
                         {!loading && !error && sections.length > 0 && sections[0].data.map((item, index) => (
-                <CardItem 
-                  key={index} 
-                  item={item} 
-                  onPress={() => setSelectedItem(item)}
-                  getDefaultImage={getDefaultImage}
-                  getCategoryDisplayName={getCategoryDisplayName}
-                />
+                <View key={index} style={styles.timelineContainer}>
+                  {/* 타임라인 점과 선 */}
+                  <View style={styles.timelineLeft}>
+                    <View style={styles.timelineDot} />
+                    <Text style={styles.timelineTime}>{item.time}</Text>
+                    {index < sections[0].data.length - 1 && (
+                      <View style={styles.timelineLine} />
+                    )}
+                  </View>
+                  
+                  {/* 카드 아이템 */}
+                  <CardItem 
+                    item={item} 
+                    onPress={() => setSelectedItem(item)}
+                    getDefaultImage={getDefaultImage}
+                    getCategoryDisplayName={getCategoryDisplayName}
+                  />
+                </View>
               ))}
              
              {!loading && !error && sections.length === 0 && (
@@ -650,10 +661,17 @@ const CardItem = memo(({
         />
       </View>
       <View style={styles.cardMid}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.place}</Text>
-        <Text style={styles.cardSubtitle} numberOfLines={1}>
-          {item.time} • {getCategoryDisplayName(item.category)}
-        </Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle} numberOfLines={1}>{item.place}</Text>
+          <Text style={styles.cardCategory}>{getCategoryDisplayName(item.category)}</Text>
+        </View>
+        {item.hashtags && (
+          <View style={styles.cardHashtags}>
+            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => (
+              <Text key={index} style={styles.cardHashtag}>#{tag.trim()}</Text>
+            ))}
+          </View>
+        )}
       </View>
       <View style={styles.cardRight}>
         <View style={styles.chevWrap}>
@@ -801,36 +819,60 @@ const styles = StyleSheet.create({
          marginBottom: 100, // 하단 버튼과의 간격
        },
        listContent: {
-         paddingHorizontal: 30,
+         paddingHorizontal: 20, // 30에서 20으로 줄임
          paddingTop: 12,
          paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-         gap: 12,
+         gap: 6, // 12에서 6으로 줄임
        },
 
   card: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 14,
-    alignItems: 'center',
+    padding: 18, // 14에서 18로 늘림
+    alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
+    flex: 1, // 우측 공간을 줄이기 위해 flex: 1 추가
+    minHeight: 80, // 최소 높이 추가
   },
   cardLeft: { marginRight: 12 },
   cardThumb: { width: 48, height: 48, borderRadius: 12 },
   cardMid: { flex: 1 },
-  cardTitle: { fontWeight: '800', color: '#263453' },
-  cardSubtitle: { color: '#8A9BB6', marginTop: 4, fontSize: 12 },
-  cardRight: { paddingLeft: 10 },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8, 
+  },
+  cardTitle: { fontWeight: '800', color: '#263453', fontSize: 14, flex: 1 },
+  cardCategory: { 
+    color: '#8A9BB6', 
+    fontSize: 12,
+    marginLeft: 0,
+  },
+  cardHashtags: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 6,
+  },
+  cardHashtag: {
+    fontSize: 10,
+    color: '#7A8AA8',
+    backgroundColor: '#F1F4F9',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  cardRight: { paddingLeft: 8 }, // 우측 여백 줄임
   chevWrap: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 28, height: 28, borderRadius: 14, // 크기 줄임
     backgroundColor: '#F1F4F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevText: { color: '#1C2E4A', fontSize: 20, fontWeight: '800' },
+  chevText: { color: '#1C2E4A', fontSize: 16, fontWeight: '800' }, // 폰트 크기 줄임
 
   tabBar: {
     position: 'absolute',
@@ -1057,5 +1099,42 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     padding: 4,
+  },
+
+  // 타임라인 스타일 추가
+  timelineContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  timelineLeft: {
+    width: 40, // 50에서 40으로 줄임
+    alignItems: 'center',
+    marginRight: 8, // 12에서 8로 줄임
+    marginTop: 24, // 카드의 중간에 위치하도록 14에서 24로 조정
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#263453',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  timelineTime: {
+    fontSize: 11,
+    color: '#8A9BB6',
+    marginTop: 6,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    height: 40, // 카드 높이 + gap에 맞춰 60에서 40으로 줄임
+    backgroundColor: '#E0E7F0',
+    marginTop: 8,
   },
 });
