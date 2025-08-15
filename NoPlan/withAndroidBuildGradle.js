@@ -9,7 +9,7 @@ module.exports = function withAndroidBuildGradle(config) {
 
     let contents = config.modResults.contents;
 
-    // --- 1. 코틀린 버전 설정 (더 강력하고 확실한 방식) ---
+    // --- 1. 코틀린 버전 설정 (소셜 로그인 호환성을 위해 1.8.22로 고정) ---
     // buildscript { ext { kotlinVersion = '...' } } 부분을 찾습니다.
     const kotlinVersionRegex = /kotlinVersion\s*=\s*['"](.*)['"]/;
     if (contents.match(kotlinVersionRegex)) {

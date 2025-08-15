@@ -1,3 +1,47 @@
+// app.config.js
+
+const { withProjectBuildGradle } = require('@expo/config-plugins');
+
+/**
+ * 코틀린 버전 강제 설정을 위한 커스텀 플러그인 (기존 설정 유지)
+ * @param {import('@expo/config-types').ExpoConfig} config
+ */
+const withForcedKotlinVersion = (config) => {
+  return withProjectBuildGradle(config, (config) => {
+    if (config.modResults.language !== 'groovy') {
+      return config;
+    }
+
+    let contents = config.modResults.contents;
+
+    const allProjectsRegex = /allprojects\s*{/;
+    if (!allProjectsRegex.test(contents)) {
+      contents += `
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+`;
+    }
+    
+    const extBlock = `
+    ext {
+        kotlinVersion = "1.8.22"
+    }
+`;
+    contents = contents.replace(
+      /allprojects\s*{/,
+      `allprojects {${extBlock}`
+    );
+
+    config.modResults.contents = contents;
+    return config;
+  });
+};
+
+// 메인 설정을 내보냅니다.
 module.exports = ({ config }) => {
   const expoConfig = {
     ...config,
@@ -38,22 +82,27 @@ module.exports = ({ config }) => {
       favicon: './assets/images/favicon.png',
     },
     plugins: [
+      // 기존 플러그인 설정은 모두 그대로 유지합니다.
+      withForcedKotlinVersion,
       'expo-router',
       'expo-secure-store',
+      // ★★★ Firebase 알림 플러그인 추가 ★★★
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',
       [
         '@react-native-seoul/kakao-login',
-        { kakaoAppKey: '8aef54490fca5199b3701d81e9cd1eb0' },
+        {
+          kakaoAppKey: '8aef54490fca5199b3701d81e9cd1eb0',
+        },
       ],
       [
         'expo-build-properties',
         {
           android: {
-            // Kakao 저장소 유지
-            repositories: [{ url: 'https://devrepo.kakao.com/nexus/content/groups/public/' }],
-            // ✅ Kotlin/SDK 강제 상향
-            kotlinVersion: '1.9.24',
+            repositories: [
+              { url: 'https://devrepo.kakao.com/nexus/content/groups/public/' },
+            ],
+            // ★★★ 기본 빌드 설정 추가 ★★★
             compileSdkVersion: 34,
             targetSdkVersion: 34,
             minSdkVersion: 23,
