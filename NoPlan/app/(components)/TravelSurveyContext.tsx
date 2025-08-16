@@ -11,7 +11,6 @@ export interface TravelSurveyData {
   transportation?: string;
   companion?: string;
   autoRecommendType?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
-  type?: 'restaurants' | 'cafes' | 'attractions' | 'accommodations';
 }
 
 interface TravelSurveyContextType {
