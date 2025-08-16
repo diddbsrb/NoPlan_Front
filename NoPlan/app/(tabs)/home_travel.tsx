@@ -20,6 +20,7 @@ import {
   Trip,
   VisitedContent,
 } from '../../service/travelService';
+import { requestUserPermission } from '../../utils/pushNotificationHelper';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -161,6 +162,15 @@ export default function HomeTravel() {
       if (status !== 'granted') {
         Alert.alert('위치 권한', '위치 권한이 필요합니다.');
         return;
+      }
+      
+      // 위치 권한이 허용되면 알림 권한도 함께 요청
+      try {
+        await requestUserPermission();
+        console.log('[home_travel] 알림 권한 요청 완료');
+      } catch (error) {
+        console.log('[home_travel] 알림 권한 요청 실패:', error);
+        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
       }
       
       const location = await Location.getCurrentPositionAsync({});

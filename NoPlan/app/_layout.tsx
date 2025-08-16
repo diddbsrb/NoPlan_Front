@@ -13,14 +13,15 @@ import { TravelSurveyProvider, useTravelSurvey } from './(components)/TravelSurv
 import { useEffect } from 'react';
 // ★★★ 2. Firebase 및 푸시 알림 관련 모듈을 import 합니다. ★★★
 import messaging from '@react-native-firebase/messaging';
-import notifee from '@notifee/react-native';
+import notifee, { EventType } from '@notifee/react-native';
 import { 
   getFCMToken, 
   listenForForegroundMessages, 
   requestUserPermission,
   createNotificationChannels,
   scheduleWeekdayLunchNotification,
-  scheduleWeekendTravelNotification
+  scheduleWeekendTravelNotification,
+  handleNotificationAction
 } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
@@ -115,6 +116,56 @@ export default function RootLayout() {
     }
   }, [loaded]); // 'loaded' 상태가 true가 되면 이 훅이 실행됩니다.
 
+    // ★★★ 6. 알림 액션 리스너 추가 ★★★
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (loaded) {
+      // 알림 클릭 리스너 설정 (앱이 백그라운드에서 열릴 때)
+      const unsubscribe = notifee.onBackgroundEvent(async ({ type, detail }) => {
+        console.log('[알림 백그라운드] 이벤트 타입:', type);
+        console.log('[알림 백그라운드] 상세 정보:', detail);
+        
+        console.log('[알림 백그라운드] EventType.PRESS 값:', EventType.PRESS);
+        console.log('[알림 백그라운드] type 값:', type);
+        console.log('[알림 백그라운드] type === EventType.PRESS:', type === EventType.PRESS);
+        
+        if (type === EventType.PRESS || type === 2) {
+          // 액션 ID 가져오기
+          const actionId = detail.pressAction?.id || 'default';
+          console.log('[알림 백그라운드] 액션 ID:', actionId);
+          console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
+          
+          // 알림 데이터와 액션 ID를 함께 전달
+          const navigationData = handleNotificationAction(actionId, detail.notification?.data || {});
+          console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
+          
+          if (navigationData) {
+            console.log('[알림 백그라운드] 네비게이션 데이터:', navigationData);
+            
+            if (navigationData.screen) {
+              console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
+              try {
+                router.push({
+                  pathname: `/${navigationData.screen}` as any,
+                  params: navigationData.params
+                });
+                console.log('[알림 백그라운드] 화면 이동 성공');
+              } catch (error) {
+                console.error('[알림 백그라운드] 화면 이동 실패:', error);
+              }
+            }
+          } else {
+            console.log('[알림 백그라운드] 네비게이션 데이터가 null입니다.');
+          }
+        }
+      });
+
+      // 컴포넌트가 사라질 때 리스너를 정리합니다.
+      return unsubscribe;
+    }
+  }, [loaded, router]);
+
   // 폰트가 로드되지 않았을 때는 아무것도 렌더링하지 않습니다 (기존 로직 유지).
   if (!loaded) {
     return null;
@@ -148,6 +199,10 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="survey_destination"
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="home_travel"
               options={{ headerShown: false }}
             />
             <Stack.Screen

@@ -1,5 +1,5 @@
 import messaging from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance, TriggerType, AndroidStyle } from '@notifee/react-native';
+import notifee, { AndroidImportance, TriggerType, AndroidStyle, AndroidAction, TimestampTrigger } from '@notifee/react-native';
 
 // 1. 알림 권한 요청
 export async function requestUserPermission() {
@@ -46,7 +46,7 @@ export function listenForForegroundMessages() {
 export async function schedulePostTravelRecommendation() {
   try {
     // 이틀 후 (48시간) 스케줄링
-    const trigger = {
+    const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: Date.now() + (48 * 60 * 60 * 1000), // 48시간 후
     };
@@ -55,6 +55,10 @@ export async function schedulePostTravelRecommendation() {
       {
         title: '새로운 여행을 떠나볼까요? 🚀',
         body: '즉흥 여행으로 새로운 추억을 만들어보세요!',
+        data: {
+          screen: 'survey_travel',
+          type: 'post_travel_recommendation'
+        },
         android: {
           channelId: 'travel-recommendations',
           importance: AndroidImportance.HIGH,
@@ -62,6 +66,21 @@ export async function schedulePostTravelRecommendation() {
             type: AndroidStyle.BIGTEXT,
             text: '즉흥 여행으로 새로운 추억을 만들어보세요! 지금 바로 여행을 시작해보세요.',
           },
+          actions: [
+            {
+              title: '시작하기',
+              pressAction: {
+                id: 'start_travel',
+                launchActivity: 'default',
+              },
+            },
+            {
+              title: '나중에',
+              pressAction: {
+                id: 'dismiss',
+              },
+            },
+          ],
         },
         ios: {
           categoryId: 'travel-recommendations',
@@ -96,7 +115,7 @@ export async function scheduleWeekdayLunchNotification() {
       triggerTime.setDate(triggerTime.getDate() + daysUntilMonday);
     }
     
-    const trigger = {
+    const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: triggerTime.getTime(),
       alarmManager: true, // Android에서 정확한 시간에 알림
@@ -107,6 +126,11 @@ export async function scheduleWeekdayLunchNotification() {
         id: 'weekday-lunch', // 고유 ID로 중복 방지
         title: '점심 시간이에요! 🍽️',
         body: '근처 맛집을 추천해드릴까요?',
+        data: {
+          screen: 'survey_destination',
+          type: 'lunch_recommendation',
+          category: 'restaurants'
+        },
         android: {
           channelId: 'lunch-recommendations',
           importance: AndroidImportance.HIGH,
@@ -114,6 +138,21 @@ export async function scheduleWeekdayLunchNotification() {
             type: AndroidStyle.BIGTEXT,
             text: '근처 맛집을 추천해드릴까요? 지금 바로 맛집을 찾아보세요!',
           },
+          actions: [
+            {
+              title: '시작하기',
+              pressAction: {
+                id: 'find_restaurants',
+                launchActivity: 'default',
+              },
+            },
+            {
+              title: '나중에',
+              pressAction: {
+                id: 'dismiss',
+              },
+            },
+          ],
         },
         ios: {
           categoryId: 'lunch-recommendations',
@@ -139,7 +178,7 @@ export async function scheduleWeekendTravelNotification() {
     triggerTime.setDate(now.getDate() + daysUntilFriday);
     triggerTime.setHours(18, 0, 0, 0); // 오후 6시
     
-    const trigger = {
+    const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: triggerTime.getTime(),
       alarmManager: true,
@@ -150,6 +189,10 @@ export async function scheduleWeekendTravelNotification() {
         id: 'weekend-travel', // 고유 ID로 중복 방지
         title: '이번 주말은 즉흥 여행 어떠세요? 🎒',
         body: '새로운 곳을 탐험해보세요!',
+        data: {
+          screen: 'survey_travel',
+          type: 'weekend_travel_recommendation'
+        },
         android: {
           channelId: 'weekend-travel',
           importance: AndroidImportance.HIGH,
@@ -157,6 +200,21 @@ export async function scheduleWeekendTravelNotification() {
             type: AndroidStyle.BIGTEXT,
             text: '이번 주말은 즉흥 여행 어떠세요? 새로운 곳을 탐험해보세요!',
           },
+          actions: [
+            {
+              title: '시작하기',
+              pressAction: {
+                id: 'start_weekend_travel',
+                launchActivity: 'default',
+              },
+            },
+            {
+              title: '나중에',
+              pressAction: {
+                id: 'dismiss',
+              },
+            },
+          ],
         },
         ios: {
           categoryId: 'weekend-travel',
@@ -239,9 +297,11 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
     let notification = {
       title: '',
       body: '',
+      data: {},
       android: {
         channelId: 'default',
         importance: AndroidImportance.HIGH,
+        actions: [] as AndroidAction[],
       },
       ios: {
         categoryId: 'default',
@@ -252,19 +312,77 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
       case 'lunch':
         notification.title = '점심 시간이에요! 🍽️';
         notification.body = '근처 맛집을 추천해드릴까요?';
+        notification.data = {
+          screen: 'survey_destination',
+          type: 'lunch_recommendation',
+          category: 'restaurants'
+        };
         notification.android.channelId = 'lunch-recommendations';
+        notification.android.actions = [
+          {
+            title: '시작하기',
+            pressAction: {
+              id: 'find_restaurants',
+              launchActivity: 'default',
+            },
+          },
+          {
+            title: '나중에',
+            pressAction: {
+              id: 'dismiss',
+            },
+          },
+        ];
         notification.ios.categoryId = 'lunch-recommendations';
         break;
       case 'weekend':
         notification.title = '이번 주말은 즉흥 여행 어떠세요? 🎒';
         notification.body = '새로운 곳을 탐험해보세요!';
+        notification.data = {
+          screen: 'survey_travel',
+          type: 'weekend_travel_recommendation'
+        };
         notification.android.channelId = 'weekend-travel';
+        notification.android.actions = [
+          {
+            title: '시작하기',
+            pressAction: {
+              id: 'start_weekend_travel',
+              launchActivity: 'default',
+            },
+          },
+          {
+            title: '나중에',
+            pressAction: {
+              id: 'dismiss',
+            },
+          },
+        ];
         notification.ios.categoryId = 'weekend-travel';
         break;
       case 'travel':
         notification.title = '새로운 여행을 떠나볼까요? 🚀';
         notification.body = '즉흥 여행으로 새로운 추억을 만들어보세요!';
+        notification.data = {
+          screen: 'survey_travel',
+          type: 'travel_recommendation'
+        };
         notification.android.channelId = 'travel-recommendations';
+        notification.android.actions = [
+          {
+            title: '시작하기',
+            pressAction: {
+              id: 'start_travel',
+              launchActivity: 'default',
+            },
+          },
+          {
+            title: '나중에',
+            pressAction: {
+              id: 'dismiss',
+            },
+          },
+        ];
         notification.ios.categoryId = 'travel-recommendations';
         break;
     }
@@ -283,5 +401,58 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
   } catch (error) {
     console.error(`[알림 테스트] ${type} 알림 발송 실패:`, error);
     throw error;
+  }
+}
+
+// ★★★ 5. 알림 액션 처리 함수 ★★★
+export function handleNotificationAction(actionId: string, notificationData: any) {
+  console.log('[알림 액션] 액션 ID:', actionId);
+  console.log('[알림 액션] 알림 데이터:', notificationData);
+  
+  // 액션 ID에 따른 처리
+  switch (actionId) {
+    case 'start_travel':
+      console.log('[알림 액션] start_travel 처리 -> survey_travel 화면으로 이동');
+      return {
+        screen: 'survey_travel',
+        params: { fromNotification: true }
+      };
+    case 'start_weekend_travel':
+      console.log('[알림 액션] start_weekend_travel 처리 -> survey_travel 화면으로 이동');
+      return {
+        screen: 'survey_travel',
+        params: { fromNotification: true }
+      };
+    case 'find_restaurants':
+      console.log('[알림 액션] find_restaurants 처리 -> survey_travel 화면으로 이동');
+      return {
+        screen: 'survey_travel',
+        params: { 
+          fromNotification: true,
+          category: 'restaurants'
+        }
+      };
+    case 'dismiss':
+      console.log('[알림 액션] dismiss 처리 -> 아무것도 하지 않음');
+      return null; // 아무것도 하지 않음
+    default:
+      console.log('[알림 액션] default 케이스 처리');
+      // 알림 데이터에서 screen 정보 확인
+      if (notificationData?.screen) {
+        console.log('[알림 액션] notificationData.screen 존재:', notificationData.screen);
+        // 모든 알림에서 survey_travel로 이동
+        return {
+          screen: 'survey_travel',
+          params: { 
+            fromNotification: true,
+            ...notificationData
+          }
+        };
+      }
+      console.log('[알림 액션] notificationData.screen 없음 -> survey_travel로 이동');
+      return {
+        screen: 'survey_travel',
+        params: { fromNotification: true }
+      };
   }
 }

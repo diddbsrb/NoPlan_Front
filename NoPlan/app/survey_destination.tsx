@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
+import { requestUserPermission } from '../utils/pushNotificationHelper';
 
 const DEST_OPTIONS = [
   { label: '식당', image: require('../assets/images/식당.jpg') },
@@ -56,6 +57,16 @@ export default function SurveyDestination() {
       // 현재 위치 받아서 글로벌 상태에 업데이트
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') throw new Error('위치 권한이 필요합니다.');
+      
+      // 위치 권한이 허용되면 알림 권한도 함께 요청
+      try {
+        await requestUserPermission();
+        console.log('[survey_destination] 알림 권한 요청 완료');
+      } catch (error) {
+        console.log('[survey_destination] 알림 권한 요청 실패:', error);
+        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
+      }
+      
       let location = await Location.getCurrentPositionAsync({});
 
       // 이동수단에 따른 반경 설정
