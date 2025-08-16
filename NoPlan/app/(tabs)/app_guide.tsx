@@ -127,7 +127,14 @@ export default function AppGuide() {
   };
 
   const handleStartTravel = () => {
-    router.replace('/home');
+    // from 파라미터에 따라 다른 동작 수행
+    if (from === 'home_travel') {
+      // home_travel에서 접근한 경우 다시 home_travel로 이동
+      router.replace('/(tabs)/home_travel');
+    } else {
+      // user_info에서 접근한 경우 home으로 이동
+      router.replace('/home');
+    }
   };
 
   return (
