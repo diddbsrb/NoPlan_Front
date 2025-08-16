@@ -1,16 +1,17 @@
+import * as Font from 'expo-font';
+import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Animated,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
@@ -32,8 +33,7 @@ export default function List() {
   } = useTravelSurvey();
   const { mapX, mapY, radius, adjectives } = survey;
   
-  // 🆕 type 파라미터가 없으면 autoRecommendType 사용
-  const finalType = type || survey.autoRecommendType || 'restaurants';
+
 
   const [places, setPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -104,7 +104,7 @@ export default function List() {
     }, [])
   );
 
-  // 🆕 화면이 포커스될 때마다 survey 상태 로깅 및 autoRecommendType 처리
+  // 🆕 화면이 포커스될 때마다 survey 상태 로깅
   useFocusEffect(
     React.useCallback(() => {
       console.log('[list.tsx] 화면 포커스됨 - 현재 survey 상태:', {
@@ -114,18 +114,16 @@ export default function List() {
         mapX: survey.mapX,
         mapY: survey.mapY,
         radius: survey.radius,
-        autoRecommendType: survey.autoRecommendType,
-        finalType
+        adjectives: survey.adjectives,
+        type,
+        fullSurvey: survey
       });
       
-      // 🆕 autoRecommendType이 있으면 자동으로 API 호출
-      if (survey.autoRecommendType && survey.mapX && survey.mapY && survey.radius) {
-        console.log('[list.tsx] autoRecommendType 감지됨, 자동 API 호출 시작:', survey.autoRecommendType);
-        console.log('[list.tsx] finalType:', finalType);
-        // autoRecommendType이 있으면 useEffect에서 자동으로 API 호출됨
-        // 여기서는 로깅만 하고 실제 처리는 useEffect에서 진행
+      // 위치 정보가 없으면 로딩 상태 표시
+      if (!survey.mapX || !survey.mapY || !survey.radius) {
+        console.log('[list.tsx] 위치 정보가 없음, 위치 정보를 가져오는 중...');
       }
-    }, [survey, finalType])
+    }, [survey, type])
   );
 
   const toggleFavorite = async (item: any) => {
@@ -160,7 +158,7 @@ export default function List() {
           overview: overview,
           hashtags: item.hashtags || '',
           recommendReason: item.recommend_reason || '',
-          category: finalType as 'restaurants' | 'cafes' | 'attractions' | 'accommodations',
+                     category: type as 'restaurants' | 'cafes' | 'attractions' | 'accommodations',
         });
         setFavorites(prev => ({ ...prev, [contentId]: res.id }));
         Alert.alert('북마크', '북마크에 추가되었습니다.');
@@ -189,14 +187,68 @@ export default function List() {
   useEffect(() => {
     console.log('[list.tsx] useEffect triggered with:', {
       type,
-      finalType,
       mapX,
       mapY,
-      radius
+      radius,
+      survey: survey
     });
     
-    if (!finalType || mapX == null || mapY == null || radius == null) {
-      console.log('[list.tsx] Missing required params:', { finalType, mapX, mapY, radius });
+    // survey 정보가 아직 로드되지 않았거나 필수 정보가 누락된 경우
+    if (!survey || Object.keys(survey).length === 0) {
+      console.log('[list.tsx] Survey 정보가 아직 로드되지 않음');
+      return;
+    }
+    
+    // 위치 정보가 없으면 현재 위치를 가져와서 survey에 추가
+    if (!mapX || !mapY || !radius) {
+      console.log('[list.tsx] 위치 정보가 없음, 현재 위치를 가져오는 중...');
+      const getCurrentLocation = async () => {
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            setError('위치 권한이 필요합니다.');
+            return;
+          }
+          
+          const location = await Location.getCurrentPositionAsync({});
+          
+          // 이동수단에 따른 반경 설정 (survey_travel에서 설정된 transportation 사용)
+          const radiusMap: { [key: string]: number } = {
+            '도보': 1000,
+            '대중교통': 2000,
+            '자가용': 3000,
+          };
+          const newRadius = radiusMap[survey.transportation || '대중교통'] || 2000;
+          
+          // survey에 위치 정보 추가
+          const updatedSurvey = {
+            ...survey,
+            mapX: location.coords.longitude,
+            mapY: location.coords.latitude,
+            radius: newRadius,
+          };
+          
+          console.log('[list.tsx] 위치 정보 업데이트:', {
+            longitude: location.coords.longitude,
+            latitude: location.coords.latitude,
+            radius: newRadius,
+            transportation: survey.transportation
+          });
+          
+          setSurvey(updatedSurvey);
+        } catch (e) {
+          console.error('[list.tsx] 위치 정보 가져오기 실패:', e);
+          setError('위치 정보를 가져올 수 없습니다.');
+        }
+      };
+      
+      getCurrentLocation();
+      return;
+    }
+    
+    if (!type || mapX == null || mapY == null || radius == null) {
+      console.log('[list.tsx] Missing required params:', { type, mapX, mapY, radius });
+      console.log('[list.tsx] Current survey state:', survey);
       return;
     }
     
@@ -220,24 +272,15 @@ export default function List() {
          console.log('[list.tsx] adjectives 파라미터 추가됨:', adjectives.trim());
        }
 
-      const apiUrl = `https://no-plan.cloud/api/v1/tours/${finalType}/?${params.toString()}`;
+      const apiUrl = `https://no-plan.cloud/api/v1/tours/${type}/?${params.toString()}`;
       console.log('[list.tsx] API URL:', apiUrl);
       
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
-        console.log('[list.tsx] API response:', data);
         if (!cancelled) {
           setPlaces(Array.isArray(data) ? data : []);
           setPageIndex(0);
-          
-          // 🆕 autoRecommendType이 있었으면 API 호출 완료 후 제거
-          if (survey.autoRecommendType) {
-            console.log('[list.tsx] autoRecommendType 제거 중:', survey.autoRecommendType);
-            const { autoRecommendType, ...surveyWithoutAuto } = survey;
-            setSurvey(surveyWithoutAuto);
-            console.log('[list.tsx] autoRecommendType 제거 완료');
-          }
         }
       } catch (e) {
         console.error('[list.tsx] API error:', e);
@@ -249,16 +292,7 @@ export default function List() {
 
     fetchPlaces();
     return () => { cancelled = true; };
-  }, [finalType, mapX, mapY, radius]);
-
-  // 🆕 autoRecommendType이 변경될 때만 API 호출
-  useEffect(() => {
-    if (survey.autoRecommendType && mapX && mapY && radius) {
-      console.log('[list.tsx] autoRecommendType 변경 감지, 자동 API 호출:', survey.autoRecommendType);
-      // autoRecommendType이 있으면 자동으로 API 호출
-      // 기존 useEffect에서 처리되므로 여기서는 로깅만
-    }
-  }, [survey.autoRecommendType, mapX, mapY, radius]);
+      }, [type, mapX, mapY, radius, survey]);
 
   const handleRetry = () => {
     setPageIndex(prev => (prev + 1) % totalPages);
@@ -268,8 +302,21 @@ export default function List() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <CustomTopBar onBack={() => router.replace('/home_travel')} />
       <View style={{ flex: 1, paddingHorizontal: 16 }}>
-        {loading ? (
-          // 🆕 로딩 중일 때는 로딩 화면만 표시
+        {!survey || Object.keys(survey).length === 0 ? (
+          // 🆕 survey 정보 로딩 중 (survey_travel에서 설정된 정보 대기)
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingTitle}>여행 정보를 불러오는 중...</Text>
+            <Text style={styles.loadingText}>여행 설정을 완료해주세요</Text>
+            <ActivityIndicator size="large" color="#123A86" />
+          </View>
+        ) : (!mapX || !mapY || !radius) ? (
+          // 🆕 위치 정보 로딩 중
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingTitle}>위치 정보를 확인하는 중...</Text>
+            <ActivityIndicator size="large" color="#123A86" />
+          </View>
+        ) : loading ? (
+          // 🆕 API 호출 중일 때는 로딩 화면만 표시
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingTitle}>잠시만 기다려주세요</Text>
             <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#123A86" />
@@ -310,11 +357,11 @@ export default function List() {
                       });
                       router.push({
                         pathname: '/info',
-                        params: { 
-                          contentid: item.contentid, 
-                          places: JSON.stringify(places),
-                          type: finalType
-                        },
+                                                 params: { 
+                           contentid: item.contentid, 
+                           places: JSON.stringify(places),
+                           type: type
+                         },
                       });
                     } catch (error) {
                       console.error('[list.tsx] Navigation error:', error);
@@ -323,11 +370,11 @@ export default function List() {
                   }}
                 >
                   <Image
-                    source={
-                      item.firstimage
-                        ? { uri: item.firstimage }
-                        : DEFAULT_IMAGES[finalType as keyof typeof DEFAULT_IMAGES]
-                    }
+                                         source={
+                       item.firstimage
+                         ? { uri: item.firstimage }
+                         : DEFAULT_IMAGES[type as keyof typeof DEFAULT_IMAGES]
+                     }
                     style={[
                       styles.cardImage,
                       !item.firstimage && styles.defaultIconImage
