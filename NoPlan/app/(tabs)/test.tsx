@@ -108,7 +108,7 @@ export default function TestScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>테스트 화면</Text>
-         </View>
+      </View>
 
       <View style={styles.content}>
         {/* ★★★ 알림 테스트 섹션 추가 ★★★ */}

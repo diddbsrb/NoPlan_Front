@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
@@ -42,6 +43,37 @@ export default function List() {
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState<{ [contentId: number]: boolean }>({});
+
+  // 🆕 로딩 멘트 관련 상태
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const fadeAnim = useState(new Animated.Value(1))[0];
+  
+  const loadingMessages = [
+    "장소를 불러오는데 최대 약 30초의 시간이 소요됩니다.",
+    "AI가 최적의 장소를 찾고 있습니다."
+  ];
+
+  // 🆕 로딩 멘트 애니메이션
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }).start(() => {
+          setCurrentMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }).start();
+        });
+      }, 3000); // 3초마다 메시지 변경
+
+      return () => clearInterval(interval);
+    }
+  }, [loading, fadeAnim]);
 
   // 폰트 로드
   useEffect(() => {
@@ -236,95 +268,113 @@ export default function List() {
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <CustomTopBar onBack={() => router.replace('/home_travel')} />
       <View style={{ flex: 1, paddingHorizontal: 16 }}>
-        <Text style={styles.title}>
-          이런 곳 <Text style={{ color: '#123A86' }}>어떠세요?</Text>
-        </Text>
-        <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
-
-                  {loading && <ActivityIndicator style={{ margin: 24 }} size="large" color="#123A86" />}
-        {error && <Text style={{ color: 'red', textAlign: 'center', margin: 12 }}>{error}</Text>}
-
-        <FlatList
-          data={displayedPlaces}
-          keyExtractor={(_, idx) => idx.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.85}
-              onPress={() => {
-                try {
-                  console.log('[list.tsx] Navigating to info with:', {
-                    contentid: item.contentid,
-                    placesLength: places.length,
-                    item: item
-                  });
-                  router.push({
-                    pathname: '/info',
-                    params: { 
-                      contentid: item.contentid, 
-                      places: JSON.stringify(places),
-                      type: finalType
-                    },
-                  });
-                } catch (error) {
-                  console.error('[list.tsx] Navigation error:', error);
-                  Alert.alert('오류', '상세 페이지로 이동할 수 없습니다.');
-                }
-              }}
+        {loading ? (
+          // 🆕 로딩 중일 때는 로딩 화면만 표시
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingTitle}>잠시만 기다려주세요</Text>
+            <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#123A86" />
+            <Animated.Text 
+              style={[
+                styles.loadingText,
+                { opacity: fadeAnim }
+              ]}
             >
-                             <Image
-                 source={
-                   item.firstimage
-                     ? { uri: item.firstimage }
-                     : DEFAULT_IMAGES[finalType as keyof typeof DEFAULT_IMAGES]
-                 }
-                 style={[
-                   styles.cardImage,
-                   !item.firstimage && styles.defaultIconImage
-                 ]}
-                 resizeMode={item.firstimage ? "cover" : "center"}
-               />
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <TouchableOpacity 
-                    onPress={() => toggleFavorite(item)}
-                    disabled={bookmarkLoading[item.contentid]}
-                  >
-                    {bookmarkLoading[item.contentid] ? (
-                      <ActivityIndicator size="small" color="#123A86" />
-                    ) : (
-                      <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
-                        {favorites[item.contentid] ? '★' : '☆'}
-                      </Text>
-                    )}
+              {loadingMessages[currentMessageIndex]}
+            </Animated.Text>
+          </View>
+        ) : (
+          // 🆕 로딩 완료 후 나머지 컴포넌트들 표시
+          <>
+            <Text style={styles.title}>
+              이런 곳 <Text style={{ color: '#123A86' }}>어떠세요?</Text>
+            </Text>
+            <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
+
+            {error && <Text style={{ color: 'red', textAlign: 'center', margin: 12 }}>{error}</Text>}
+
+            <FlatList
+              data={displayedPlaces}
+              keyExtractor={(_, idx) => idx.toString()}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 32 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.card}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    try {
+                      console.log('[list.tsx] Navigating to info with:', {
+                        contentid: item.contentid,
+                        placesLength: places.length,
+                        item: item
+                      });
+                      router.push({
+                        pathname: '/info',
+                        params: { 
+                          contentid: item.contentid, 
+                          places: JSON.stringify(places),
+                          type: finalType
+                        },
+                      });
+                    } catch (error) {
+                      console.error('[list.tsx] Navigation error:', error);
+                      Alert.alert('오류', '상세 페이지로 이동할 수 없습니다.');
+                    }
+                  }}
+                >
+                  <Image
+                    source={
+                      item.firstimage
+                        ? { uri: item.firstimage }
+                        : DEFAULT_IMAGES[finalType as keyof typeof DEFAULT_IMAGES]
+                    }
+                    style={[
+                      styles.cardImage,
+                      !item.firstimage && styles.defaultIconImage
+                    ]}
+                    resizeMode={item.firstimage ? "cover" : "center"}
+                  />
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardHeader}>
+                      <Text style={styles.cardTitle}>{item.title}</Text>
+                      <TouchableOpacity 
+                        onPress={() => toggleFavorite(item)}
+                        disabled={bookmarkLoading[item.contentid]}
+                      >
+                        {bookmarkLoading[item.contentid] ? (
+                          <ActivityIndicator size="small" color="#123A86" />
+                        ) : (
+                          <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
+                            {favorites[item.contentid] ? '★' : '☆'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.cardLocationRow}>
+                      <Text style={styles.cardLocationIcon}>📍</Text>
+                      <Text style={styles.cardLocation}>{item.addr1}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                !loading && !error ? (
+                  <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
+                    추천 결과가 없습니다.
+                  </Text>
+                ) : null
+              }
+              ListFooterComponent={
+                <View style={styles.bottomArea}>
+                  <Text style={styles.bottomDesc}>이 중에서 가고싶은 곳이 없다면?</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                    <Text style={styles.retryButtonText}>재추천 받기</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.cardLocationRow}>
-                  <Text style={styles.cardLocationIcon}>📍</Text>
-                  <Text style={styles.cardLocation}>{item.addr1}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            !loading && !error ? (
-              <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
-                추천 결과가 없습니다.
-              </Text>
-            ) : null
-          }
-          ListFooterComponent={
-            <View style={styles.bottomArea}>
-              <Text style={styles.bottomDesc}>이 중에서 가고싶은 곳이 없다면?</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
-                <Text style={styles.retryButtonText}>재추천 받기</Text>
-              </TouchableOpacity>
-            </View>
-          }
-        />
+              }
+            />
+          </>
+        )}
       </View>
     </View>
   );
@@ -420,5 +470,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Pretendard-Medium',
     fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingTitle: {
+    fontSize: 20,
+    fontFamily: 'Pretendard-Medium',
+    color: '#123A86',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
   },
 });

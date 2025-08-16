@@ -1,8 +1,9 @@
 // app/(tabs)/app_guide.tsx
 import * as Font from 'expo-font';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ import CustomTopBar from '../(components)/CustomTopBar';
 
 export default function AppGuide() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const [step, setStep] = useState(1);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   
@@ -38,57 +40,73 @@ export default function AppGuide() {
       case 1:
         return (
           <>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/guide/case1.png')} 
+                style={styles.icon} 
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.title}>
-              사용자님의 위치 수신
+              AI가 실시간으로{'\n'}최적의 여행지를 추천해줘요
             </Text>
             <Text style={styles.desc}>
-              현재 위치를 기반으로 최적의 여행지를 찾아드립니다.
+              지금 당신에게 딱 맞는{'\n'}맛집, 카페, 명소를 찾아보세요
             </Text>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>📍</Text>
-            </View>
           </>
         );
       case 2:
         return (
           <>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/guide/case2.png')} 
+                style={styles.icon} 
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.title}>
-              사용자님의 정보 수신
+              원하는 분위기만 알려주세요.{'\n'}AI가 완벽한 장소를 찾아드릴게요
             </Text>
             <Text style={styles.desc}>
-              개인화된 여행 경험을 위한 정보를 안전하게 수집합니다.
+              조용한 감성 카페, 활기찬 로컬 맛집 등{'\n'}원하는 무드를 선택하세요
             </Text>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>👤</Text>
-            </View>
           </>
         );
       case 3:
         return (
           <>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/guide/case3.png')} 
+                style={styles.icon} 
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.title}>
-              AI가 최적의 즉흥 여행지를 추천
+              내 위치 기반으로{'\n'}여행지를 추천해줘요
             </Text>
             <Text style={styles.desc}>
-              인공지능이 실시간으로 최적의 여행지를 추천해드립니다.
+              현재 위치 주변의 숨은 명소와 인기 {'\n'}장소를 바로 알려드릴게요. {'\n'}사용자 정보는 안전하게 보호됩니다
             </Text>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>🤖</Text>
-            </View>
           </>
         );
       case 4:
         return (
           <>
+            <View style={styles.iconContainer}>
+              <Image 
+                source={require('../../assets/images/guide/case4.png')} 
+                style={styles.icon} 
+                resizeMode="contain"
+              />
+            </View>
             <Text style={styles.title}>
-              AI가 만들어주는 사용자님만의 여행 요약
+              여행 후 AI가 작성해주는{'\n'}특별한 여행 요약을 만나보세요
             </Text>
             <Text style={styles.desc}>
-              여행 후 AI가 개인화된 여행 요약을 생성해드립니다.
+              AI가 나만의 여행을{'\n'}자동으로 기록해줍니다
             </Text>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>📝</Text>
-            </View>
           </>
         );
       default:
@@ -109,12 +127,18 @@ export default function AppGuide() {
   };
 
   const handleStartTravel = () => {
-    router.replace('/survey_travel');
+    router.replace('/home');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <CustomTopBar onBack={() => router.back()} />
+      <CustomTopBar onBack={() => {
+        if (from === 'home_travel') {
+          router.push('/(tabs)/home_travel');
+        } else {
+          router.back();
+        }
+      }} />
       <View style={styles.inner}>
         {renderStep()}
         
@@ -189,7 +213,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 24,
-    marginTop: 50,
+    marginTop: 0,
   },
   desc: {
     fontSize: 14,
@@ -258,11 +282,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30,
-    marginBottom: 20,
+    marginTop: 50,
+    marginBottom: 40,
+
   },
   icon: {
-    fontSize: 60,
-    textAlign: 'center',
+    width: 200,
+    height: 200,
   },
 });

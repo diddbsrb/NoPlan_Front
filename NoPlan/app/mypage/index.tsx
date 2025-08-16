@@ -54,7 +54,7 @@ export default function MyPage() {
   const { logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
-  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('terms');
+  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('edit');
   
   const [userName, setUserName] = useState('회원');
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
@@ -80,6 +80,9 @@ export default function MyPage() {
   
   const [isBookmarkModalVisible, setIsBookmarkModalVisible] = useState(false);
   const [selectedBookmark, setSelectedBookmark] = useState<BookmarkResponse | null>(null);
+  
+  // 약관 모달 상태 추가
+  const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -260,7 +263,25 @@ export default function MyPage() {
           return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
         }
         
-        return tripIds.map((tripId) => {
+        // 여행 기록을 최신 순으로 정렬 (여행 자체의 순서)
+        const sortedTripIds = tripIds.sort((a, b) => {
+          const tripA = visitedTrips[a];
+          const tripB = visitedTrips[b];
+          
+          // 각 여행의 모든 콘텐츠 중 가장 최근 날짜를 찾기
+          const getLatestDate = (contents: VisitedContent[]) => {
+            if (contents.length === 0) return 0;
+            return Math.max(...contents.map(content => new Date(content.created_at).getTime()));
+          };
+          
+          const latestDateA = getLatestDate(tripA.contents);
+          const latestDateB = getLatestDate(tripB.contents);
+          
+          // 최신 여행이 위에 오도록 내림차순 정렬
+          return latestDateB - latestDateA;
+        });
+        
+        return sortedTripIds.map((tripId) => {
           const tripData = visitedTrips[tripId];
           const tripContents = tripData.contents;
           const firstContent = tripContents[0];
@@ -354,8 +375,7 @@ export default function MyPage() {
     if (activeTab === 'personal') {
       return (
         <>
-          {activePersonalScreen === 'terms' && <TermsComponent onEdit={() => setActivePersonalScreen('edit')} />}
-          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActivePersonalScreen('terms')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} />}
+          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActiveTab('visited')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} onTerms={() => setIsTermsModalVisible(true)} />}
           {activePersonalScreen === 'password' && <PasswordChangeComponent onBack={() => setActivePersonalScreen('edit')} />}
           {activePersonalScreen === 'delete' && <AccountDeleteComponent onBack={() => setActivePersonalScreen('edit')} />}
         </>
@@ -512,6 +532,20 @@ export default function MyPage() {
           </View>
         </View>
       </Modal>
+
+      <Modal animationType="slide" transparent={true} visible={isTermsModalVisible} onRequestClose={() => setIsTermsModalVisible(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>개인정보 처리방침</Text>
+              <TouchableOpacity style={styles.closeXButton} onPress={() => setIsTermsModalVisible(false)}>
+                <Text style={styles.closeXText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <TermsComponent onBack={() => setIsTermsModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -640,8 +674,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: screenWidth * 0.9,
-    maxHeight: '80%',
+    width: screenWidth * 0.90,
+    height: '85%',
+    maxHeight: '98%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,

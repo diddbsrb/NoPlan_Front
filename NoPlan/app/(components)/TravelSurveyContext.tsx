@@ -1,6 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { apiClient } from '../../service/apiClient';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { travelService } from '../../service/travelService';
 
 export interface TravelSurveyData {
@@ -34,17 +33,14 @@ export function TravelSurveyProvider({ children }: { children: ReactNode }) {
   const [isTraveling, setIsTravelingState] = useState(false);
 
   const setSurvey = (data: TravelSurveyData) => {
-    console.log('[TravelSurveyContext] setSurvey called with:', data);
     setSurveyState(data);
   };
 
   const clearSurvey = () => {
-    console.log('[TravelSurveyContext] clearSurvey called');
     setSurveyState({});
   };
 
   const setIsLoggedIn = async (loggedIn: boolean) => {
-    console.log('[TravelSurveyContext] setIsLoggedIn called with:', loggedIn);
     setIsLoggedInState(loggedIn);
     // SecureStore에 로그인 상태 저장
     if (loggedIn) {
@@ -60,7 +56,6 @@ export function TravelSurveyProvider({ children }: { children: ReactNode }) {
   };
 
   const setIsTraveling = async (traveling: boolean) => {
-    console.log('[TravelSurveyContext] setIsTraveling called with:', traveling);
     setIsTravelingState(traveling);
     // SecureStore에 여행 상태 저장
     await SecureStore.setItemAsync('isTraveling', traveling ? 'true' : 'false');
@@ -160,10 +155,6 @@ export function TravelSurveyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadSavedStates();
   }, []);
-  
-  console.log('[TravelSurveyContext] Current survey state:', survey);
-  console.log('[TravelSurveyContext] Current isLoggedIn state:', isLoggedIn);
-  console.log('[TravelSurveyContext] Current isTraveling state:', isTraveling);
   
   return (
     <TravelSurveyContext.Provider value={{ 

@@ -3,10 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Font from 'expo-font';
 
 interface Props {
-    onEdit: () => void;
+    onBack: () => void;
 }
 
-const TermsComponent: React.FC<Props> = ({ onEdit }) => {
+const TermsComponent: React.FC<Props> = ({ onBack }) => {
     const [fontsLoaded, setFontsLoaded] = useState(false);
 
     // 폰트 로드
@@ -21,11 +21,9 @@ const TermsComponent: React.FC<Props> = ({ onEdit }) => {
     }, []);
 
     return (
-        <View style={{ flex: 1, padding: 20 }}>
-            <ScrollView style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10, borderWidth: 1, borderColor: '#eee' }}>
-                <Text style={{ fontFamily: 'Pretendard-Medium', fontSize: 14, marginBottom: 10 }}>📄 개인정보 처리방침</Text>
+        <View style={{ flex: 1, padding: 10 }}>
+            <ScrollView style={{ backgroundColor: '#fff', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#eee' }}>
                 <Text style={{ fontSize: 12, color: '#333', lineHeight: 20 }}>
-                    📄 개인정보 처리방침
                     [No Plan](이하 "회사")는 이용자의 개인정보를 매우 중요하게 생각하며, 「개인정보 보호법」 등 관련 법령을 준수하여 다음과 같이 개인정보를 수집·이용하고 보호합니다.
                     1. 수집하는 개인정보 항목
                     회사는 회원가입, 서비스 이용 시 다음과 같은 개인정보를 수집합니다.
@@ -58,20 +56,6 @@ const TermsComponent: React.FC<Props> = ({ onEdit }) => {
                     ※ 본 방침은 [2025년 7월 6일]부터 적용됩니다. 변경사항이 있을 경우 앱 내 공지사항 또는 이메일을 통해 고지합니다.
                 </Text>
             </ScrollView>
-
-            <TouchableOpacity
-                onPress={onEdit}
-                style={{
-                    marginTop: 20,
-                    backgroundColor: '#d0ebff',
-                    borderRadius: 8,
-                    height: 44,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Medium' }}>개인정보 수정</Text>
-            </TouchableOpacity>
         </View>
     );
 };
