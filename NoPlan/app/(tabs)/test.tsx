@@ -1,17 +1,18 @@
 // app/(tabs)/test.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { travelService } from '../../service/travelService';
 // ★★★ 알림 테스트를 위한 import 추가 ★★★
-import { 
+import {
   sendTestNotification, 
   schedulePostTravelRecommendation,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  createNotificationChannels
+  createNotificationChannels,
+  requestUserPermission
 } from '../../utils/pushNotificationHelper';
 
 export default function TestScreen() {
@@ -26,7 +27,7 @@ export default function TestScreen() {
       const result = await sendTestNotification('lunch');
       console.log('[테스트 화면] 점심 알림 테스트 결과:', result);
       alert('점심 알림 테스트 완료! 알림을 확인해보세요.');
-    } catch (error) {
+      } catch (error) {
       console.error('[테스트 화면] 점심 알림 테스트 실패:', error);
       alert(`점심 알림 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
@@ -80,6 +81,29 @@ export default function TestScreen() {
     }
   };
 
+  const testNotificationWithActions = async () => {
+    try {
+      console.log('[테스트 화면] 알림 액션 테스트 시작');
+      const result = await sendTestNotification('travel');
+      console.log('[테스트 화면] 알림 액션 테스트 결과:', result);
+      alert('알림 액션 테스트 완료! 알림을 눌러서 앱이 열리는지 확인해보세요.');
+    } catch (error) {
+      console.error('[테스트 화면] 알림 액션 테스트 실패:', error);
+      alert(`알림 액션 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    try {
+      console.log('[테스트 화면] 알림 권한 요청 시작');
+      await requestUserPermission();
+      alert('알림 권한 요청 완료! 설정에서 알림 권한을 확인해보세요.');
+    } catch (error) {
+      console.error('[테스트 화면] 알림 권한 요청 실패:', error);
+      alert(`알림 권한 요청 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -110,7 +134,15 @@ export default function TestScreen() {
           <TouchableOpacity style={styles.testButton} onPress={testPostTravelNotification}>
             <Text style={styles.testButtonText}>여행 완료 후 알림 (48시간 후)</Text>
           </TouchableOpacity>
-        </View>
+          
+          <TouchableOpacity style={styles.testButton} onPress={testNotificationWithActions}>
+            <Text style={styles.testButtonText}>알림 액션 테스트 (즉시)</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.testButton} onPress={requestNotificationPermission}>
+            <Text style={styles.testButtonText}>🔔 알림 권한 요청</Text>
+            </TouchableOpacity>
+          </View>
 
         {/* 기존 여행 테스트 섹션 */}
         <View style={styles.section}>
@@ -189,7 +221,7 @@ export default function TestScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1, 
     backgroundColor: '#fff',
   },
   header: {
@@ -239,54 +271,54 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  modalOverlay: {
-    flex: 1,
+  modalOverlay: { 
+    flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
+    justifyContent: 'center', 
     alignItems: 'center',
   },
-  modalBox: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+  modalBox: { 
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
     padding: 24,
     margin: 20,
-    alignItems: 'center',
+    alignItems: 'center', 
   },
-  modalTitle: {
-    fontSize: 18,
+  modalTitle: { 
+    fontSize: 18, 
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 8, 
   },
-  modalDesc: {
-    fontSize: 14,
-    color: '#666',
+  modalDesc: { 
+    fontSize: 14, 
+    color: '#666', 
     marginBottom: 20,
     textAlign: 'center',
   },
-  modalBtnRow: {
-    flexDirection: 'row',
+  modalBtnRow: { 
+    flexDirection: 'row', 
     gap: 12,
   },
-  modalBtnGray: {
-    backgroundColor: '#E0E0E0',
+  modalBtnGray: { 
+    backgroundColor: '#E0E0E0', 
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 8, 
   },
-  modalBtnTextGray: {
+  modalBtnTextGray: { 
     color: '#666',
     fontSize: 14,
     fontWeight: '600',
   },
-  modalBtnBlue: {
+  modalBtnBlue: { 
     backgroundColor: '#123A86',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 8, 
   },
-  modalBtnTextBlue: {
-    color: '#fff',
+  modalBtnTextBlue: { 
+    color: '#fff', 
     fontSize: 14,
     fontWeight: '600',
   },

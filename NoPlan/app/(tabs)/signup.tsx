@@ -10,6 +10,7 @@ import {
   View
 } from 'react-native';
 import { authService } from '../../service/authService';
+import { requestUserPermission } from '../../utils/pushNotificationHelper';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');

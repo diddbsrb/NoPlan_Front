@@ -21,6 +21,7 @@ import MapView, { Marker } from 'react-native-maps';
 
 import { bookmarkService } from '../service/bookmarkService';
 import { CreateVisitedContentDto, travelService } from '../service/travelService';
+import { saveLastScreen } from '../utils/pushNotificationHelper';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../assets/images/restaurants_icon.png'),
@@ -96,6 +97,14 @@ export default function Info() {
 
   // 2) 현재 contentid에 해당하는 항목
   const current = listPlaces.find(p => p.contentid === contentid);
+
+  // 화면이 포커스될 때마다 마지막 화면 정보 저장
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[Info] 화면 포커스됨 - 마지막 화면 정보 저장');
+      saveLastScreen('info', { contentid, places: placesParam, type });
+    }, [contentid, placesParam, type])
+  );
 
   // 🆕 Detail API 호출 제거 - current 데이터만 사용
 

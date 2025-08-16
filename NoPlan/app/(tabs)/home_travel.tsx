@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Alert,
   Image,
@@ -22,6 +23,7 @@ import {
   Trip,
   VisitedContent,
 } from '../../service/travelService';
+import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -89,6 +91,14 @@ export default function HomeTravel() {
   useEffect(() => {
     console.log('[HomeTravel] sections updated:', JSON.stringify(sections, null, 2));
   }, [sections]);
+
+  // 화면이 포커스될 때마다 마지막 화면 정보 저장
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[HomeTravel] 화면 포커스됨 - 마지막 화면 정보 저장');
+      saveLastScreen('home_travel');
+    }, [])
+  );
 
   // 추천 컨텍스트 생성 함수
   const getRecommendationContext = (visitedContents: VisitedContentWithDate[]): RecommendationContext => {
@@ -176,6 +186,15 @@ export default function HomeTravel() {
       if (status !== 'granted') {
         Alert.alert('위치 권한', '위치 권한이 필요합니다.');
         return;
+      }
+      
+      // 위치 권한이 허용되면 알림 권한도 함께 요청
+      try {
+        await requestUserPermission();
+        console.log('[home_travel] 알림 권한 요청 완료');
+      } catch (error) {
+        console.log('[home_travel] 알림 권한 요청 실패:', error);
+        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
       }
       
       const location = await Location.getCurrentPositionAsync({});

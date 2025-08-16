@@ -144,6 +144,15 @@ export default function SurveyTravel() {
             return;
           }
           
+          // 위치 권한이 허용되면 알림 권한도 함께 요청
+          try {
+            await requestUserPermission();
+            console.log('[survey_travel] 알림 권한 요청 완료');
+          } catch (error) {
+            console.log('[survey_travel] 알림 권한 요청 실패:', error);
+            // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
+          }
+          
           let location = await Location.getCurrentPositionAsync({});
           setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
           // 지역명 조회
