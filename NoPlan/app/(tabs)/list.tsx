@@ -15,6 +15,7 @@ import {
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { bookmarkService } from '../../service/bookmarkService';
+import { saveLastScreen } from '../../utils/pushNotificationHelper';
 
 const DEFAULT_IMAGES = {
   restaurants: require('../../assets/images/restaurants_icon.png'),
@@ -104,6 +105,14 @@ export default function List() {
     }, [])
   );
 
+  // 화면이 포커스될 때마다 마지막 화면 정보 저장
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[List] 화면 포커스됨 - 마지막 화면 정보 저장');
+      saveLastScreen('list', { type: finalType });
+    }, [finalType])
+  );
+
   // 🆕 화면이 포커스될 때마다 survey 상태 로깅 및 autoRecommendType 처리
   useFocusEffect(
     React.useCallback(() => {
@@ -139,10 +148,12 @@ export default function List() {
         // 로딩 상태 시작
         setBookmarkLoading(prev => ({ ...prev, [contentId]: true }));
         
-        // 북마크 추가 시 상세 정보 먼저 가져오기
-        let overview = '';
-        try {
-          const detailResponse = await fetch(`https://no-plan.cloud/api/v1/tours/detail/${contentId}/`);
+                 // 북마크 추가 시 상세 정보 먼저 가져오기
+         let overview = '';
+         try {
+           // Rate Limit 방지를 위한 지연 시간 추가
+           await new Promise(resolve => setTimeout(resolve, 500));
+           const detailResponse = await fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentId}/`);
           if (detailResponse.ok) {
             const detailData = await detailResponse.json();
             overview = detailData.overview || '';
@@ -208,6 +219,9 @@ export default function List() {
       setLoading(true);
       setError(null);
 
+      // Rate Limit 방지를 위한 지연 시간 추가
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       const params = new URLSearchParams({
         mapX: mapX.toString(),
         mapY: mapY.toString(),
@@ -225,8 +239,35 @@ export default function List() {
       
       try {
         const response = await fetch(apiUrl);
+        
+        // 응답 상태 확인
+        console.log('[list.tsx] Response status:', response.status);
+        console.log('[list.tsx] Response headers:', response.headers);
+        
+                 if (!response.ok) {
+           // 에러 응답의 내용을 텍스트로 먼저 확인
+           const errorText = await response.text();
+           console.error('[list.tsx] API error response:', errorText);
+           
+           // Rate Limit 에러인지 확인
+           if (errorText.includes('RateLimitError') || response.status === 429) {
+             throw new Error('요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요.');
+           }
+           
+           throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 200)}`);
+         }
+        
+        // 응답이 JSON인지 확인
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const responseText = await response.text();
+          console.error('[list.tsx] Non-JSON response:', responseText.substring(0, 500));
+          throw new Error('API returned non-JSON response');
+        }
+        
         const data = await response.json();
         console.log('[list.tsx] API response:', data);
+        
         if (!cancelled) {
           setPlaces(Array.isArray(data) ? data : []);
           setPageIndex(0);
@@ -241,7 +282,10 @@ export default function List() {
         }
       } catch (e) {
         console.error('[list.tsx] API error:', e);
-        if (!cancelled) setError('목록을 불러오지 못했습니다.');
+        if (!cancelled) {
+          const errorMessage = e instanceof Error ? e.message : '목록을 불러오지 못했습니다.';
+          setError(errorMessage);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -260,9 +304,12 @@ export default function List() {
     }
   }, [survey.autoRecommendType, mapX, mapY, radius]);
 
-  const handleRetry = () => {
-    setPageIndex(prev => (prev + 1) % totalPages);
-  };
+     const handleRetry = () => {
+     // Rate Limit 방지를 위해 2초 대기 후 재시도
+     setTimeout(() => {
+       setPageIndex(prev => (prev + 1) % totalPages);
+     }, 2000);
+   };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>

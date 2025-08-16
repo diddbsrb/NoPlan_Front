@@ -21,7 +21,9 @@ import {
   createNotificationChannels,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  handleNotificationAction
+  handleNotificationAction,
+  resetNotificationsBasedOnTravelStatus,
+  sendTestNotification
 } from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
@@ -83,27 +85,76 @@ export default function RootLayout() {
     // 앱이 필요한 폰트나 리소스를 모두 로드한 후에 푸시 알림 설정을 시작하는 것이 좋습니다.
     if (loaded) {
       const setupNotifications = async () => {
-        await requestUserPermission();
-        await getFCMToken();
-        await createNotificationChannels();
-        
-        // ★★★ 알림 스케줄링은 한 번만 실행하도록 개선 ★★★
-        // 이미 스케줄링된 알림이 있는지 확인 후 없으면 새로 스케줄링
         try {
-          const scheduledNotifications = await notifee.getTriggerNotificationIds();
-          console.log('현재 스케줄된 알림들:', scheduledNotifications);
-          
-          if (!scheduledNotifications.includes('weekday-lunch')) {
-            await scheduleWeekdayLunchNotification();
+          // 1. 알림 권한 요청
+          const permissionGranted = await requestUserPermission();
+          if (!permissionGranted) {
+            console.log('알림 권한이 거부되었습니다.');
+            return;
           }
-          if (!scheduledNotifications.includes('weekend-travel')) {
+
+          // 2. FCM 토큰 가져오기
+          const token = await getFCMToken();
+          if (!token) {
+            console.log('FCM 토큰을 가져올 수 없습니다.');
+            return;
+          }
+
+          // 3. 알림 채널 생성
+          await createNotificationChannels();
+          
+          // 4. 로컬 알림 스케줄링
+          try {
+            const scheduledNotifications = await notifee.getTriggerNotificationIds();
+            console.log('현재 스케줄된 알림들:', scheduledNotifications);
+            
+            // 기존 알림 취소 후 새로 스케줄링 (시간 변경을 위해)
+            if (scheduledNotifications.includes('weekday-lunch')) {
+              await notifee.cancelNotification('weekday-lunch');
+              console.log('기존 평일 점심 알림 취소됨');
+            }
+            if (scheduledNotifications.includes('weekend-travel')) {
+              await notifee.cancelNotification('weekend-travel');
+              console.log('기존 주말 여행 알림 취소됨');
+            }
+            
+                    // 여행 상태에 따른 알림 재설정
+        await resetNotificationsBasedOnTravelStatus();
+            
+            // 스케줄링 후 다시 확인
+            const newScheduledNotifications = await notifee.getTriggerNotificationIds();
+            console.log('스케줄링 후 알림들:', newScheduledNotifications);
+            
+            // 즉시 테스트 알림 발송 (알림 시스템 확인용)
+            try {
+              console.log('즉시 테스트 알림 발송 시작...');
+              await sendTestNotification('lunch');
+              console.log('즉시 테스트 알림 발송 완료');
+            } catch (error) {
+              console.error('즉시 테스트 알림 발송 실패:', error);
+            }
+            
+            // 30초 후 테스트 알림 발송
+            setTimeout(async () => {
+              try {
+                console.log('30초 후 테스트 알림 발송 시작...');
+                await sendTestNotification('weekend');
+                console.log('30초 후 테스트 알림 발송 완료');
+              } catch (error) {
+                console.error('30초 후 테스트 알림 발송 실패:', error);
+              }
+            }, 30 * 1000); // 30초 후
+            
+          } catch (error) {
+            console.error('알림 스케줄링 확인 실패:', error);
+            // 에러 발생 시 기본적으로 스케줄링 시도
+            await scheduleWeekdayLunchNotification();
             await scheduleWeekendTravelNotification();
           }
+
+          console.log('알림 설정이 완료되었습니다.');
         } catch (error) {
-          console.error('알림 스케줄링 확인 실패:', error);
-          // 에러 발생 시 기본적으로 스케줄링 시도
-          await scheduleWeekdayLunchNotification();
-          await scheduleWeekendTravelNotification();
+          console.error('알림 설정 중 오류 발생:', error);
         }
       };
 
@@ -130,39 +181,40 @@ export default function RootLayout() {
         console.log('[알림 백그라운드] type 값:', type);
         console.log('[알림 백그라운드] type === EventType.PRESS:', type === EventType.PRESS);
         
-        if (type === EventType.PRESS || type === 2) {
-          // 액션 ID 가져오기
-          const actionId = detail.pressAction?.id || 'default';
-          console.log('[알림 백그라운드] 액션 ID:', actionId);
-          console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
+                 if (type === EventType.PRESS || type === 2) {
+           // 액션 ID 가져오기
+           const actionId = detail.pressAction?.id || 'default';
+           console.log('[알림 백그라운드] 액션 ID:', actionId);
+           console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
+           
+           // 알림 데이터와 액션 ID를 함께 전달 (async 처리)
+           handleNotificationAction(actionId, detail.notification?.data || {}).then(navigationData => {
+             console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
           
-          // 알림 데이터와 액션 ID를 함께 전달
-          const navigationData = handleNotificationAction(actionId, detail.notification?.data || {});
-          console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
-          
-          if (navigationData) {
-            console.log('[알림 백그라운드] 네비게이션 데이터:', navigationData);
-            
-            if (navigationData.screen) {
-              console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
-              try {
-                router.push({
-                  pathname: `/${navigationData.screen}` as any,
-                  params: navigationData.params
-                });
-                console.log('[알림 백그라운드] 화면 이동 성공');
-              } catch (error) {
-                console.error('[알림 백그라운드] 화면 이동 실패:', error);
-              }
-            }
-          } else {
-            console.log('[알림 백그라운드] 네비게이션 데이터가 null입니다.');
-          }
-        }
-      });
+             if (navigationData) {
+               console.log('[알림 백그라운드] 네비게이션 데이터:', navigationData);
+               
+               if (navigationData.screen) {
+                 console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
+                 try {
+                   router.push({
+                     pathname: `/${navigationData.screen}` as any,
+                     params: navigationData.params
+                   });
+                   console.log('[알림 백그라운드] 화면 이동 성공');
+                 } catch (error) {
+                   console.error('[알림 백그라운드] 화면 이동 실패:', error);
+                 }
+               }
+             } else {
+               console.log('[알림 백그라운드] 네비게이션 데이터가 null입니다.');
+             }
+           });
+         }
+       });
 
-      // 컴포넌트가 사라질 때 리스너를 정리합니다.
-      return unsubscribe;
+       // 컴포넌트가 사라질 때 리스너를 정리합니다.
+       return unsubscribe;
     }
   }, [loaded, router]);
 

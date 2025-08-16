@@ -19,9 +19,10 @@ interface Props {
   onPassword: () => void;
   onDelete: () => void;
   onTerms: () => void;
+  onNotifications: () => void;
 }
 
-const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTerms }) => {
+const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTerms, onNotifications }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(true);
   const [isAlarmEnabled, setIsAlarmEnabled] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
@@ -271,15 +272,14 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 현재 위치 기반으로 더 나은 추천을 위해 수집됩니다.</Text>
         
-        <TouchableOpacity onPress={handleNotificationSettingPress} style={styles.settingRow}>
+        <TouchableOpacity onPress={onNotifications} style={styles.settingRow}>
           <Text style={styles.label}>알림 설정</Text>
-          <Switch
-            disabled={true}
-            value={isAlarmEnabled}
-            trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isAlarmEnabled ? '#123A86' : '#f4f3f4'}
-            style={{ opacity: 0.7 }}
-          />
+          <View style={styles.settingValue}>
+            <Text style={styles.settingValueText}>
+              {isAlarmEnabled ? '활성화' : '비활성화'}
+            </Text>
+            <Text style={styles.arrow}>›</Text>
+          </View>
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
         
@@ -398,5 +398,18 @@ const styles = StyleSheet.create({
     marginTop: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  settingValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingValueText: {
+    fontSize: 13,
+    color: '#666',
+    marginRight: 5,
+  },
+  arrow: {
+    fontSize: 16,
+    color: '#999',
   },
 });

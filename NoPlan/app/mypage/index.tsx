@@ -30,6 +30,7 @@ import TermsComponent from './TermsComponent';
 import InfoEditComponent from './InfoEditComponent';
 import PasswordChangeComponent from './PasswordChangeComponent';
 import AccountDeleteComponent from './AccountDeleteComponent';
+import NotificationSettingsComponent from './NotificationSettingsComponent';
 
 type VisitedTrips = {
   [key: string]: {
@@ -50,11 +51,9 @@ const PLACEHOLDER_IMAGE_URL = 'https://search.pstatic.net/common/?src=http%3A%2F
 
 export default function MyPage() {
   const router = useRouter();
-  // ★★★ 핵심 2: AuthContext에서 logout 함수 가져오기 ★★★
-  const { logout } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
-  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('edit');
+  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete' | 'notifications'>('edit');
   
   const [userName, setUserName] = useState('회원');
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
@@ -160,36 +159,7 @@ export default function MyPage() {
     Linking.openURL(kakaoMapUrl);
   };
 
-  // ★★★ 핵심 3: AuthContext를 사용하는 로그아웃 함수 ★★★
-  const handleLogout = () => {
-    Alert.alert(
-      "로그아웃",
-      "정말 로그아웃 하시겠습니까?",
-      [
-        {
-          text: "취소",
-          style: "cancel"
-        },
-        { 
-          text: "로그아웃",
-          onPress: async () => {
-            try {
-              // AuthContext의 logout 함수 사용 (모든 정리 작업을 자동으로 처리)
-              await logout();
-              
-              // 홈 화면으로 이동
-              router.replace('/');
-      
-            } catch (error) {
-              console.error('로그아웃 처리 중 오류 발생:', error);
-              Alert.alert("오류", "로그아웃 중 문제가 발생했습니다.");
-            }
-          },
-          style: 'destructive'
-        }
-      ]
-    );
-  };
+
 
 
   const handleDeleteTrip = async (tripId: string) => {
@@ -375,9 +345,10 @@ export default function MyPage() {
     if (activeTab === 'personal') {
       return (
         <>
-          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActiveTab('visited')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} onTerms={() => setIsTermsModalVisible(true)} />}
+          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActiveTab('visited')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} onTerms={() => setIsTermsModalVisible(true)} onNotifications={() => setActivePersonalScreen('notifications')} />}
           {activePersonalScreen === 'password' && <PasswordChangeComponent onBack={() => setActivePersonalScreen('edit')} />}
           {activePersonalScreen === 'delete' && <AccountDeleteComponent onBack={() => setActivePersonalScreen('edit')} />}
+          {activePersonalScreen === 'notifications' && <NotificationSettingsComponent onBack={() => setActivePersonalScreen('edit')} />}
         </>
       );
     }
@@ -408,10 +379,6 @@ export default function MyPage() {
           {renderContent()}
         </ScrollView>
       </View>
-      
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>로그아웃</Text>
-      </TouchableOpacity>
 
       {/* --- Modals --- */}
       <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
@@ -819,15 +786,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  logoutButton: {
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    backgroundColor: '#F8F9FA'
-  },
-  logoutButtonText: {
-    textAlign: 'center',
-    color: '#666',
-    fontSize: 14,
-  },
+
 });
