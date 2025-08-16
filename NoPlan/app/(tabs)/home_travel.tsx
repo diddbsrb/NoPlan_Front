@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
   travelService,
   Trip,
@@ -188,14 +188,18 @@ export default function HomeTravel() {
       };
       const radius = radiusMap[survey.transportation || '대중교통'] || 500;
       
-      // survey context 업데이트하지 않고 type만 파라미터로 전달
-      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> type 파라미터로 전달`);
-      console.log('[HomeTravel] 위치 정보:', {
-        longitude: location.coords.longitude,
-        latitude: location.coords.latitude,
+      // survey context 업데이트 (자동 추천 타입 포함)
+      const newSurvey: TravelSurveyData = {
+        ...survey,
+        mapX: location.coords.longitude,
+        mapY: location.coords.latitude,
         radius,
-        transportation: survey.transportation
-      });
+        adjectives: survey.adjectives || '',
+        autoRecommendType: type,
+      };
+      
+      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> autoRecommendType으로 설정`);
+      setSurvey(newSurvey);
       
       // survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
       router.replace({ pathname: '/list', params: { type } });
@@ -235,13 +239,17 @@ export default function HomeTravel() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
 
-      // 최신 여행 정보로 survey 상태 업데이트하지 않음 (survey_travel에서 이미 설정됨)
-      console.log('[HomeTravel] 최신 여행 정보 로드 완료:', {
-        region: latest.region,
-        transportation: latest.transportation || survey.transportation,
-        companion: latest.companion || survey.companion,
-        adjectives: latest.adjectives || survey.adjectives,
-      });
+      // 최신 여행 정보로 survey 상태 업데이트
+      if (latest) {
+        const updatedSurvey = {
+          ...survey,
+          region: latest.region,
+          transportation: latest.transportation || survey.transportation,
+          companion: latest.companion || survey.companion,
+          adjectives: latest.adjectives || survey.adjectives,
+        };
+        setSurvey(updatedSurvey);
+      }
 
       // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
@@ -346,12 +354,6 @@ export default function HomeTravel() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* 배경 이미지 */}
-      <Image
-        source={require('../../assets/images/home/bg4.jpeg')}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.helpButton}
@@ -377,7 +379,7 @@ export default function HomeTravel() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+          <Ionicons name="person-circle-outline" size={32} color="#263453" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -684,16 +686,6 @@ const R = 40;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#EEF1F5' },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-    opacity: 0.3, // 배경 이미지에 낮은 투명도 적용
-  },
   container: { flex: 1 },
   loadingContainer: { 
     flex: 1, 
@@ -720,29 +712,28 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    height: 140, // 200에서 160으로 줄임
+    height: 200,
     borderBottomLeftRadius: R,
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 투명도를 더 줄여서 거의 불투명하게
+    paddingTop: 8,
+    backgroundColor: '#263453',
   },
   heroTextWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -30, // 글씨를 위로 올리기 위해 음수 마진 추가
     gap: 10,
   },
-           title: {
-      textAlign: 'center',
-      color: '#F4F7FB',
-      fontSize: 20,
-      lineHeight: 28,
-      fontWeight: '800',
-      marginBottom: 15, // 아바타와의 간격을 줄여서 더 위로 올림
-    },
+     title: {
+     textAlign: 'center',
+     color: '#F4F7FB',
+     fontSize: 20,
+     lineHeight: 28,
+     fontWeight: '800',
+     marginBottom: 30, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
+   },
   subtitle: {
     textAlign: 'center',
     color: '#AFC2E2',
@@ -765,7 +756,7 @@ const styles = StyleSheet.create({
 
   avatarWrap: {
     alignItems: 'center',
-    marginTop: -50,
+    marginTop: -70,
   },
   avatarRing: {
     width: 72,
@@ -1061,11 +1052,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 히어로와 동일한 배경색 적용
+    backgroundColor: 'transparent',
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
-    zIndex: 10, // 히어로 위에 표시되도록 zIndex 추가
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   helpButton: {
     padding: 4,
@@ -1074,13 +1071,14 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 20,
+    backgroundColor: '#F1F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#263453',
   },
   helpIcon: {
-    color: '#FFFFFF',
+    color: '#263453',
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -1095,7 +1093,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 22,
-    color: '#FFFFFF',
+    color: '#263453',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
   },
