@@ -1,27 +1,27 @@
 // app/(tabs)/test.tsx
 
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { memo, useEffect, useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { memo, useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
-  Image,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    Modal,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
-  travelService,
-  Trip,
-  VisitedContent,
+    travelService,
+    Trip,
+    VisitedContent,
 } from '../../service/travelService';
 import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
 
@@ -77,6 +77,7 @@ export default function HomeTravel() {
       try {
         await Font.loadAsync({
           'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+          'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
         });
         setFontsLoaded(true);
       } catch (error) {
@@ -766,7 +767,7 @@ const styles = StyleSheet.create({
      color: '#F4F7FB',
      fontSize: 20,
      lineHeight: 28,
-     fontWeight: '800',
+     fontFamily: 'Pretendard-Medium',
      marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
   subtitle: {
@@ -812,7 +813,7 @@ const styles = StyleSheet.create({
   },
   avatarCaption: {
     marginTop: 10,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Medium',
     color: '#263453',
     textAlign: 'center',
     paddingHorizontal: 20,
@@ -881,7 +882,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8, 
   },
-  cardTitle: { fontWeight: '800', color: '#263453', fontSize: 14, flex: 1 },
+  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#263453', fontSize: 14, flex: 1 },
   cardCategory: { 
     color: '#8A9BB6', 
     fontSize: 12,
@@ -907,7 +908,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevText: { color: '#1C2E4A', fontSize: 16, fontWeight: '800' }, // 폰트 크기 줄임
+  chevText: { color: '#1C2E4A', fontSize: 16, fontFamily: 'Pretendard-Medium' }, // 폰트 크기 줄임
 
   tabBar: {
     position: 'absolute',
@@ -933,8 +934,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14, fontWeight: '700' },
-  tabLabel: { color: '#AFC2E2', fontSize: 11, fontWeight: '700' },
+  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14 },
+  tabLabel: { color: '#AFC2E2', fontSize: 11, fontFamily: 'Pretendard-Medium' },
 
   // 모달 스타일
   modalOverlay: { 
@@ -1029,7 +1030,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   placeDetailContent: {
     padding: 20,
@@ -1039,7 +1040,7 @@ const styles = StyleSheet.create({
   },
   placeTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#D9BCE',
     marginBottom: 8,
   },
@@ -1057,7 +1058,7 @@ const styles = StyleSheet.create({
   },
   placeInfoLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 6,
   },
@@ -1108,7 +1109,7 @@ const styles = StyleSheet.create({
   helpIcon: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   topBarCenter: {
     flexDirection: 'row',
@@ -1156,7 +1157,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#8A9BB6',
     marginTop: 6,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
   },
   timelineLine: {

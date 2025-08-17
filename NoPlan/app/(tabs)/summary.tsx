@@ -4,12 +4,12 @@ import * as Font from 'expo-font';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 // ★★★ 여행 완료 후 알림 스케줄링을 위한 import 추가 ★★★
@@ -30,6 +30,7 @@ export default function SummaryScreen() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     marginBottom: 8,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   regionText: {
     fontSize: 18,
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     marginBottom: 12,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   summaryText: {
     fontSize: 16,

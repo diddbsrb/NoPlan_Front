@@ -1,16 +1,15 @@
-import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
 import * as Font from 'expo-font';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { authService } from '../../service/authService';
-import { requestUserPermission } from '../../utils/pushNotificationHelper';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
@@ -27,6 +26,7 @@ export default function SignupScreen() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }

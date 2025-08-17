@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Switch,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { 
-  sendTestNotification,
-  checkNotificationPermission
+import {
+    checkNotificationPermission,
+    sendTestNotification
 } from '../../utils/pushNotificationHelper';
 
 interface NotificationPreferences {
@@ -271,11 +271,11 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     color: '#007AFF',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#1C1C1E',
     marginBottom: 8,
   },
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#1C1C1E',
     marginBottom: 4,
   },
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   testTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#1C1C1E',
     marginBottom: 8,
   },
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   testButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
   savingIndicator: {
     flexDirection: 'row',

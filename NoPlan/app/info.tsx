@@ -4,18 +4,18 @@ import * as Font from 'expo-font';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  Dimensions,
-  Image,
-  Linking,
-  PanResponder,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Animated,
+    Dimensions,
+    Image,
+    Linking,
+    PanResponder,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -543,8 +543,7 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     color: '#666', 
     marginBottom: 4,
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '500'
+    fontFamily: 'Pretendard-Medium',
   },
   crowdInfo: {
     flexDirection: 'row',

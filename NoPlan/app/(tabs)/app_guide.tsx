@@ -27,6 +27,7 @@ export default function AppGuide() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
