@@ -7,21 +7,21 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
-    travelService,
-    Trip,
-    VisitedContent,
+  travelService,
+  Trip,
+  VisitedContent,
 } from '../../service/travelService';
 import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
 
@@ -383,7 +383,7 @@ export default function HomeTravel() {
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.helpButton}
-          onPress={() => router.push({
+          onPress={() => router.replace({
             pathname: '/app_guide',
             params: { from: 'home_travel' }
           })}
