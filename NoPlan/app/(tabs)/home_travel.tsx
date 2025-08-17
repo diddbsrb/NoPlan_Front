@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
   },
   title: {
      textAlign: 'center',
-     color: '#F4F7FB',
+     color: '#fff',
      fontSize: 20,
      lineHeight: 28,
      fontFamily: 'Pretendard-Medium',
@@ -778,15 +778,16 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 50,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#659ECF',
   },
   avatarCaption: {
-    marginTop: 20,
+    marginTop: 15,
     fontFamily: 'Pretendard-Medium',
+    fontSize: 15,
     color: '#333',
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
 
   recommendationSection: {
@@ -795,7 +796,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recommendationButton: {
-    backgroundColor: 'rgba(101, 158, 207, 0.8)',
+    backgroundColor: 'rgba(101, 158, 207, 0.7)',
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -813,16 +814,16 @@ const styles = StyleSheet.create({
     color: '#888',
   },
 
-                       scrollContainer: {
-         flex: 1,
-         marginBottom: 100, // 하단 버튼과의 간격
-       },
-       listContent: {
-         paddingHorizontal: 20, // 30에서 20으로 줄임
-         paddingTop: 12,
-         paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-         gap: 6, // 12에서 6으로 줄임
-       },
+  scrollContainer: {
+    flex: 1,
+    marginBottom: 100, // 하단 버튼과의 간격
+  },
+  listContent: {
+    paddingHorizontal: 20, // 30에서 20으로 줄임
+    paddingTop: 12,
+    paddingBottom: 20, // 스크롤 컨테이너 하단 여백
+    gap: 6, // 12에서 6으로 줄임
+  },
 
   card: {
     flexDirection: 'row',
@@ -878,7 +879,7 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     bottom: 24,
-    backgroundColor: 'rgba(101, 158, 207, 0.9)',
+    backgroundColor: 'rgba(101, 158, 207, 0.85)',
     borderRadius: 26,
     height: 64,
     flexDirection: 'row',
