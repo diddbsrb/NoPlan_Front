@@ -1,16 +1,16 @@
+import * as Font from 'expo-font';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Animated,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
@@ -319,7 +319,7 @@ export default function List() {
           // 🆕 로딩 중일 때는 로딩 화면만 표시
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingTitle}>잠시만 기다려주세요</Text>
-            <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#123A86" />
+            <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#659ECF" />
             <Animated.Text 
               style={[
                 styles.loadingText,
@@ -333,7 +333,7 @@ export default function List() {
           // 🆕 로딩 완료 후 나머지 컴포넌트들 표시
           <>
             <Text style={styles.title}>
-              이런 곳 <Text style={{ color: '#123A86' }}>어떠세요?</Text>
+              이런 곳 <Text style={{ color: '#659ECF' }}>어떠세요?</Text>
             </Text>
             <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
 
@@ -389,7 +389,7 @@ export default function List() {
                         disabled={bookmarkLoading[item.contentid]}
                       >
                         {bookmarkLoading[item.contentid] ? (
-                          <ActivityIndicator size="small" color="#123A86" />
+                          <ActivityIndicator size="small" color="#659ECF" />
                         ) : (
                           <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
                             {favorites[item.contentid] ? '★' : '☆'}
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
   filled: {
-    color: '#123A86',
+    color: '#659ECF',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 36,
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   loadingTitle: {
     fontSize: 20,
     fontFamily: 'Pretendard-Medium',
-    color: '#123A86',
+    color: '#659ECF',
     textAlign: 'center',
     marginBottom: 16,
   },

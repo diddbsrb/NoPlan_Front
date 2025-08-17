@@ -120,7 +120,7 @@ export default function SurveyDestination() {
       <CustomTopBar onBack={() => router.back()} />
              <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', padding: 24, paddingTop: 20 }}>
         <Text style={styles.title}>
-          다음은 <Text style={{ color: '#123A86' }}>어디로</Text> 가볼까요?
+          다음은 <Text style={{ color: '#659ECF' }}>어디로</Text> 가볼까요?
         </Text>
         <Text style={styles.desc}>다음 행선지를 선택해주세요.</Text>
         <View style={[styles.grid, { width: '100%' }]}>
@@ -141,7 +141,7 @@ export default function SurveyDestination() {
       <TouchableOpacity
         style={[
           styles.nextButton,
-          { backgroundColor: selected !== null ? '#F2FAFC' : '#123A86' },
+          { backgroundColor: selected !== null ? '#659ECF' : '#E0E0E0' },
         ]}
         disabled={selected === null || loading}
         onPress={() => {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedOption: {
-    borderColor: '#123A86',
+    borderColor: '#659ECF',
   },
   optionImage: {
     width: '100%',
@@ -222,7 +222,5 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     paddingVertical: 13,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#123A86',
   },
 });

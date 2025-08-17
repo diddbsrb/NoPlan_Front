@@ -4,13 +4,13 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Image,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,7 +21,6 @@ const imageList = [
   require('../../assets/images/home/bg2.jpeg'),
   require('../../assets/images/home/bg3.jpeg'),
   require('../../assets/images/home/bg4.jpeg'),
-  require('../../assets/images/home/bg5.jpeg'),
 ];
 
 export default function HomeScreen() {
@@ -161,8 +160,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-    marginLeft: -30,
+    marginTop: 25,
+    marginLeft: -25,
+    marginRight: 5,
   },
   logo: { width: 100, height: 30 },
   center: {
