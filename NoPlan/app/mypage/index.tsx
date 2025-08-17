@@ -2,17 +2,17 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Linking,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 
@@ -222,7 +222,7 @@ export default function MyPage() {
 
   const renderContent = () => {
     if (isLoading && activeTab !== 'personal') {
-      return <ActivityIndicator size="large" color="#123A86" style={{ marginTop: 40 }} />;
+      return <ActivityIndicator size="large" color="#659ECF" style={{ marginTop: 40 }} />;
     }
 
       if (activeTab === 'visited') {
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   tabTextActive: {
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
   },
   scrollContainer: {
@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
   },
   star: {
     fontSize: 24,
-    color: '#123A86',
+    color: '#659ECF',
   },
   deleteTripButton: {
     paddingVertical: 5,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     color: '#00796b',
   },
   navigationButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

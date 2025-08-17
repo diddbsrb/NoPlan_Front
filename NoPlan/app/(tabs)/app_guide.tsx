@@ -50,10 +50,10 @@ export default function AppGuide() {
       case 1:
         return (
           <>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { marginTop: 50, marginBottom: 40 }]}>
               <Image 
                 source={require('../../assets/images/guide/case1.png')} 
-                style={styles.icon} 
+                style={[styles.icon, { width: 220, height: 220 }]} 
                 resizeMode="contain"
               />
             </View>
@@ -68,10 +68,10 @@ export default function AppGuide() {
       case 2:
         return (
           <>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { marginTop: 50, marginBottom: 60 }]}>
               <Image 
                 source={require('../../assets/images/guide/case2.png')} 
-                style={styles.icon} 
+                style={[styles.icon, { width: 200, height: 200 }]} 
                 resizeMode="contain"
               />
             </View>
@@ -86,10 +86,10 @@ export default function AppGuide() {
       case 3:
         return (
           <>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { marginTop: 20, marginBottom: 0 }]}>
               <Image 
                 source={require('../../assets/images/guide/case3.png')} 
-                style={styles.icon} 
+                style={[styles.icon, { width: 250, height: 280 }]} 
                 resizeMode="contain"
               />
             </View>
@@ -104,10 +104,10 @@ export default function AppGuide() {
       case 4:
         return (
           <>
-            <View style={styles.iconContainer}>
+            <View style={[styles.iconContainer, { marginTop: 25, marginBottom: 0 }]}>
               <Image 
                 source={require('../../assets/images/guide/case4.png')} 
-                style={styles.icon} 
+                style={[styles.icon, { width: 300, height: 300 }]} 
                 resizeMode="contain"
               />
             </View>
@@ -165,7 +165,7 @@ export default function AppGuide() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#123A86" />
+          <Ionicons name="person-circle-outline" size={32} color="#659ECF" />
         </TouchableOpacity>
       </View>
       
@@ -181,7 +181,7 @@ export default function AppGuide() {
             key={n}
             style={[
               styles.progressBar,
-              { backgroundColor: step === n ? '#123A86' : '#E0E0E0' },
+              { backgroundColor: step === n ? '#659ECF' : '#E0E0E0' },
             ]}
           />
         ))}
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
   },
   nextButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
   },
   startButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 22,
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',

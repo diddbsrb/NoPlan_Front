@@ -4,12 +4,12 @@ import * as Font from 'expo-font';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 // ★★★ 여행 완료 후 알림 스케줄링을 위한 import 추가 ★★★
@@ -63,7 +63,7 @@ export default function SummaryScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Ionicons name="checkmark-circle" size={24} color="#123A86" />
+          <Ionicons name="checkmark-circle" size={24} color="#659ECF" />
           <Text style={styles.headerTitle}>여행 완료!</Text>
         </View>
       </View>
@@ -109,8 +109,9 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 50,
+    paddingTop: 60,
     paddingBottom: 16,
+    marginBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 23,
     fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginLeft: 8,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 5,
     borderWidth: 1,
     borderColor: '#E9ECEF',
   },
@@ -150,10 +151,10 @@ const styles = StyleSheet.create({
   regionText: {
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
-    color: '#123A86',
+    color: '#659ECF',
   },
   summarySection: {
-    marginBottom: 8,
+    marginBottom: 5,
   },
   summaryLabel: {
     fontSize: 14,
@@ -186,12 +187,12 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
   homeButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

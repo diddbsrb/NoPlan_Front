@@ -2,12 +2,12 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { authService } from '../../service/authService';
 
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontFamily: 'Pretendard-Medium',
-    color: '#123A86',
+    color: '#A9D1F4',
     marginBottom: 15, // headerTitle과 description 사이 간격 넓힘
     textAlign: 'center',
   },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#A9D1F4',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

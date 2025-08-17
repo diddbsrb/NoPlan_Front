@@ -1,16 +1,14 @@
+import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import * as Font from 'expo-font';
 // *** 변경점 1: Alert와 Linking을 import 합니다. ***
-import { Alert, Image, StyleSheet, Switch, Text, TouchableOpacity, View, Linking, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Alert, Image, Linking, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
-import { userService } from '../../service/userService';
 import { authService } from '../../service/authService';
 // ★★★ 경로가 수정되었습니다. (../가 두 개에서 한 개로 변경) ★★★
-import { useAuth } from '../(contexts)/AuthContext';
 import messaging from '@react-native-firebase/messaging';
+import { useAuth } from '../(contexts)/AuthContext';
 
 console.log('🧩 InfoEditComponent 렌더됨');
 
@@ -266,7 +264,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
             disabled={true} 
             value={isLocationEnabled}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isLocationEnabled ? '#123A86' : '#f4f3f4'}
+            thumbColor={isLocationEnabled ? '#659ECF' : '#f4f3f4'}
             style={{ opacity: 0.7 }}
           />
         </TouchableOpacity>
@@ -333,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   link: {
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
   },
   linkedText: {
@@ -366,7 +364,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   logoutText: {
-    color: '#123A86',
+    color: '#659ECF',
     fontSize: 13,
   },
   deleteButton: {
@@ -383,7 +381,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,

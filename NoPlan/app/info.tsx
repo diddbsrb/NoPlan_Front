@@ -4,18 +4,18 @@ import * as Font from 'expo-font';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    Linking,
-    PanResponder,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Linking,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -225,7 +225,7 @@ export default function Info() {
   if (!current) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#123A86" />
+        <ActivityIndicator size="large" color="#659ECF" />
         <Text style={{ marginTop: 16, color: '#666' }}>정보를 불러오는 중...</Text>
       </View>
     );
@@ -267,7 +267,7 @@ export default function Info() {
     console.log('[info] 방문 기록 저장 시작');
     
     Alert.alert(
-      '방문했어요',
+      '방문할게요',
       '이 장소를 방문 목록에 추가하시겠습니까?',
       [
         { text: '취소', style: 'cancel' },
@@ -423,7 +423,7 @@ export default function Info() {
               <Text style={styles.primaryButtonText}>경로 탐색</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.secondaryButton} onPress={handleVisit}>
-              <Text style={styles.secondaryButtonText}>방문했어요</Text>
+              <Text style={styles.secondaryButtonText}>방문할게요</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -452,7 +452,7 @@ const CrowdStatus = ({ status }: { status: string | null }) => {
   
   return (
     <View style={styles.crowdStatus}>
-      <Text style={styles.crowdLabel}>현재 혼잡도</Text>
+      <Text style={styles.crowdLabel}>예상 혼잡도</Text>
       <View style={styles.crowdInfo}>
         <Text style={styles.crowdIcon}>{crowdInfo.icon}</Text>
         <Text style={[styles.crowdText, { color: crowdInfo.color }]}>
@@ -496,10 +496,10 @@ const styles = StyleSheet.create({
   },
   cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'center' },
-  cardSubtitle: { fontSize: 14, color: '#123A86', marginTop: 4, textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#333', marginTop: 4, textAlign: 'center' },
 
   star: { fontSize: 24, color: '#ccc' },
-  filled: { color: '#123A86' },
+  filled: { color: '#659ECF' },
 
   sheet: {
     position: 'absolute',
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   sheetHeaderText: { flex: 1 },
 
   sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'left' },
-  sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
+  sheetSubtitle: { fontSize: 14, color: '#333', marginTop: 2, textAlign: 'left' },
 
   sheetContent: { paddingHorizontal: 16, paddingBottom: 50 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -570,14 +570,14 @@ const styles = StyleSheet.create({
   primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Medium' },
   secondaryButton: {
     flex: 1,
-    borderColor: '#123A86',
+    borderColor: '#659ECF',
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginLeft: 8,
   },
-  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Medium' },
+  secondaryButtonText: { fontSize: 16, color: '#659ECF', fontFamily: 'Pretendard-Medium' },
 
   backBtn: {
     position: 'absolute',
@@ -587,13 +587,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  backText: { fontSize: 24, color: '#123A86' },
+  backText: { fontSize: 24, color: '#659ECF' },
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: 'red', marginBottom: 20 },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

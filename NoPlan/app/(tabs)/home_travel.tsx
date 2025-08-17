@@ -376,7 +376,7 @@ export default function HomeTravel() {
     <SafeAreaView style={styles.safe}>
       {/* 배경 이미지 */}
       <Image
-        source={require('../../assets/images/home/bg4.jpeg')}
+        source={require('../../assets/images/home_travel_screen.jpeg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
@@ -423,7 +423,7 @@ export default function HomeTravel() {
          <View style={styles.avatarWrap}>
                        <View style={styles.avatarRing}>
               <Image
-                source={require('../../assets/images/noplan_logo_blue.png')}
+                source={require('../../assets/images/main_character.png')}
                 style={styles.avatar}
               />
             </View>
@@ -499,9 +499,8 @@ export default function HomeTravel() {
             onPress={() => setShowModal(true)}
           >
             <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>종료</Text>
+              <Text style={styles.tabIconText}>여행 종료</Text>
             </View>
-            <Text style={styles.tabLabel}>여행 종료</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -510,9 +509,8 @@ export default function HomeTravel() {
             onPress={() => router.push('/survey_destination')}
           >
             <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>다음</Text>
+              <Text style={styles.tabIconText}>다음 행선지</Text>
             </View>
-            <Text style={styles.tabLabel}>다음 행선지</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -653,18 +651,6 @@ export default function HomeTravel() {
   );
 }
 
-const TabItem = memo(({ label, active = false }: { label: string; active?: boolean }) => {
-  return (
-    <TouchableOpacity activeOpacity={0.8} style={styles.tabItem}>
-      <View style={styles.tabIcon}>
-        <Text style={styles.tabIconText}>
-          {label.slice(0, 1)}
-        </Text>
-      </View>
-      <Text style={styles.tabLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-});
 
 const CardItem = memo(({ 
   item, 
@@ -720,7 +706,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    opacity: 0.3, // 배경 이미지에 낮은 투명도 적용
+    opacity: 0.4, // 배경 이미지에 낮은 투명도 적용
   },
   container: { flex: 1 },
   loadingContainer: { 
@@ -753,7 +739,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 투명도를 더 줄여서 거의 불투명하게
+    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 투명도를 더 줄여서 거의 불투명하게
   },
   heroTextWrap: {
     flex: 1,
@@ -764,31 +750,13 @@ const styles = StyleSheet.create({
   },
   title: {
      textAlign: 'center',
-     color: '#F4F7FB',
+     color: '#fff',
      fontSize: 20,
      lineHeight: 28,
      fontFamily: 'Pretendard-Medium',
      marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
-  subtitle: {
-    textAlign: 'center',
-    color: '#AFC2E2',
-    fontSize: 12,
-    letterSpacing: 0.2,
-  },
 
-  glowWrap: {
-    position: 'absolute',
-    left: 0, right: 0, bottom: -60,
-    alignItems: 'center',
-  },
-  glowDisc: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#F7D4A3',
-    opacity: 0.35,
-  },
 
   avatarWrap: {
     alignItems: 'center',
@@ -807,23 +775,19 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: '#659ECF',
   },
   avatarCaption: {
-    marginTop: 10,
+    marginTop: 15,
     fontFamily: 'Pretendard-Medium',
-    color: '#263453',
+    fontSize: 15,
+    color: '#333',
     textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  avatarSubCaption: {
-    marginTop: 4,
-    color: '#7A8AA8',
-    fontSize: 12,
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
 
   recommendationSection: {
@@ -832,7 +796,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recommendationButton: {
-    backgroundColor: '#263453',
+    backgroundColor: 'rgba(101, 158, 207, 0.7)',
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -850,16 +814,16 @@ const styles = StyleSheet.create({
     color: '#888',
   },
 
-                       scrollContainer: {
-         flex: 1,
-         marginBottom: 100, // 하단 버튼과의 간격
-       },
-       listContent: {
-         paddingHorizontal: 20, // 30에서 20으로 줄임
-         paddingTop: 12,
-         paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-         gap: 6, // 12에서 6으로 줄임
-       },
+  scrollContainer: {
+    flex: 1,
+    marginBottom: 100, // 하단 버튼과의 간격
+  },
+  listContent: {
+    paddingHorizontal: 20, // 30에서 20으로 줄임
+    paddingTop: 12,
+    paddingBottom: 20, // 스크롤 컨테이너 하단 여백
+    gap: 6, // 12에서 6으로 줄임
+  },
 
   card: {
     flexDirection: 'row',
@@ -882,7 +846,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8, 
   },
-  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#263453', fontSize: 14, flex: 1 },
+  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#333', fontSize: 14, flex: 1 },
   cardCategory: { 
     color: '#8A9BB6', 
     fontSize: 12,
@@ -915,7 +879,7 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     bottom: 24,
-    backgroundColor: '#263453',
+    backgroundColor: 'rgba(101, 158, 207, 0.85)',
     borderRadius: 26,
     height: 64,
     flexDirection: 'row',
@@ -927,15 +891,14 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 10,
   },
-  tabItem: { alignItems: 'center', justifyContent: 'center', gap: 6 },
+  tabItem: { alignItems: 'center', justifyContent: 'center'},
   tabIcon: {
-    width: 36, height: 36, borderRadius: 18,
+    width: 80, height: 45, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14 },
-  tabLabel: { color: '#AFC2E2', fontSize: 11, fontFamily: 'Pretendard-Medium' },
+  tabIconText: { color: '#fff', fontFamily: 'Pretendard-Medium', fontSize: 14 },
 
   // 모달 스타일
   modalOverlay: { 
@@ -985,7 +948,7 @@ const styles = StyleSheet.create({
     fontSize: 15 
   },
   modalBtnBlue: { 
-    backgroundColor: '#263453', 
+    backgroundColor: '#659ECF', 
     borderRadius: 8, 
     paddingVertical: 10, 
     paddingHorizontal: 18, 
@@ -1088,7 +1051,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 히어로와 동일한 배경색 적용
+    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 히어로와 동일한 배경색 적용
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
@@ -1145,7 +1108,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#263453',
+    backgroundColor: '#659ECF',
     borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
@@ -1155,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   timelineTime: {
     fontSize: 11,
-    color: '#8A9BB6',
+    color: '#333',
     marginTop: 6,
     fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
