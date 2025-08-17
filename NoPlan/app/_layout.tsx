@@ -6,25 +6,26 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
+import { BackHandler, ToastAndroid } from 'react-native';
 import 'react-native-reanimated';
 import { TravelSurveyProvider, useTravelSurvey } from './(components)/TravelSurveyContext';
 
 // ★★★ 1. React와 useEffect를 import 합니다. ★★★
 import { useEffect } from 'react';
 // ★★★ 2. Firebase 및 푸시 알림 관련 모듈을 import 합니다. ★★★
-import messaging from '@react-native-firebase/messaging';
 import notifee, { EventType } from '@notifee/react-native';
-import { 
-  getFCMToken, 
-  listenForForegroundMessages, 
-  requestUserPermission,
+import messaging from '@react-native-firebase/messaging';
+import {
   createNotificationChannels,
+  getFCMToken,
+  handleNotificationAction,
+  listenForForegroundMessages,
+  requestUserPermission,
+  resetNotificationsBasedOnTravelStatus,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  handleNotificationAction,
-  resetNotificationsBasedOnTravelStatus,
   sendTestNotification
-} from '../utils/pushNotificationHelper'; // 경로는 실제 위치에 맞게 수정
+} from '../utils/pushNotificationHelper';
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
 import { AuthProvider } from './(contexts)/AuthContext';
@@ -80,7 +81,37 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // ★★★ 5. 푸시 알림 설정을 위한 useEffect 훅을 추가합니다. ★★★
+  // ★★★ 5. 전역 안드로이드 뒤로가기 버튼 핸들러 ★★★
+  useEffect(() => {
+    let backPressCount = 0;
+    let backPressTimer: NodeJS.Timeout;
+
+    const backAction = () => {
+      if (backPressCount === 0) {
+        backPressCount = 1;
+        ToastAndroid.show('뒤로가기 한 번 더 누르면 앱 종료', ToastAndroid.SHORT);
+        backPressTimer = setTimeout(() => {
+          backPressCount = 0;
+        }, 2000); // 2초 내에 다시 누르면 앱 종료
+        return true; // 기본 동작 방지
+      } else {
+        // 두 번째 뒤로가기: 앱 종료
+        BackHandler.exitApp();
+        return true;
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+    return () => {
+      backHandler.remove();
+      if (backPressTimer) {
+        clearTimeout(backPressTimer);
+      }
+    };
+  }, []);
+
+  // ★★★ 6. 푸시 알림 설정을 위한 useEffect 훅을 추가합니다. ★★★
   useEffect(() => {
     // 앱이 필요한 폰트나 리소스를 모두 로드한 후에 푸시 알림 설정을 시작하는 것이 좋습니다.
     if (loaded) {
