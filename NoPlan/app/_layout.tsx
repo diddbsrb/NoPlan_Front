@@ -269,33 +269,23 @@ export default function RootLayout() {
               options={{ headerShown: false }}
             />
 
-            {/* index 화면을 명시적으로 등록 */}
-            <Stack.Screen
-              name="index"
-              options={{ headerShown: false }}
-            />
-
-            {/* 설문 화면: 기본 헤더 숨김 */}
-            <Stack.Screen
-              name="survey_travel"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="survey_destination"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="home_travel"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="mypage"
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="info"
-              options={{ headerShown: false }}
-            />
+                         {/* 설문 화면: 기본 헤더 숨김 */}
+             <Stack.Screen
+               name="survey_travel"
+               options={{ headerShown: false }}
+             />
+             <Stack.Screen
+               name="survey_destination"
+               options={{ headerShown: false }}
+             />
+             <Stack.Screen
+               name="mypage"
+               options={{ headerShown: false }}
+             />
+             <Stack.Screen
+               name="info"
+               options={{ headerShown: false }}
+             />
             
             {/* ★★★ 카카오 로그인 웹뷰 화면을 스택에 등록하는 것을 잊지 마세요. ★★★ */}
             <Stack.Screen
