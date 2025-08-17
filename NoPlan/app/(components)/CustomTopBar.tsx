@@ -1,9 +1,9 @@
 // components/CustomTopBar.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface CustomTopBarProps {
   title?: string;
@@ -122,8 +122,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     color: '#123A86',
-    fontFamily: 'Pretendard-Light',
-            fontFamily: 'Pretendard-Medium',
+    fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',
     textShadowOffset: { width: 0, height: 1 },

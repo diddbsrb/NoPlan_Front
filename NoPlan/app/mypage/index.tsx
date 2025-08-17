@@ -1,36 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Dimensions,
-  Image,
-  ActivityIndicator,
-  Modal,
-  Alert,
-  Linking,
-} from 'react-native';
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    Linking,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
 
 // --- 서비스 및 타입 import ---
+import { BookmarkResponse, bookmarkService } from '../../service/bookmarkService';
+import { travelService, Trip, VisitedContent } from '../../service/travelService';
 import { userService } from '../../service/userService';
-import { travelService, VisitedContent, Trip } from '../../service/travelService';
-import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
 // ★★★ 핵심 1: AuthContext import 추가 ★★★
-import { useAuth } from '../(contexts)/AuthContext';
-import { useTravelSurvey } from '../(components)/TravelSurveyContext';
-import * as SecureStore from 'expo-secure-store';
 
 // --- 분리된 컴포넌트 import ---
-import TermsComponent from './TermsComponent';
-import InfoEditComponent from './InfoEditComponent';
-import PasswordChangeComponent from './PasswordChangeComponent';
 import AccountDeleteComponent from './AccountDeleteComponent';
+import InfoEditComponent from './InfoEditComponent';
 import NotificationSettingsComponent from './NotificationSettingsComponent';
+import PasswordChangeComponent from './PasswordChangeComponent';
+import TermsComponent from './TermsComponent';
 
 type VisitedTrips = {
   [key: string]: {
@@ -65,6 +62,7 @@ export default function MyPage() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -725,7 +723,7 @@ const styles = StyleSheet.create({
   closeXText: {
     fontSize: 18,
     color: '#666',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   bookmarkModalScroll: {
     maxHeight: 400,

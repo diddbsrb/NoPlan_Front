@@ -1,13 +1,18 @@
 // app/(tabs)/test.tsx
 
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { travelService } from '../../service/travelService';
 // ★★★ 알림 테스트를 위한 import 추가 ★★★
 import {
-  sendTestNotification, 
+  createNotificationChannels,
+  requestUserPermission,
   schedulePostTravelRecommendation,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
@@ -17,6 +22,8 @@ import {
   checkScheduledNotifications,
   cancelTestNotifications,
   scheduleTestNotification
+
+
 } from '../../utils/pushNotificationHelper';
 
 export default function TestScreen() {
@@ -369,7 +376,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
   },
   content: {
@@ -381,7 +388,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 15,
   },
@@ -395,7 +402,7 @@ const styles = StyleSheet.create({
   testButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
   cancelButton: {
     backgroundColor: '#FF5252',
@@ -422,7 +429,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
   modalOverlay: { 
     flex: 1, 
@@ -439,7 +446,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: { 
     fontSize: 18, 
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 8, 
   },
@@ -462,7 +469,7 @@ const styles = StyleSheet.create({
   modalBtnTextGray: { 
     color: '#666',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
   modalBtnBlue: { 
     backgroundColor: '#123A86',
@@ -473,6 +480,6 @@ const styles = StyleSheet.create({
   modalBtnTextBlue: { 
     color: '#fff', 
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
   },
 });

@@ -1,7 +1,9 @@
 // app/(tabs)/app_guide.tsx
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   SafeAreaView,
@@ -10,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import CustomTopBar from '../(components)/CustomTopBar';
+
 
 
 
@@ -27,6 +29,7 @@ export default function AppGuide() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -34,6 +37,13 @@ export default function AppGuide() {
   }, []);
 
   // 슬라이드 관련 useEffect 제거
+
+  // 화면이 포커스될 때마다 step을 1로 초기화
+  useFocusEffect(
+    useCallback(() => {
+      setStep(1);
+    }, [])
+  );
 
   const renderStep = () => {
     switch (step) {
@@ -127,18 +137,38 @@ export default function AppGuide() {
   };
 
   const handleStartTravel = () => {
-    router.replace('/home');
+    // from 파라미터에 따라 다른 동작 수행
+    if (from === 'home_travel') {
+      // home_travel에서 접근한 경우 다시 home_travel로 이동
+      router.replace('/(tabs)/home_travel');
+    } else {
+      // user_info에서 접근한 경우 home으로 이동
+      router.replace('/home');
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <CustomTopBar onBack={() => {
-        if (from === 'home_travel') {
-          router.push('/(tabs)/home_travel');
-        } else {
-          router.back();
-        }
-      }} />
+      {/* 상단바 - 뒤로가기 버튼 제외 */}
+      <View style={styles.topBar}>
+        <View style={styles.topBarLeft} />
+        <View style={styles.topBarCenter}>
+          <Image
+            source={require('../../assets/images/noplan_logo_blue.png')}
+            style={styles.topBarLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.topBarTitle}>NO PLAN</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.topBarRight}
+          onPress={() => router.push('/mypage')}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="person-circle-outline" size={32} color="#123A86" />
+        </TouchableOpacity>
+      </View>
+      
       <View style={styles.inner}>
         {renderStep()}
         
@@ -289,5 +319,49 @@ const styles = StyleSheet.create({
   icon: {
     width: 200,
     height: 200,
+  },
+  
+  // 상단바 스타일 - CustomTopBar와 동일
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+    paddingTop: 60,
+    paddingBottom: 17,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  topBarLeft: {
+    width: 40, // icon size + padding과 동일
+  },
+  topBarCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  topBarLogo: {
+    width: 32,
+    height: 32,
+    marginRight: 8,
+  },
+  topBarTitle: {
+    fontSize: 22,
+    color: '#123A86',
+    fontFamily: 'Pretendard-Medium',
+    letterSpacing: 1,
+    textShadowColor: '#B2D1D4',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  topBarRight: {
+    width: 40, // icon size + padding과 동일
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

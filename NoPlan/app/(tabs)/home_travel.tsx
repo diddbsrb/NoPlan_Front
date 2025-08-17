@@ -1,11 +1,11 @@
 // app/(tabs)/test.tsx
 
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { memo, useEffect, useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { memo, useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -77,6 +77,7 @@ export default function HomeTravel() {
       try {
         await Font.loadAsync({
           'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+          'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
         });
         setFontsLoaded(true);
       } catch (error) {
@@ -373,10 +374,16 @@ export default function HomeTravel() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* 배경 이미지 */}
+      <Image
+        source={require('../../assets/images/home/bg4.jpeg')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.helpButton}
-          onPress={() => router.push({
+          onPress={() => router.replace({
             pathname: '/app_guide',
             params: { from: 'home_travel' }
           })}
@@ -387,7 +394,7 @@ export default function HomeTravel() {
         </TouchableOpacity>
         <View style={styles.topBarCenter}>
           <Image
-            source={require('../../assets/images/noplan_logo_blue.png')}
+            source={require('../../assets/images/noplan_logo_white.png')}
             style={styles.topBarLogo}
             resizeMode="contain"
           />
@@ -398,7 +405,7 @@ export default function HomeTravel() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#263453" />
+          <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -446,7 +453,7 @@ export default function HomeTravel() {
           </View>
         )}
 
-                                   {/* 카드 리스트 - 방문한 장소들 */}
+          {/* 카드 리스트 - 방문한 장소들 */}
           <View style={styles.scrollContainer}>
             <ScrollView
               contentContainerStyle={styles.listContent}
@@ -705,6 +712,16 @@ const R = 40;
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#EEF1F5' },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.3, // 배경 이미지에 낮은 투명도 적용
+  },
   container: { flex: 1 },
   loadingContainer: { 
     flex: 1, 
@@ -731,27 +748,27 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    height: 200,
+    height: 140,
     borderBottomLeftRadius: R,
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    paddingTop: 8,
-    backgroundColor: '#263453',
+    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 투명도를 더 줄여서 거의 불투명하게
   },
   heroTextWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: -30, // 글씨를 위로 올리기 위해 음수 마진 추가
     gap: 10,
   },
-     title: {
+  title: {
      textAlign: 'center',
      color: '#F4F7FB',
      fontSize: 20,
      lineHeight: 28,
-     fontWeight: '800',
-     marginBottom: 30, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
+     fontFamily: 'Pretendard-Medium',
+     marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
   subtitle: {
     textAlign: 'center',
@@ -775,7 +792,7 @@ const styles = StyleSheet.create({
 
   avatarWrap: {
     alignItems: 'center',
-    marginTop: -70,
+    marginTop: -50,
   },
   avatarRing: {
     width: 72,
@@ -796,7 +813,7 @@ const styles = StyleSheet.create({
   },
   avatarCaption: {
     marginTop: 10,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Medium',
     color: '#263453',
     textAlign: 'center',
     paddingHorizontal: 20,
@@ -865,7 +882,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8, 
   },
-  cardTitle: { fontWeight: '800', color: '#263453', fontSize: 14, flex: 1 },
+  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#263453', fontSize: 14, flex: 1 },
   cardCategory: { 
     color: '#8A9BB6', 
     fontSize: 12,
@@ -891,7 +908,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevText: { color: '#1C2E4A', fontSize: 16, fontWeight: '800' }, // 폰트 크기 줄임
+  chevText: { color: '#1C2E4A', fontSize: 16, fontFamily: 'Pretendard-Medium' }, // 폰트 크기 줄임
 
   tabBar: {
     position: 'absolute',
@@ -917,8 +934,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14, fontWeight: '700' },
-  tabLabel: { color: '#AFC2E2', fontSize: 11, fontWeight: '700' },
+  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14 },
+  tabLabel: { color: '#AFC2E2', fontSize: 11, fontFamily: 'Pretendard-Medium' },
 
   // 모달 스타일
   modalOverlay: { 
@@ -1013,7 +1030,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   placeDetailContent: {
     padding: 20,
@@ -1023,8 +1040,8 @@ const styles = StyleSheet.create({
   },
   placeTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#263453',
+    fontFamily: 'Pretendard-Medium',
+    color: '#D9BCE',
     marginBottom: 8,
   },
   placeCategory: {
@@ -1041,7 +1058,7 @@ const styles = StyleSheet.create({
   },
   placeInfoLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginBottom: 6,
   },
@@ -1071,17 +1088,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 히어로와 동일한 배경색 적용
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    zIndex: 10, // 히어로 위에 표시되도록 zIndex 추가
   },
   helpButton: {
     padding: 4,
@@ -1090,16 +1101,15 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 20,
-    backgroundColor: '#F1F4F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#263453',
+    borderColor: '#FFFFFF',
   },
   helpIcon: {
-    color: '#263453',
+    color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
   },
   topBarCenter: {
     flexDirection: 'row',
@@ -1112,7 +1122,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 22,
-    color: '#263453',
+    color: '#FFFFFF',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
   },
@@ -1147,7 +1157,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#8A9BB6',
     marginTop: 6,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
   },
   timelineLine: {
