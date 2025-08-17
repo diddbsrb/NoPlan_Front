@@ -10,7 +10,6 @@ import {
   Image,
   Linking,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -242,13 +241,9 @@ export default function SurveyTravel() {
               이번 여행의 <Text style={{ color: '#123A86' }}>방식</Text>을 선택해주세요.
             </Text>
             <Text style={styles.desc}>
-              NO PLAN이 거리를 고려해 최적의 여행지를 찾아드립니다.
+              거리를 고려해 최적의 여행지를 찾아드립니다.
             </Text>
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.travelTypeGrid}
-              showsVerticalScrollIndicator={false}
-            >
+            <View style={[styles.travelTypeGrid, { width: '100%' }]}>
               {TRAVEL_TYPE_OPTIONS.map((opt, idx) => (
                 <TouchableOpacity
                   key={opt.label}
@@ -268,7 +263,7 @@ export default function SurveyTravel() {
                   <Text style={styles.overlayLabel}>{opt.label}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </>
         );
       case 3:
@@ -278,13 +273,9 @@ export default function SurveyTravel() {
               이번 여행의 <Text style={{ color: '#123A86' }}>동반자</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
-              NO PLAN이 여행 인원에 따른 최적의 여행지를 찾아드립니다.
+              여행 인원에 따른 최적의 여행지를 찾아드립니다.
             </Text>
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.companionGrid}
-              showsVerticalScrollIndicator={false}
-            >
+            <View style={[styles.companionGrid, { width: '100%' }]}>
               {COMPANION_OPTIONS.map((opt, idx) => (
                 <TouchableOpacity
                   key={opt.label}
@@ -304,7 +295,7 @@ export default function SurveyTravel() {
                   <Text style={styles.overlayLabel}>{opt.label}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </>
         );
       default:
@@ -413,14 +404,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
-    marginBottom: 24,
-    marginTop: 50,
+    marginBottom: 10,
+    marginTop: 30,
   },
   desc: {
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   circleGrid: {
@@ -429,6 +420,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 16,
+    paddingTop: 30
   },
   circle: {
     width: '30%',
@@ -458,11 +450,12 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
 
-  scrollView: { width: '100%' },
+
   travelTypeGrid: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 10,
+    paddingTop: 20
   },
   travelTypeOption: {
     width: '90%',
@@ -481,7 +474,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 5,
   },
   companionOption: {
     width: '47%',
