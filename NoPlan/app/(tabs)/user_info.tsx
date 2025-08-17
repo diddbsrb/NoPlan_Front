@@ -19,6 +19,7 @@ const InfoInputScreen = () => {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -139,8 +140,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#000',
-    fontFamily: 'Pretendard-Light',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   footer: {
     fontSize: 11,

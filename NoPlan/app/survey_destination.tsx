@@ -3,10 +3,10 @@ import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { requestUserPermission } from '../utils/pushNotificationHelper';
 import CustomTopBar from './(components)/CustomTopBar';
 import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
-import { requestUserPermission } from '../utils/pushNotificationHelper';
 
 const DEST_OPTIONS = [
   { label: '식당', image: require('../assets/images/식당.jpg') },
@@ -118,16 +118,12 @@ export default function SurveyDestination() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <CustomTopBar onBack={() => router.back()} />
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+             <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', padding: 24, paddingTop: 20 }}>
         <Text style={styles.title}>
           다음은 <Text style={{ color: '#123A86' }}>어디로</Text> 가볼까요?
         </Text>
         <Text style={styles.desc}>다음 행선지를 선택해주세요.</Text>
-        <ScrollView
-          style={{ width: '100%' }}
-          contentContainerStyle={styles.grid}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={[styles.grid, { width: '100%' }]}>
           {DEST_OPTIONS.map((option, idx) => (
             <TouchableOpacity
               key={option.label}
@@ -140,12 +136,12 @@ export default function SurveyDestination() {
               <Text style={styles.optionLabel}>{option.label}</Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
       </View>
       <TouchableOpacity
         style={[
           styles.nextButton,
-          { backgroundColor: selected !== null ? '#F2FAFC' : '#E0E0E0' },
+          { backgroundColor: selected !== null ? '#F2FAFC' : '#123A86' },
         ]}
         disabled={selected === null || loading}
         onPress={() => {
@@ -154,7 +150,7 @@ export default function SurveyDestination() {
           }
         }}
       >
-        <Text style={{ color: '#123A86', fontFamily: 'Pretendard-Medium', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
+        <Text style={{ color: '#FFFFFF', fontFamily: 'Pretendard-Medium', fontSize: 18 }}>{loading ? '위치 확인 중...' : '다음'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -223,8 +219,8 @@ const styles = StyleSheet.create({
   nextButton: {
     borderRadius: 8,
     marginHorizontal: 32,
-    marginBottom: 100,
-    paddingVertical: 14,
+    marginBottom: 50,
+    paddingVertical: 13,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#123A86',

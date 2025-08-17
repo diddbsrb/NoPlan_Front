@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
 import * as Font from 'expo-font';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
     Image,
     SafeAreaView,
@@ -11,7 +11,6 @@ import {
     View
 } from 'react-native';
 
-import * as SecureStore from 'expo-secure-store';
 // ★★★ AuthContext import 추가 ★★★
 import { useAuth } from '../(contexts)/AuthContext';
 import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
@@ -45,6 +44,7 @@ export default function SigninScreen() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -167,14 +167,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 12,
     color: '#000',
   },
   blue: {
     color: '#80BFE8',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Medium',
   },
   subtext: {
     fontSize: 13,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#222',
   },
   orText: {
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   kakaoText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-Medium',
     color: '#3B1E1E',
   },
   footerText: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Medium',
     color: '#000',
   },
   errorText: {
