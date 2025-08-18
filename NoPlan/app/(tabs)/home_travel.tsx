@@ -405,7 +405,7 @@ export default function HomeTravel() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+          <Ionicons name="person" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
