@@ -498,19 +498,18 @@ export default function HomeTravel() {
             style={styles.tabItem}
             onPress={() => setShowModal(true)}
           >
-            <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>여행 종료</Text>
-            </View>
+            <Text style={styles.tabIconText}>여행 종료</Text>
           </TouchableOpacity>
+          
+          {/* 가운데 세로선 */}
+          <View style={styles.tabBarDivider} />
           
           <TouchableOpacity 
             activeOpacity={0.8} 
             style={styles.tabItem}
             onPress={() => router.push('/survey_destination')}
           >
-            <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>다음 행선지</Text>
-            </View>
+            <Text style={styles.tabIconText}>다음 행선지</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -679,9 +678,14 @@ const CardItem = memo(({
         </View>
         {item.hashtags && (
           <View style={styles.cardHashtags}>
-            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => (
-              <Text key={index} style={styles.cardHashtag}>#{tag.trim()}</Text>
-            ))}
+            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => {
+              const trimmedTag = tag.trim();
+              return (
+                <Text key={index} style={styles.cardHashtag} numberOfLines={1} ellipsizeMode="tail">
+                  #{trimmedTag}
+                </Text>
+              );
+            })}
           </View>
         )}
       </View>
@@ -840,7 +844,11 @@ const styles = StyleSheet.create({
   },
   cardLeft: { marginRight: 12 },
   cardThumb: { width: 48, height: 48, borderRadius: 12 },
-  cardMid: { flex: 1 },
+  cardMid: { 
+    flex: 1, 
+    maxWidth: '70%', // 최대 너비 제한으로 우측 영역 보호
+    marginRight: 8, // 우측 여백 추가
+  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -856,6 +864,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 10,
     gap: 6,
+    flexWrap: 'wrap', // 줄바꿈 허용
+    maxWidth: '100%', // 최대 너비 제한
   },
   cardHashtag: {
     fontSize: 10,
@@ -864,6 +874,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
+    maxWidth: '100%', // 최대 너비 제한
+    flexShrink: 1, // 필요시 축소 허용
   },
   cardRight: { paddingLeft: 8 }, // 우측 여백 줄임
   chevWrap: {
@@ -878,27 +890,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 18,
     right: 18,
-    bottom: 24,
-    backgroundColor: 'rgba(101, 158, 207, 0.85)',
+    bottom: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 26,
-    height: 64,
+    height: 55,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 10,
+    paddingHorizontal: 30,
     shadowColor: '#000',
     shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 10,
   },
   tabItem: { alignItems: 'center', justifyContent: 'center'},
-  tabIcon: {
-    width: 80, height: 45, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  tabIconText: { color: '#333', fontFamily: 'Pretendard-Medium', fontSize: 15 },
+  tabBarDivider: {
+    width: 2,
+    height: 20,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 10,
   },
-  tabIconText: { color: '#fff', fontFamily: 'Pretendard-Medium', fontSize: 14 },
 
   // 모달 스타일
   modalOverlay: { 
