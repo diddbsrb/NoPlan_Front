@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  BackHandler,
   FlatList,
   Image,
   StyleSheet,
@@ -105,12 +106,24 @@ export default function List() {
     }, [])
   );
 
-  // 화면이 포커스될 때마다 마지막 화면 정보 저장
+  // 화면이 포커스될 때마다 마지막 화면 정보 저장 및 뒤로가기 핸들러 설정
   useFocusEffect(
     React.useCallback(() => {
       console.log('[List] 화면 포커스됨 - 마지막 화면 정보 저장');
       saveLastScreen('list', { type: finalType });
-    }, [finalType])
+      
+      // 뒤로가기 핸들러 설정
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        console.log('[List] 기기 뒤로가기 버튼 눌림 - home_travel로 이동');
+        router.replace('/home_travel');
+        return true; // 기본 뒤로가기 동작 방지
+      });
+      
+      // 화면이 포커스를 잃을 때 핸들러 제거
+      return () => {
+        backHandler.remove();
+      };
+    }, [finalType, router])
   );
 
   // 🆕 화면이 포커스될 때마다 survey 상태 로깅 및 autoRecommendType 처리
