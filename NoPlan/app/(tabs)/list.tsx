@@ -359,7 +359,7 @@ export default function List() {
                         pathname: '/info',
                         params: { 
                           contentid: item.contentid, 
-                          places: JSON.stringify(places),
+                          place: JSON.stringify(item), // 클릭한 장소만 전달
                           type: finalType
                         },
                       });
