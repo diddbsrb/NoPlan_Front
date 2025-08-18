@@ -22,7 +22,11 @@ const TermsComponent: React.FC<Props> = ({ onBack }) => {
 
     return (
         <View style={{ flex: 1, padding: 10 }}>
-            <ScrollView style={{ backgroundColor: '#fff', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#eee' }}>
+            <ScrollView 
+                style={{ backgroundColor: '#fff', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#eee' }}
+                contentContainerStyle={{ paddingBottom: 30 }}
+                showsVerticalScrollIndicator={true}
+            >
                 <Text style={{ fontSize: 12, color: '#333', lineHeight: 20 }}>
                     [No Plan](이하 "회사")는 이용자의 개인정보를 매우 중요하게 생각하며, 「개인정보 보호법」 등 관련 법령을 준수하여 다음과 같이 개인정보를 수집·이용하고 보호합니다.
                     1. 수집하는 개인정보 항목
@@ -50,7 +54,7 @@ const TermsComponent: React.FC<Props> = ({ onBack }) => {
                     6. 이용자의 권리
                     이용자는 언제든지 개인정보 열람, 정정, 삭제, 처리 정지를 요청할 수 있습니다. 관련 요청은 앱 내 고객센터 또는 [이메일주소]를 통해 접수 가능합니다.
                     7. 개인정보 보호책임자
-                    이름: [홍길동]
+                    이름: [홍준기]
                     이메일: [privacy@noplan.app]
                     담당부서: 고객지원팀
                     ※ 본 방침은 [2025년 7월 6일]부터 적용됩니다. 변경사항이 있을 경우 앱 내 공지사항 또는 이메일을 통해 고지합니다.

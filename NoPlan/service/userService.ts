@@ -51,4 +51,16 @@ export const userService = {
       }
     );
   },
+
+  // 회원 탈퇴
+  withdrawAccount: async () => {
+    try {
+      const response = await apiClient.delete('/users/me/withdraw/');
+      console.log('✅ 회원 탈퇴 성공:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ 회원 탈퇴 실패:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 };

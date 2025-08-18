@@ -57,9 +57,9 @@ const MAX_OVERSHOOT = 100;
 
 export default function Info() {
   const router = useRouter();
-  const { contentid, places: placesParam, type } = useLocalSearchParams<{
+  const { contentid, place: placeParam, type } = useLocalSearchParams<{
     contentid: string;
-    places: string;
+    place: string;
     type?: string;
   }>();
 
@@ -84,26 +84,43 @@ export default function Info() {
     loadFonts();
   }, []);
 
-  // 1) 리스트에서 받은 placesParam 파싱
-  const listPlaces: ListPlace[] = useMemo(() => {
-    if (!placesParam) return [];
+  // 1) 리스트에서 받은 placeParam 파싱 (단일 장소)
+  const current: ListPlace | null = useMemo(() => {
+    if (!placeParam) return null;
     try {
-      const decoded = decodeURIComponent(placesParam);
-      return JSON.parse(decoded) as ListPlace[];
+      const decoded = decodeURIComponent(placeParam);
+      return JSON.parse(decoded) as ListPlace;
     } catch {
-      return [];
+      return null;
     }
-  }, [placesParam]);
-
-  // 2) 현재 contentid에 해당하는 항목
-  const current = listPlaces.find(p => p.contentid === contentid);
+  }, [placeParam]);
 
   // 화면이 포커스될 때마다 마지막 화면 정보 저장
   useFocusEffect(
     useCallback(() => {
       console.log('[Info] 화면 포커스됨 - 마지막 화면 정보 저장');
-      saveLastScreen('info', { contentid, places: placesParam, type });
-    }, [contentid, placesParam, type])
+      
+      // placeParam 정보 확인
+      if (placeParam) {
+        console.log('[Info] placeParam 길이:', placeParam.length);
+        console.log('[Info] placeParam 크기 (bytes):', new Blob([placeParam]).size);
+        
+        try {
+          const decoded = decodeURIComponent(placeParam);
+          const parsed = JSON.parse(decoded);
+          console.log('[Info] placeParam 파싱된 객체:', parsed);
+          
+          // 전체 크기 확인
+          const fullParams = { contentid, place: placeParam, type };
+          const paramsString = JSON.stringify(fullParams);
+          console.log('[Info] 전체 params 크기 (bytes):', new Blob([paramsString]).size);
+        } catch (error) {
+          console.log('[Info] placeParam 파싱 실패:', error);
+        }
+      }
+      
+      saveLastScreen('info', { contentid, place: placeParam, type });
+    }, [contentid, placeParam, type])
   );
 
   // 🆕 Detail API 호출 제거 - current 데이터만 사용
@@ -221,7 +238,7 @@ export default function Info() {
     );
   }
   
-  // 데이터가 없고 위치 정보도 없는 경우 로딩 표시
+  // 데이터가 없는 경우 로딩 표시
   if (!current) {
     return (
       <View style={styles.center}>

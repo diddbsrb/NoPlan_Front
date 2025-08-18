@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import * as Font from 'expo-font';
+import { userService } from '../../service/userService';
+import { useRouter } from 'expo-router';
 
 interface Props {
   onBack: () => void;
@@ -17,6 +19,8 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [etcReason, setEtcReason] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   // 폰트 로드
   useEffect(() => {
@@ -28,6 +32,58 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
     }
     loadFonts();
   }, []);
+
+  // 회원 탈퇴 처리
+  const handleDeleteAccount = async () => {
+    if (!selectedReason) {
+      Alert.alert('알림', '탈퇴 사유를 선택해주세요.');
+      return;
+    }
+
+    if (selectedReason === '기타' && !etcReason.trim()) {
+      Alert.alert('알림', '기타 사유를 입력해주세요.');
+      return;
+    }
+
+    Alert.alert(
+      '회원 탈퇴',
+      '정말로 탈퇴하시겠습니까?\n모든 데이터가 영구적으로 삭제되며 복구가 불가능합니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await userService.withdrawAccount();
+              Alert.alert(
+                '탈퇴 완료',
+                '회원 탈퇴가 성공적으로 처리되었습니다.',
+                [
+                  {
+                    text: '확인',
+                    onPress: () => {
+                      // index 페이지로 이동
+                      router.replace('/');
+                    }
+                  }
+                ]
+              );
+            } catch (error: any) {
+              console.error('회원 탈퇴 실패:', error);
+              Alert.alert(
+                '오류',
+                '회원 탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.'
+              );
+            } finally {
+              setIsDeleting(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <View style={{ padding: 20 }}>
@@ -78,8 +134,20 @@ const AccountDeleteComponent: React.FC<Props> = ({ onBack }) => {
           />
         )}
 
-                  <TouchableOpacity style={{ backgroundColor: '#123A86', borderRadius: 8, height: 44, justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={{ color: '#fff', fontFamily: 'Pretendard-Medium' }}>계정 삭제하기</Text>
+                  <TouchableOpacity 
+                    style={{ 
+                      backgroundColor: isDeleting ? '#ccc' : '#123A86', 
+                      borderRadius: 8, 
+                      height: 44, 
+                      justifyContent: 'center', 
+                      alignItems: 'center' 
+                    }}
+                    onPress={handleDeleteAccount}
+                    disabled={isDeleting}
+                  >
+                      <Text style={{ color: '#fff', fontFamily: 'Pretendard-Medium' }}>
+                        {isDeleting ? '처리 중...' : '계정 삭제하기'}
+                      </Text>
         </TouchableOpacity>
       </View>
     </View>

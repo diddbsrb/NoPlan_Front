@@ -23,6 +23,7 @@ import {
   Trip,
   VisitedContent,
 } from '../../service/travelService';
+import { userService, UserInfo } from '../../service/userService';
 import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
 
 interface TripWithDate extends Trip {
@@ -70,6 +71,7 @@ export default function HomeTravel() {
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TripItem | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   // 폰트 로드
   useEffect(() => {
@@ -317,9 +319,20 @@ export default function HomeTravel() {
     }
   };
 
+  // 사용자 정보 가져오기
+  const fetchUserInfo = async () => {
+    try {
+      const userData = await userService.getUserInfo();
+      setUserInfo(userData);
+    } catch (error) {
+      console.error('사용자 정보 가져오기 실패:', error);
+    }
+  };
+
   // 컴포넌트 마운트 시에만 실행
   useEffect(() => {
     fetchData();
+    fetchUserInfo();
   }, []);
 
   // 카테고리별 기본 이미지 설정 (CardItem과 공유)
@@ -414,23 +427,27 @@ export default function HomeTravel() {
                      {/* 중앙 타이틀 */}
                        <View style={styles.heroTextWrap}>
               <Text style={styles.title} numberOfLines={0}>
-                안녕하세요.{'\n'}NOPLAN입니다
+                오늘의 여정은 <Text style={styles.highlight}>{(() => {
+                  const adjectives = survey.adjectives?.split(',').map(adj => adj.trim()).filter(adj => adj) || ['스껄한'];
+                  return adjectives[Math.floor(Math.random() * adjectives.length)];
+                })()}</Text> 여행이에요 ✨{'\n'}
+                <Text style={styles.highlight}>{userInfo?.name || '000'}</Text>님, 즐거운 순간을 함께 만들어가요!
               </Text>
             </View>
          </View>
 
-         {/* 중앙 아바타 - 히어로 하단에 겹치도록 */}
-         <View style={styles.avatarWrap}>
-                       <View style={styles.avatarRing}>
-              <Image
-                source={require('../../assets/images/main_character.png')}
-                style={styles.avatar}
-              />
-            </View>
-           <Text style={styles.avatarCaption} numberOfLines={0}>
-             {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
-           </Text>
-         </View>
+        {/* 중앙 아바타 */}
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarRing}>
+            <Image
+              source={require('../../assets/images/main_character.png')}
+              style={styles.avatar}
+            />
+          </View>
+          <Text style={styles.avatarCaption} numberOfLines={0}>
+            {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
+          </Text>
+        </View>
 
         {/* 추천 버튼 */}
         {recommendationContext && !loading && !error && (
@@ -678,7 +695,7 @@ const CardItem = memo(({
         </View>
         {item.hashtags && (
           <View style={styles.cardHashtags}>
-            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 2).map((tag, index) => {
+            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => {
               const trimmedTag = tag.trim();
               return (
                 <Text key={index} style={styles.cardHashtag} numberOfLines={1} ellipsizeMode="tail">
@@ -743,7 +760,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 투명도를 더 줄여서 거의 불투명하게
+    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 투명도 살짝 올림
   },
   heroTextWrap: {
     flex: 1,
@@ -754,12 +771,28 @@ const styles = StyleSheet.create({
   },
   title: {
      textAlign: 'center',
-     color: '#fff',
+     color: '#FFFFFF',
      fontSize: 20,
      lineHeight: 28,
      fontFamily: 'Pretendard-Medium',
      marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
+  highlight: {
+     color: '#1B365D',
+     fontFamily: 'Pretendard-Medium',
+   },
+  recommendationMessageWrap: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  recommendationMessage: {
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 15,
+    color: '#333',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
 
 
   avatarWrap: {
@@ -800,7 +833,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recommendationButton: {
-    backgroundColor: 'rgba(101, 158, 207, 0.7)',
+    backgroundColor: 'rgba(101, 158, 207, 0.6)',
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -826,21 +859,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // 30에서 20으로 줄임
     paddingTop: 12,
     paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-    gap: 6, // 12에서 6으로 줄임
+    gap: 1, // 6에서 3으로 더 줄임
   },
 
   card: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 18, // 14에서 18로 늘림
+    padding: 10, // 14에서 10으로 더 줄임
     alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
     flex: 1, // 우측 공간을 줄이기 위해 flex: 1 추가
-    minHeight: 80, // 최소 높이 추가
+    minHeight: 60, // 70에서 60으로 더 줄임
   },
   cardLeft: { marginRight: 12 },
   cardThumb: { width: 48, height: 48, borderRadius: 12 },
@@ -868,12 +901,12 @@ const styles = StyleSheet.create({
     maxWidth: '100%', // 최대 너비 제한
   },
   cardHashtag: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#7A8AA8',
     backgroundColor: '#F1F4F9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     maxWidth: '100%', // 최대 너비 제한
     flexShrink: 1, // 필요시 축소 허용
   },
@@ -1070,7 +1103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 히어로와 동일한 배경색 적용
+    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 흰색에 투명도 0.85
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,

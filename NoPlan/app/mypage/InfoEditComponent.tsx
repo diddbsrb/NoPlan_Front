@@ -42,7 +42,25 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
     loadFonts();
   }, []);
 
-  // ★★★ userService.getUserInfo() 호출을 제거하고 AuthContext의 userInfo만 사용합니다. ★★★
+  // 사용자 정보 새로고침 (컴포넌트 마운트 시에만)
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        await refreshUserInfo();
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+    loadUserInfo();
+  }, []); // 빈 의존성 배열로 변경
+
+  // 사용자 정보 디버깅 (userInfo가 변경될 때만)
+  useEffect(() => {
+    if (userInfo) {
+      console.log('🔍 InfoEditComponent - 현재 userInfo:', userInfo);
+      console.log('🔍 InfoEditComponent - 사용자 이름:', userInfo?.name);
+    }
+  }, [userInfo]);
   
   // 권한 상태 확인 함수를 별도로 분리
   const checkPermissions = async () => {
@@ -226,7 +244,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
       <View style={styles.card}>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이름</Text>
-          <Text style={styles.value}>{userInfo.name ?? '회원님'}</Text>
+          <Text style={styles.value}>{userInfo.name || '회원'}</Text>
         </View>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이메일</Text>
