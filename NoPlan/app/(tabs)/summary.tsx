@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: '#333',
-    textAlign: 'justify',
+    textAlign: 'left',
   },
   messageSection: {
     alignItems: 'center',

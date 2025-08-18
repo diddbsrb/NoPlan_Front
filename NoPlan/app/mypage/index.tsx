@@ -80,6 +80,12 @@ export default function MyPage() {
   
   // 약관 모달 상태 추가
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
+  
+  // 페이지네이션과 정렬 관련 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const itemsPerPage = 5; // 페이지당 아이템 수
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -137,7 +143,57 @@ export default function MyPage() {
     };
 
     fetchDataForTab();
+    setCurrentPage(1); // 탭 변경 시 첫 페이지로 리셋
   }, [activeTab]);
+
+  // 정렬된 데이터 계산
+  const getSortedData = () => {
+    if (activeTab === 'visited') {
+      const tripsArray = Object.entries(visitedTrips).map(([tripId, data]) => ({
+        tripId,
+        ...data
+      }));
+      
+      return tripsArray.sort((a, b) => {
+        const dateA = a.tripInfo?.created_at ? new Date(a.tripInfo.created_at).getTime() : 0;
+        const dateB = b.tripInfo?.created_at ? new Date(b.tripInfo.created_at).getTime() : 0;
+        return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
+      });
+    } else if (activeTab === 'wishlist') {
+      return bookmarks.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
+      });
+    }
+    return [];
+  };
+
+  // 페이지네이션된 데이터 계산
+  const getPaginatedData = () => {
+    const sortedData = getSortedData();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedData.slice(startIndex, endIndex);
+  };
+
+  // 전체 페이지 수 계산
+  const getTotalPages = () => {
+    const sortedData = getSortedData();
+    return Math.ceil(sortedData.length / itemsPerPage);
+  };
+
+  // 정렬 변경 핸들러
+  const handleSortChange = (newSortOrder: 'latest' | 'oldest') => {
+    setSortOrder(newSortOrder);
+    setCurrentPage(1); // 정렬 변경 시 첫 페이지로 리셋
+    setShowSortDropdown(false); // 드롭다운 닫기
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleTripPress = (tripId: string) => {
     setSelectedTrip(visitedTrips[tripId]);
@@ -225,119 +281,256 @@ export default function MyPage() {
       return <ActivityIndicator size="large" color="#659ECF" style={{ marginTop: 40 }} />;
     }
 
-      if (activeTab === 'visited') {
-        const tripIds = Object.keys(visitedTrips);
-        if (tripIds.length === 0) {
-          return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
-        }
-        
-        // 여행 기록을 최신 순으로 정렬 (여행 자체의 순서)
-        const sortedTripIds = tripIds.sort((a, b) => {
-          const tripA = visitedTrips[a];
-          const tripB = visitedTrips[b];
-          
-          // 각 여행의 모든 콘텐츠 중 가장 최근 날짜를 찾기
-          const getLatestDate = (contents: VisitedContent[]) => {
-            if (contents.length === 0) return 0;
-            return Math.max(...contents.map(content => new Date(content.created_at).getTime()));
-          };
-          
-          const latestDateA = getLatestDate(tripA.contents);
-          const latestDateB = getLatestDate(tripB.contents);
-          
-          // 최신 여행이 위에 오도록 내림차순 정렬
-          return latestDateB - latestDateA;
-        });
-        
-        return sortedTripIds.map((tripId) => {
-          const tripData = visitedTrips[tripId];
-          const tripContents = tripData.contents;
-          const firstContent = tripContents[0];
-          // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
-          let imageSource;
-          if (firstContent.first_image) {
-            imageSource = { uri: firstContent.first_image };
-          } else if (firstContent.category && DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS]) {
-            imageSource = DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS];
-          } else {
-            imageSource = DEFAULT_ICONS.attractions; // 기본값
-          }
-  
-          const tripDate = new Date(firstContent.created_at);
-          const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
-          const newTitle = `${formattedDate}의 여행`;
-
-          return (
-            <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTextContainer}>
-                  <Text style={styles.cardTitle}>{newTitle}</Text>
-                  <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
-                </View>
-                <TouchableOpacity 
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleDeleteTrip(tripId);
-                  }}
-                  style={styles.deleteTripButton}
-                >
-                  <Text style={styles.deleteTripButtonText}>삭제</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.wishlistImageBox}>
-                <Image 
-                  source={imageSource} 
-                  style={[
-                    styles.image,
-                    !firstContent.first_image && styles.defaultIconImage
-                  ]} 
-                  resizeMode={firstContent.first_image ? "cover" : "center"} 
-                />
-              </View>
-            </TouchableOpacity>
-          );
-        });
+          if (activeTab === 'visited') {
+      const paginatedData = getPaginatedData();
+      const totalPages = getTotalPages();
+      
+      if (paginatedData.length === 0) {
+        return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
       }
+      
+      return (
+        <>
+          {/* 정렬 옵션 */}
+          <View style={styles.sortContainer}>
+            <View style={styles.sortDropdownContainer}>
+              <TouchableOpacity 
+                style={styles.sortDropdownButton}
+                onPress={() => setShowSortDropdown(!showSortDropdown)}
+              >
+                <Text style={styles.sortDropdownButtonText}>
+                  {sortOrder === 'latest' ? '최신순' : '오래된순'}
+                </Text>
+                <Text style={[styles.sortDropdownArrow, showSortDropdown && styles.sortDropdownArrowUp]}>
+                  ▼
+                </Text>
+              </TouchableOpacity>
+              
+              {showSortDropdown && (
+                <View style={styles.sortDropdownMenu}>
+                  <TouchableOpacity 
+                    style={[styles.sortDropdownItem, sortOrder === 'latest' && styles.sortDropdownItemActive]}
+                    onPress={() => handleSortChange('latest')}
+                  >
+                    <Text style={[styles.sortDropdownItemText, sortOrder === 'latest' && styles.sortDropdownItemTextActive]}>
+                      최신순
+                    </Text>
+                    {sortOrder === 'latest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.sortDropdownItem, sortOrder === 'oldest' && styles.sortDropdownItemActive]}
+                    onPress={() => handleSortChange('oldest')}
+                  >
+                    <Text style={[styles.sortDropdownItemText, sortOrder === 'oldest' && styles.sortDropdownItemTextActive]}>
+                      오래된순
+                    </Text>
+                    {sortOrder === 'oldest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* 여행 목록 */}
+          {paginatedData.map((tripData: any) => {
+            const tripId = tripData.tripId;
+            const tripContents = tripData.contents;
+            const firstContent = tripContents[0];
+            
+            // 이미지 소스 결정
+            let imageSource;
+            if (firstContent.first_image) {
+              imageSource = { uri: firstContent.first_image };
+            } else if (firstContent.category && DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS]) {
+              imageSource = DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS];
+            } else {
+              imageSource = DEFAULT_ICONS.attractions;
+            }
+
+            const tripDate = new Date(firstContent.created_at);
+            const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
+            const newTitle = `${formattedDate}의 여행`;
+
+            return (
+              <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTextContainer}>
+                    <Text style={styles.cardTitle}>{newTitle}</Text>
+                    <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTrip(tripId);
+                    }}
+                    style={styles.deleteTripButton}
+                  >
+                    <Text style={styles.deleteTripButtonText}>삭제</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.wishlistImageBox}>
+                  <Image 
+                    source={imageSource} 
+                    style={[
+                      styles.image,
+                      !firstContent.first_image && styles.defaultIconImage
+                    ]} 
+                    resizeMode={firstContent.first_image ? "cover" : "center"} 
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity 
+                style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
+                onPress={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
+                  이전
+                </Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.paginationText}>
+                {currentPage} / {totalPages}
+              </Text>
+              
+              <TouchableOpacity 
+                style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                onPress={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
+                  다음
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      );
+    }
   
       if (activeTab === 'wishlist') {
-        if (bookmarks.length === 0) {
+        const paginatedData = getPaginatedData();
+        const totalPages = getTotalPages();
+        
+        if (paginatedData.length === 0) {
           return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
         }
-        return bookmarks.map((bookmark) => {
-          // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
-          let imageSource;
-          if (bookmark.firstImage) {
-            imageSource = { uri: bookmark.firstImage };
-          } else if (bookmark.category && DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS]) {
-            imageSource = DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS];
-          } else {
-            imageSource = DEFAULT_ICONS.attractions; // 기본값
-          }
-          
-          return (
-            <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTextContainer}>
-                  <Text style={styles.cardTitle}>{bookmark.title}</Text>
-                  <Text style={styles.locationText}>{bookmark.addr1}</Text>
-                </View>
-                <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteBookmark(bookmark.id); }} style={styles.starButton}>
-                  <Text style={styles.star}>★</Text>
+        
+        return (
+          <>
+            {/* 정렬 옵션 */}
+            <View style={styles.sortContainer}>
+              <View style={styles.sortDropdownContainer}>
+                <TouchableOpacity 
+                  style={styles.sortDropdownButton}
+                  onPress={() => setShowSortDropdown(!showSortDropdown)}
+                >
+                  <Text style={styles.sortDropdownButtonText}>
+                    {sortOrder === 'latest' ? '최신순' : '오래된순'}
+                  </Text>
+                  <Text style={[styles.sortDropdownArrow, showSortDropdown && styles.sortDropdownArrowUp]}>
+                    ▼
+                  </Text>
+                </TouchableOpacity>
+                
+                {showSortDropdown && (
+                  <View style={styles.sortDropdownMenu}>
+                    <TouchableOpacity 
+                      style={[styles.sortDropdownItem, sortOrder === 'latest' && styles.sortDropdownItemActive]}
+                      onPress={() => handleSortChange('latest')}
+                    >
+                      <Text style={[styles.sortDropdownItemText, sortOrder === 'latest' && styles.sortDropdownItemTextActive]}>
+                        최신순
+                      </Text>
+                      {sortOrder === 'latest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.sortDropdownItem, sortOrder === 'oldest' && styles.sortDropdownItemActive]}
+                      onPress={() => handleSortChange('oldest')}
+                    >
+                      <Text style={[styles.sortDropdownItemText, sortOrder === 'oldest' && styles.sortDropdownItemTextActive]}>
+                        오래된순
+                      </Text>
+                      {sortOrder === 'oldest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* 북마크 목록 */}
+            {paginatedData.map((bookmark: any) => {
+              // 이미지 소스 결정
+              let imageSource;
+              if (bookmark.firstImage) {
+                imageSource = { uri: bookmark.firstImage };
+              } else if (bookmark.category && DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS]) {
+                imageSource = DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS];
+              } else {
+                imageSource = DEFAULT_ICONS.attractions;
+              }
+              
+              return (
+                <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardTextContainer}>
+                      <Text style={styles.cardTitle}>{bookmark.title}</Text>
+                      <Text style={styles.locationText}>{bookmark.addr1}</Text>
+                    </View>
+                    <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteBookmark(bookmark.id); }} style={styles.starButton}>
+                      <Text style={styles.star}>★</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.wishlistImageBox}>
+                    <Image 
+                      source={imageSource} 
+                      style={[
+                        styles.image,
+                        !bookmark.firstImage && styles.defaultIconImage
+                      ]} 
+                      resizeMode={bookmark.firstImage ? "cover" : "center"} 
+                    />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity 
+                  style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
+                  onPress={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
+                    이전
+                  </Text>
+                </TouchableOpacity>
+                
+                <Text style={styles.paginationText}>
+                  {currentPage} / {totalPages}
+                </Text>
+                
+                <TouchableOpacity 
+                  style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+                  onPress={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
+                    다음
+                  </Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.wishlistImageBox}>
-                <Image 
-                  source={imageSource} 
-                  style={[
-                    styles.image,
-                    !bookmark.firstImage && styles.defaultIconImage
-                  ]} 
-                  resizeMode={bookmark.firstImage ? "cover" : "center"} 
-                />
-              </View>
-            </TouchableOpacity>
-          );
-        });
+            )}
+          </>
+        );
       }
   
     if (activeTab === 'personal') {
@@ -436,7 +629,11 @@ export default function MyPage() {
                 <Text style={styles.closeXText}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.bookmarkModalScroll}>
+            <ScrollView 
+              style={styles.bookmarkModalScroll}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.bookmarkModalScrollContent}
+            >
               {/* 북마크 이미지 추가 */}
               {selectedBookmark && (
                 <View style={styles.bookmarkImageContainer}>
@@ -640,12 +837,13 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: screenWidth * 0.90,
-    height: '85%',
-    maxHeight: '98%',
+    height: '80%',
+    maxHeight: '95%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   modalTitle: {
     fontSize: 18,
@@ -655,7 +853,7 @@ const styles = StyleSheet.create({
   },
   imageBox: {
     width: '100%',
-    height: 180,
+    height: 120,
     borderRadius: 16,
     overflow: 'hidden',
     marginTop: 10,
@@ -695,7 +893,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#666',
-    textAlign: 'justify',
+    textAlign: 'left',
   },
   visitedPlacesTitle: {
     fontSize: 16,
@@ -726,8 +924,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
   },
   bookmarkModalScroll: {
-    maxHeight: 400,
+    flex: 1,
     width: '100%',
+  },
+  bookmarkModalScrollContent: {
+    paddingBottom: 20,
   },
   infoSection: {
     marginBottom: 20,
@@ -783,6 +984,117 @@ const styles = StyleSheet.create({
   bookmarkModalImage: {
     width: '100%',
     height: '100%',
+  },
+
+  // 정렬 관련 스타일
+  sortContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingRight: 0, // 오른쪽 패딩 제거하여 더 오른쪽으로 이동
+  },
+  sortDropdownContainer: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  sortDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#659ECF',
+    borderRadius: 6,
+  },
+  sortDropdownButtonText: {
+    fontSize: 13,
+    color: '#333',
+    fontFamily: 'Pretendard-Medium',
+    marginRight: 4,
+  },
+  sortDropdownArrow: {
+    fontSize: 10,
+    color: '#659ECF',
+    fontFamily: 'Pretendard-Medium',
+  },
+  sortDropdownArrowUp: {
+    transform: [{ rotate: '180deg' }],
+  },
+  sortDropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#659ECF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minWidth: 120,
+    marginTop: 4,
+  },
+  sortDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  sortDropdownItemActive: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    marginHorizontal: 4,
+    marginVertical: 2,
+  },
+  sortDropdownItemText: {
+    fontSize: 13,
+    color: '#333',
+    fontFamily: 'Pretendard-Medium',
+  },
+  sortDropdownItemTextActive: {
+    color: '#659ECF',
+  },
+  sortDropdownCheck: {
+    fontSize: 13,
+    color: '#659ECF',
+    fontFamily: 'Pretendard-Medium',
+  },
+
+  // 페이지네이션 관련 스타일
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  paginationButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#659ECF',
+    marginHorizontal: 8,
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  paginationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: 'Pretendard-Medium',
+  },
+  paginationButtonTextDisabled: {
+    color: '#999',
+  },
+  paginationText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'Pretendard-Medium',
+    marginHorizontal: 10,
   },
 
 });

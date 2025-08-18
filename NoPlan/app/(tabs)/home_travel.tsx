@@ -407,7 +407,7 @@ export default function HomeTravel() {
         </TouchableOpacity>
         <View style={styles.topBarCenter}>
           <Image
-            source={require('../../assets/images/noplan_logo_white.png')}
+            source={require('../../assets/images/noplan_logo_blue.png')}
             style={styles.topBarLogo}
             resizeMode="contain"
           />
@@ -418,7 +418,7 @@ export default function HomeTravel() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person" size={28} color="#FFFFFF" />
+          <Ionicons name="person" size={28} color="#659ECF" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 투명도 살짝 올림
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // 투명도 살짝 올림
   },
   heroTextWrap: {
     flex: 1,
@@ -771,14 +771,14 @@ const styles = StyleSheet.create({
   },
   title: {
      textAlign: 'center',
-     color: '#FFFFFF',
+     color: '#000000', // 검정색으로 변경
      fontSize: 20,
      lineHeight: 28,
      fontFamily: 'Pretendard-Medium',
      marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
   highlight: {
-     color: '#1B365D',
+     color: '#659ECF', // 파란색으로 변경
      fontFamily: 'Pretendard-Medium',
    },
   recommendationMessageWrap: {
@@ -859,7 +859,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // 30에서 20으로 줄임
     paddingTop: 12,
     paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-    gap: 1, // 6에서 3으로 더 줄임
+    gap: 3, // 6에서 3으로 더 줄임
   },
 
   card: {
@@ -1103,7 +1103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(101, 158, 207, 0.6)', // 흰색에 투명도 0.85
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // 흰색에 투명도 0.85
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
@@ -1119,10 +1119,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#659ECF',
   },
   helpIcon: {
-    color: '#FFFFFF',
+    color: '#659ECF',
     fontSize: 20,
     fontFamily: 'Pretendard-Medium',
   },
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 22,
-    color: '#FFFFFF',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
   },
