@@ -5,12 +5,12 @@ import * as Font from 'expo-font';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Image,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 
@@ -165,7 +165,7 @@ export default function AppGuide() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#659ECF" />
+          <Ionicons name="person" size={28} color="#659ECF" />
         </TouchableOpacity>
       </View>
       

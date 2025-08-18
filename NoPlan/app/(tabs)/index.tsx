@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { ImageBackground, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router'; // ✅ 추가
 import * as Font from 'expo-font';
+import { useRouter } from 'expo-router'; // ✅ 추가
+import { useEffect, useState } from 'react';
+import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter(); // ✅ 라우터 객체 생성
@@ -40,7 +40,7 @@ export default function HomeScreen() {
           style={styles.button}
           onPress={() => router.push('/(tabs)/signin')} // ✅ 버튼 눌렀을 때 이동
         >
-          <Text style={styles.buttonText}>지금 시작하기</Text>
+          <Text style={styles.buttonText} numberOfLines={1} ellipsizeMode="tail">지금 시작하기</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -92,11 +92,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 10,
     paddingVertical: 18,
-    paddingHorizontal: 140,
+    paddingHorizontal: 32, // 140에서 32로 줄여서 텍스트에 맞는 적절한 패딩 설정
     alignItems: 'center',
     position: 'absolute',
     bottom: 40,
     alignSelf: 'center',
+    minWidth: 350, // 최소 너비 설정으로 텍스트가 잘리지 않도록 함
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -104,7 +105,9 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#000',
-    fontSize: 15,
+    fontSize: 16, // 15에서 16으로 증가하여 home.tsx와 일치
     fontFamily: 'Pretendard-Medium',
+    textAlign: 'center', // 텍스트 중앙 정렬
+    includeFontPadding: false, // 안드로이드에서 폰트 패딩 제거
   },
 });

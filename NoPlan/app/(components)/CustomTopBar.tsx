@@ -75,7 +75,7 @@ export default function CustomTopBar({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#659ECF" />
+          <Ionicons name="person" size={28} color="#659ECF" />
         </TouchableOpacity>
       ) : (
         <View style={styles.iconPlaceholder} />

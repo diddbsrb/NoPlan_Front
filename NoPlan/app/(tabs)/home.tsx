@@ -121,7 +121,7 @@ export default function HomeScreen() {
           style={styles.button}
           onPress={() => router.push('/survey_travel')}
         >
-          <Text style={styles.buttonText}>지금 시작하기</Text>
+          <Text style={styles.buttonText} numberOfLines={1} ellipsizeMode="tail">지금 시작하기</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
@@ -182,11 +182,18 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: 'rgba(255,255,255,0.65)',
     paddingVertical: 18,
-    paddingHorizontal: 140,
+    paddingHorizontal: 32, // 140에서 32로 줄여서 텍스트에 맞는 적절한 패딩 설정
     borderRadius: 10,
     marginBottom: 2,
     alignItems: 'center',
     alignSelf: 'center',
+    minWidth: 350, // 최소 너비 설정으로 텍스트가 잘리지 않도록 함
   },
-      buttonText: { color: '#000', fontFamily: 'Pretendard-Medium', fontSize: 14 },
+  buttonText: { 
+    color: '#000', 
+    fontFamily: 'Pretendard-Medium', 
+    fontSize: 16,
+    textAlign: 'center', // 텍스트 중앙 정렬
+    includeFontPadding: false, // 안드로이드에서 폰트 패딩 제거
+  },
 });
