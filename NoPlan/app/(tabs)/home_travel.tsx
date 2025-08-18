@@ -678,7 +678,7 @@ const CardItem = memo(({
         </View>
         {item.hashtags && (
           <View style={styles.cardHashtags}>
-            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => {
+            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 2).map((tag, index) => {
               const trimmedTag = tag.trim();
               return (
                 <Text key={index} style={styles.cardHashtag} numberOfLines={1} ellipsizeMode="tail">
@@ -896,14 +896,20 @@ const styles = StyleSheet.create({
     height: 55,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between', // space-around에서 space-between으로 변경
     paddingHorizontal: 30,
     shadowColor: '#000',
     shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 10,
   },
-  tabItem: { alignItems: 'center', justifyContent: 'center'},
+  tabItem: { 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    flex: 1, // 전체 너비를 균등하게 분할
+    paddingVertical: 15, // 세로 터치 영역 확장
+    paddingHorizontal: 20, // 가로 터치 영역 확장
+  },
   tabIconText: { color: '#333', fontFamily: 'Pretendard-Medium', fontSize: 15 },
   tabBarDivider: {
     width: 2,
@@ -1046,6 +1052,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 30, // 해시태그 아래 여백 추가
   },
   hashtag: {
     backgroundColor: '#e0f7fa',
