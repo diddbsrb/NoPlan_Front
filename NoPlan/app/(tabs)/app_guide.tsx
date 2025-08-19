@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 50,
-    marginBottom: 40,
+    marginBottom: 20, // 탭 바 제거로 인한 여백 조정
 
   },
   icon: {

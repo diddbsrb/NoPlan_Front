@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     padding: 24,
-    paddingBottom: 20,
+    paddingBottom: 10, // 탭 바 제거로 인한 여백 조정
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },

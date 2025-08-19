@@ -50,11 +50,11 @@ module.exports = ({ config }) => {
     slug: 'NoPlan',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    icon: './assets/images/noplan_logo_blue.png',
     scheme: 'noplan',
     userInterfaceStyle: 'automatic',
     splash: {
-      image: './assets/images/splash-icon.png',
+      image: './assets/images/noplan_logo_blue.png',
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
@@ -67,7 +67,7 @@ module.exports = ({ config }) => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
+        foregroundImage: './assets/images/noplan_logo_blue.png',
         backgroundColor: '#ffffff',
       },
       package: 'com.donggguk.noplan',
@@ -79,7 +79,7 @@ module.exports = ({ config }) => {
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/favicon.png',
+      favicon: './assets/images/noplan_logo_blue.png',
     },
     plugins: [
       // 기존 플러그인 설정은 모두 그대로 유지합니다.

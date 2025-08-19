@@ -65,7 +65,7 @@ export default function HomeScreen() {
         flex: 1,
         justifyContent: 'space-between',
         paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
-        paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
+        paddingBottom: Math.max(20, screenHeight * 0.03), // 탭 바 제거로 인한 여백 조정
         zIndex: 2,
       },
       header: {

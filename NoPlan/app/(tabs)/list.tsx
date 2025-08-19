@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   bottomArea: {
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 100,
+    marginBottom: 20, // 탭 바 제거로 인한 여백 조정
   },
   bottomDesc: {
     fontSize: 14,
