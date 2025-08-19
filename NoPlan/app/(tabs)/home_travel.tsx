@@ -1,4 +1,4 @@
-// app/(tabs)/test.tsx
+// app/(tabs)/home_travel.tsx
 
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';

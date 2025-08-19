@@ -197,25 +197,7 @@ export default function RootLayout() {
             const newScheduledNotifications = await notifee.getTriggerNotificationIds();
             console.log('스케줄링 후 알림들:', newScheduledNotifications);
             
-            // 즉시 테스트 알림 발송 (알림 시스템 확인용)
-            try {
-              console.log('즉시 테스트 알림 발송 시작...');
-              await sendTestNotification('lunch');
-              console.log('즉시 테스트 알림 발송 완료');
-            } catch (error) {
-              console.error('즉시 테스트 알림 발송 실패:', error);
-            }
             
-            // 30초 후 테스트 알림 발송
-            setTimeout(async () => {
-              try {
-                console.log('30초 후 테스트 알림 발송 시작...');
-                await sendTestNotification('weekend');
-                console.log('30초 후 테스트 알림 발송 완료');
-              } catch (error) {
-                console.error('30초 후 테스트 알림 발송 실패:', error);
-              }
-            }, 30 * 1000); // 30초 후
             
           } catch (error) {
             console.error('알림 스케줄링 확인 실패:', error);
@@ -248,39 +230,43 @@ export default function RootLayout() {
         console.log('[알림 백그라운드] 이벤트 타입:', type);
         console.log('[알림 백그라운드] 상세 정보:', detail);
         
-        console.log('[알림 백그라운드] EventType.PRESS 값:', EventType.PRESS);
-        console.log('[알림 백그라운드] type 값:', type);
-        console.log('[알림 백그라운드] type === EventType.PRESS:', type === EventType.PRESS);
-        
-                 if (type === EventType.PRESS || type === 2) {
-           // 액션 ID 가져오기
-           const actionId = detail.pressAction?.id || 'default';
+        // 모든 이벤트 타입을 처리 (PRESS, ACTION_PRESS, DELIVERED 등)
+        if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
+           // 액션 ID 가져오기 (여러 방법으로 시도)
+           let actionId = 'default';
+           
+           if (detail.pressAction?.id) {
+             actionId = detail.pressAction.id;
+           } else if (detail.notification?.data?.actionId) {
+             const dataActionId = detail.notification.data.actionId;
+             actionId = typeof dataActionId === 'string' ? dataActionId : 'default';
+           }
+           
            console.log('[알림 백그라운드] 액션 ID:', actionId);
            console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
            
            // 알림 데이터와 액션 ID를 함께 전달 (async 처리)
-           handleNotificationAction(actionId, detail.notification?.data || {}).then(navigationData => {
+           try {
+             const navigationData = await handleNotificationAction(actionId, detail.notification?.data || {});
              console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
           
-             if (navigationData) {
-               console.log('[알림 백그라운드] 네비게이션 데이터:', navigationData);
-               
-               if (navigationData.screen) {
-                 console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
-                 try {
-                   router.push({
-                     pathname: `/${navigationData.screen}` as any,
-                     params: navigationData.params
-                   });
-                   console.log('[알림 백그라운드] 화면 이동 성공');
-                 } catch (error) {
-                   console.error('[알림 백그라운드] 화면 이동 실패:', error);
-                 }
+             if (navigationData && navigationData.screen) {
+               console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
+               try {
+                 router.push({
+                   pathname: `/${navigationData.screen}` as any,
+                   params: navigationData.params
+                 });
+                 console.log('[알림 백그라운드] 화면 이동 성공');
+               } catch (error) {
+                 console.error('[알림 백그라운드] 화면 이동 실패:', error);
                }
              } else {
-               console.log('[알림 백그라운드] 네비게이션 데이터가 null입니다.');
+               console.log('[알림 백그라운드] 네비게이션 데이터가 null이거나 screen이 없습니다.');
              }
-           });
+           } catch (error) {
+             console.error('[알림 백그라운드] handleNotificationAction 처리 실패:', error);
+           }
          }
        });
 

@@ -11,8 +11,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
+import { getLastScreen } from '../../utils/pushNotificationHelper';
 
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
@@ -31,6 +34,121 @@ export default function HomeScreen() {
   const isAnimating = useRef(false);
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  // 화면 크기 가져오기
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+  // 반응형 스타일 함수
+  const getResponsiveStyles = () => {
+    return StyleSheet.create({
+      container: {
+        flex: 1,
+      },
+      background: { 
+        flex: 1, 
+        width: '100%', 
+        height: '100%',
+        position: 'absolute',
+      },
+      overlayBackground: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      },
+      overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(147, 144, 144, 0.3)',
+      },
+      uiContainer: {
+        flex: 1,
+        justifyContent: 'space-between',
+        paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
+        paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
+        zIndex: 2,
+      },
+      header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: Math.max(12, screenHeight * 0.015), // 화면 높이의 1.5% 또는 최소 12px
+        marginLeft: -Math.min(30, screenWidth * 0.08), // 화면 너비의 8% 또는 최대 30px
+        marginRight: Math.max(5, screenWidth * 0.01), // 화면 너비의 1% 또는 최소 5px
+      },
+      logo: { 
+        width: Math.min(100, screenWidth * 0.25), // 화면 너비의 25% 또는 최대 100px
+        height: Math.min(30, screenHeight * 0.04) // 화면 높이의 4% 또는 최대 30px
+      },
+      center: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: screenHeight * 0.55, // 화면 높이의 55%
+      },
+      title: {
+        fontSize: Math.max(18, Math.min(24, screenWidth * 0.05)), // 화면 너비의 5% 또는 18-24px 범위
+        fontFamily: 'Pretendard-Medium',
+        color: '#fff',
+        textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      },
+      button: {
+        backgroundColor: 'rgba(255,255,255,0.65)',
+        paddingVertical: Math.max(16, screenHeight * 0.02), // 화면 높이의 2% 또는 최소 16px
+        paddingHorizontal: Math.max(32, screenWidth * 0.1), // 화면 너비의 10% 또는 최소 32px
+        borderRadius: Math.max(8, screenWidth * 0.02), // 화면 너비의 2% 또는 최소 8px
+        marginBottom: Math.max(2, screenHeight * 0.002), // 화면 높이의 0.2% 또는 최소 2px
+        alignItems: 'center',
+        alignSelf: 'center',
+        minWidth: Math.min(350, screenWidth * 0.8), // 화면 너비의 80% 또는 최대 350px
+      },
+      buttonText: { 
+        color: '#000', 
+        fontFamily: 'Pretendard-Medium', 
+        fontSize: Math.max(14, Math.min(18, screenWidth * 0.04)), // 화면 너비의 4% 또는 14-18px 범위
+        textAlign: 'center', // 텍스트 중앙 정렬
+        includeFontPadding: false, // 안드로이드에서 폰트 패딩 제거
+      },
+    });
+  };
+
+  // 여행 상태 확인 함수
+  const checkTravelStatus = async (): Promise<boolean> => {
+    try {
+      const isTraveling = await SecureStore.getItemAsync('isTraveling');
+      return isTraveling === 'true';
+    } catch (error) {
+      console.error('여행 상태 확인 실패:', error);
+      return false;
+    }
+  };
+
+  // 시작하기 버튼 핸들러
+  const handleStartButton = async () => {
+    try {
+      const isTraveling = await checkTravelStatus();
+      if (isTraveling) {
+        // 여행 중이면 마지막으로 머무른 페이지로 이동
+        const lastScreen = await getLastScreen();
+        if (lastScreen) {
+          // 타입 안전성을 위해 as any 사용
+          router.push(lastScreen.screen as any);
+        } else {
+          // 마지막 화면 정보가 없으면 여행 홈 화면으로
+          router.push('/home_travel');
+        }
+      } else {
+        // 여행 중이 아니면 여행 설문 화면으로 (새 여행 시작)
+        router.push('/survey_travel');
+      }
+    } catch (error) {
+      console.error('화면 이동 실패:', error);
+      // 오류 시 기본적으로 여행 설문 화면으로
+      router.push('/survey_travel');
+    }
+  };
 
   // 폰트 로드
   useEffect(() => {
@@ -80,6 +198,9 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [currentImageIndex]);
 
+  // 반응형 스타일 가져오기
+  const styles = getResponsiveStyles();
+
   return (
     <View style={styles.container}>
       {/* 첫 번째 배경 이미지 */}
@@ -119,7 +240,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/survey_travel')}
+          onPress={handleStartButton}
         >
           <Text style={styles.buttonText} numberOfLines={1} ellipsizeMode="tail">지금 시작하기</Text>
         </TouchableOpacity>
@@ -127,73 +248,3 @@ export default function HomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: { 
-    flex: 1, 
-    width: '100%', 
-    height: '100%',
-    position: 'absolute',
-  },
-  overlayBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(147, 144, 144, 0.3)',
-  },
-  uiContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 40,
-    zIndex: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 25,
-    marginLeft: -25,
-    marginRight: 5,
-  },
-  logo: { width: 100, height: 30 },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 450,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Pretendard-Medium',
-    color: '#fff',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  button: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    paddingVertical: 18,
-    paddingHorizontal: 32, // 140에서 32로 줄여서 텍스트에 맞는 적절한 패딩 설정
-    borderRadius: 10,
-    marginBottom: 2,
-    alignItems: 'center',
-    alignSelf: 'center',
-    minWidth: 350, // 최소 너비 설정으로 텍스트가 잘리지 않도록 함
-  },
-  buttonText: { 
-    color: '#000', 
-    fontFamily: 'Pretendard-Medium', 
-    fontSize: 16,
-    textAlign: 'center', // 텍스트 중앙 정렬
-    includeFontPadding: false, // 안드로이드에서 폰트 패딩 제거
-  },
-});
