@@ -1,12 +1,8 @@
 // app/(tabs)/test.tsx
 
-
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, ScrollView, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { travelService } from '../../service/travelService';
 // ★★★ 알림 테스트를 위한 import 추가 ★★★
@@ -16,14 +12,10 @@ import {
   schedulePostTravelRecommendation,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  createNotificationChannels,
-  requestUserPermission,
   testBackgroundNotifications,
   checkScheduledNotifications,
   cancelTestNotifications,
   scheduleTestNotification
-
-
 } from '../../utils/pushNotificationHelper';
 
 export default function TestScreen() {
@@ -98,8 +90,9 @@ export default function TestScreen() {
   const testLunchNotification = async () => {
     try {
       console.log('[테스트 화면] 점심 알림 테스트 시작');
-      const result = await sendTestNotification('lunch');
-      console.log('[테스트 화면] 점심 알림 테스트 결과:', result);
+      console.log('[테스트 화면] 현재 시간:', new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }));
+      await scheduleWeekdayLunchNotification();
+      console.log('[테스트 화면] 점심 알림 테스트 결과: 성공');
       alert('점심 알림 테스트 완료! 알림을 확인해보세요.');
       } catch (error) {
       console.error('[테스트 화면] 점심 알림 테스트 실패:', error);
@@ -110,8 +103,8 @@ export default function TestScreen() {
   const testWeekendNotification = async () => {
     try {
       console.log('[테스트 화면] 주말 여행 알림 테스트 시작');
-      const result = await sendTestNotification('weekend');
-      console.log('[테스트 화면] 주말 여행 알림 테스트 결과:', result);
+      await scheduleWeekendTravelNotification();
+      console.log('[테스트 화면] 주말 여행 알림 테스트 결과: 성공');
       alert('주말 여행 알림 테스트 완료! 알림을 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 주말 여행 알림 테스트 실패:', error);
@@ -122,8 +115,8 @@ export default function TestScreen() {
   const testTravelNotification = async () => {
     try {
       console.log('[테스트 화면] 여행 추천 알림 테스트 시작');
-      const result = await sendTestNotification('travel');
-      console.log('[테스트 화면] 여행 추천 알림 테스트 결과:', result);
+      await schedulePostTravelRecommendation();
+      console.log('[테스트 화면] 여행 추천 알림 테스트 결과: 성공');
       alert('여행 추천 알림 테스트 완료! 알림을 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 여행 추천 알림 테스트 실패:', error);
@@ -158,8 +151,8 @@ export default function TestScreen() {
   const testNotificationWithActions = async () => {
     try {
       console.log('[테스트 화면] 알림 액션 테스트 시작');
-      const result = await sendTestNotification('travel');
-      console.log('[테스트 화면] 알림 액션 테스트 결과:', result);
+      await scheduleTestNotification();
+      console.log('[테스트 화면] 알림 액션 테스트 결과: 성공');
       alert('알림 액션 테스트 완료! 알림을 눌러서 앱이 열리는지 확인해보세요.');
     } catch (error) {
       console.error('[테스트 화면] 알림 액션 테스트 실패:', error);

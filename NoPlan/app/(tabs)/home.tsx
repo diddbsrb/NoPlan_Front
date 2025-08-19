@@ -13,6 +13,9 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
+import { getLastScreen } from '../../utils/pushNotificationHelper';
+import { Dimensions } from 'react-native';
 
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
@@ -32,6 +35,45 @@ export default function HomeScreen() {
   const isAnimating = useRef(false);
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  // 화면 크기 가져오기
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+  // 여행 상태 확인 함수
+  const checkTravelStatus = async (): Promise<boolean> => {
+    try {
+      const isTraveling = await SecureStore.getItemAsync('isTraveling');
+      return isTraveling === 'true';
+    } catch (error) {
+      console.error('여행 상태 확인 실패:', error);
+      return false;
+    }
+  };
+
+  // 시작하기 버튼 핸들러
+  const handleStartButton = async () => {
+    try {
+      const isTraveling = await checkTravelStatus();
+      if (isTraveling) {
+        // 여행 중이면 마지막으로 머무른 페이지로 이동
+        const lastScreen = await getLastScreen();
+        if (lastScreen) {
+          // 타입 안전성을 위해 as any 사용
+          router.push(lastScreen.screen as any);
+        } else {
+          // 마지막 화면 정보가 없으면 여행 홈 화면으로
+          router.push('/home_travel');
+        }
+      } else {
+        // 여행 중이 아니면 여행 설문 화면으로 (새 여행 시작)
+        router.push('/survey_travel');
+      }
+    } catch (error) {
+      console.error('화면 이동 실패:', error);
+      // 오류 시 기본적으로 여행 설문 화면으로
+      router.push('/survey_travel');
+    }
+  };
 
   // 폰트 로드
   useEffect(() => {
@@ -120,7 +162,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/survey_travel')}
+          onPress={handleStartButton}
         >
           <Text style={styles.buttonText}>지금 시작하기</Text>
         </TouchableOpacity>
@@ -153,25 +195,28 @@ const styles = StyleSheet.create({
   uiContainer: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 40,
+    paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
+    paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
     zIndex: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-    marginLeft: -30,
+    marginTop: Math.max(12, screenHeight * 0.015), // 화면 높이의 1.5% 또는 최소 12px
+    marginLeft: -Math.min(30, screenWidth * 0.08), // 화면 너비의 8% 또는 최대 30px
   },
-  logo: { width: 100, height: 30 },
+  logo: { 
+    width: Math.min(100, screenWidth * 0.25), // 화면 너비의 25% 또는 최대 100px
+    height: Math.min(30, screenHeight * 0.04) // 화면 높이의 4% 또는 최대 30px
+  },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 450,
+    marginTop: screenHeight * 0.55, // 화면 높이의 55%
   },
   title: {
-    fontSize: 20,
+    fontSize: Math.max(18, Math.min(24, screenWidth * 0.05)), // 화면 너비의 5% 또는 18-24px 범위
     fontFamily: 'Pretendard-Medium',
     color: '#fff',
     textAlign: 'center',
@@ -181,12 +226,16 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: 'rgba(255,255,255,0.65)',
-    paddingVertical: 18,
-    paddingHorizontal: 140,
-    borderRadius: 10,
-    marginBottom: 2,
+    paddingVertical: Math.max(16, screenHeight * 0.02), // 화면 높이의 2% 또는 최소 16px
+    paddingHorizontal: Math.max(120, screenWidth * 0.35), // 화면 너비의 35% 또는 최소 120px
+    borderRadius: Math.max(8, screenWidth * 0.02), // 화면 너비의 2% 또는 최소 8px
+    marginBottom: Math.max(2, screenHeight * 0.002), // 화면 높이의 0.2% 또는 최소 2px
     alignItems: 'center',
     alignSelf: 'center',
   },
-      buttonText: { color: '#000', fontFamily: 'Pretendard-Medium', fontSize: 14 },
+  buttonText: { 
+    color: '#000', 
+    fontFamily: 'Pretendard-Medium', 
+    fontSize: Math.max(13, Math.min(16, screenWidth * 0.035)) // 화면 너비의 3.5% 또는 13-16px 범위
+  },
 });

@@ -156,25 +156,7 @@ export default function RootLayout() {
             const newScheduledNotifications = await notifee.getTriggerNotificationIds();
             console.log('스케줄링 후 알림들:', newScheduledNotifications);
             
-            // 즉시 테스트 알림 발송 (알림 시스템 확인용)
-            try {
-              console.log('즉시 테스트 알림 발송 시작...');
-              await sendTestNotification('lunch');
-              console.log('즉시 테스트 알림 발송 완료');
-            } catch (error) {
-              console.error('즉시 테스트 알림 발송 실패:', error);
-            }
             
-            // 30초 후 테스트 알림 발송
-            setTimeout(async () => {
-              try {
-                console.log('30초 후 테스트 알림 발송 시작...');
-                await sendTestNotification('weekend');
-                console.log('30초 후 테스트 알림 발송 완료');
-              } catch (error) {
-                console.error('30초 후 테스트 알림 발송 실패:', error);
-              }
-            }, 30 * 1000); // 30초 후
             
           } catch (error) {
             console.error('알림 스케줄링 확인 실패:', error);
@@ -209,10 +191,13 @@ export default function RootLayout() {
         console.log('[알림 백그라운드] 상세 정보:', detail);
         
         console.log('[알림 백그라운드] EventType.PRESS 값:', EventType.PRESS);
+        console.log('[알림 백그라운드] EventType.ACTION_PRESS 값:', EventType.ACTION_PRESS);
         console.log('[알림 백그라운드] type 값:', type);
         console.log('[알림 백그라운드] type === EventType.PRESS:', type === EventType.PRESS);
+        console.log('[알림 백그라운드] type === EventType.ACTION_PRESS:', type === EventType.ACTION_PRESS);
         
-                 if (type === EventType.PRESS || type === 2) {
+        // 알림 클릭 이벤트 처리 (PRESS 또는 ACTION_PRESS)
+        if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
            // 액션 ID 가져오기
            const actionId = detail.pressAction?.id || 'default';
            console.log('[알림 백그라운드] 액션 ID:', actionId);

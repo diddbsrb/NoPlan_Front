@@ -226,19 +226,32 @@ export async function scheduleWeekdayLunchNotification() {
     await ensureChannel('travel-recommendations', '여행 추천');
 
     const now = new Date();
+    console.log('[알림 시간] 현재 시간:', now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }));
 
-    // 점심: 11:50 (주석/로직 일치)
+    // 점심: 11:50 (한국 시간 기준)
     const lunchTime = new Date();
+    // 한국 시간대로 설정 (UTC+9)
+    const koreaTimeOffset = 9 * 60; // 9시간을 분으로
+    const localOffset = lunchTime.getTimezoneOffset();
+    const totalOffset = koreaTimeOffset + localOffset;
+    
     lunchTime.setHours(11, 50, 0, 0);
+    lunchTime.setMinutes(lunchTime.getMinutes() + totalOffset);
 
     // 평일만 → 오늘이 주말이면 다음 월요일로
     const lunchDOW = lunchTime.getDay();
     if (lunchDOW === 0 || lunchDOW === 6) {
       const daysUntilMonday = (1 - lunchDOW + 7) % 7;
       lunchTime.setDate(lunchTime.getDate() + daysUntilMonday);
+      console.log('[알림 시간] 주말이어서 점심 알림을 다음 월요일로 설정:', lunchTime);
     }
     // 이미 지났으면 1분 후(테스트)
-    if (now.getTime() > lunchTime.getTime()) lunchTime.setTime(now.getTime() + 60_000);
+    if (now.getTime() > lunchTime.getTime()) {
+      lunchTime.setTime(now.getTime() + 60_000);
+      console.log('[알림 시간] 점심 알림이 이미 지나서 1분 후로 설정:', lunchTime);
+    } else {
+      console.log('[알림 시간] 점심 알림 시간 설정:', lunchTime);
+    }
 
     const lunchTrigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
@@ -278,9 +291,15 @@ export async function scheduleWeekdayLunchNotification() {
     );
     console.log('여행 중 평일 점심 알림이 스케줄링되었습니다:', lunchTime);
 
-    // 오후: 15:00 (당일 지났으면 내일)
+    // 오후: 15:00 (한국 시간 기준)
     const afternoonTime = new Date();
+    // 한국 시간대로 설정 (UTC+9)
+    const afternoonKoreaTimeOffset = 9 * 60; // 9시간을 분으로
+    const afternoonLocalOffset = afternoonTime.getTimezoneOffset();
+    const afternoonTotalOffset = afternoonKoreaTimeOffset + afternoonLocalOffset;
+    
     afternoonTime.setHours(15, 0, 0, 0);
+    afternoonTime.setMinutes(afternoonTime.getMinutes() + afternoonTotalOffset);
     if (now.getTime() > afternoonTime.getTime()) afternoonTime.setDate(afternoonTime.getDate() + 1);
 
     const afternoonRec = await getRecommendationTypeBasedOnLastVisit();
@@ -337,9 +356,15 @@ export async function scheduleWeekdayLunchNotification() {
     );
     console.log('여행 중 오후 스마트 알림이 스케줄링되었습니다:', afternoonTime);
 
-    // 저녁: 18:00 (당일 지났으면 내일)
+    // 저녁: 18:00 (한국 시간 기준)
     const eveningTime = new Date();
+    // 한국 시간대로 설정 (UTC+9)
+    const eveningKoreaTimeOffset = 9 * 60; // 9시간을 분으로
+    const eveningLocalOffset = eveningTime.getTimezoneOffset();
+    const eveningTotalOffset = eveningKoreaTimeOffset + eveningLocalOffset;
+    
     eveningTime.setHours(18, 0, 0, 0);
+    eveningTime.setMinutes(eveningTime.getMinutes() + eveningTotalOffset);
     if (now.getTime() > eveningTime.getTime()) eveningTime.setDate(eveningTime.getDate() + 1);
 
     const eveningRec = await getRecommendationTypeBasedOnLastVisit();
@@ -693,9 +718,17 @@ export async function testBackgroundNotifications() {
 export async function scheduleDelayedTestNotification(minutes: number) {
   try {
     await ensureChannel('test-background', '백그라운드 테스트');
+    
+    // 현재 시간에 분을 더해서 정확한 시간 계산
+    const now = new Date();
+    const targetTime = new Date(now.getTime() + minutes * 60 * 1000);
+    
+    console.log(`[백그라운드 테스트] 현재 시간: ${now.toLocaleString('ko-KR')}`);
+    console.log(`[백그라운드 테스트] ${minutes}분 후 시간: ${targetTime.toLocaleString('ko-KR')}`);
+    
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
-      timestamp: Date.now() + minutes * 60 * 1000,
+      timestamp: targetTime.getTime(),
     };
     
     await notifee.createTriggerNotification(
@@ -795,9 +828,9 @@ export async function handleNotificationAction(actionId: string, notificationDat
 
   switch (actionId) {
     case 'start_travel':
-      return isTraveling ? goLastOrHome() : { screen: 'survey_travel', params: { fromNotification: true } };
+      return { screen: 'survey_travel', params: { fromNotification: true } };
     case 'start_weekend_travel':
-      return isTraveling ? goLastOrHome() : { screen: 'survey_travel', params: { fromNotification: true } };
+      return { screen: 'survey_travel', params: { fromNotification: true } };
     case 'find_restaurants':
       return isTraveling ? goLastOrHome({ category: 'restaurants' }) : { screen: 'survey_travel', params: { fromNotification: true, category: 'restaurants' } };
     case 'find_accommodations':
