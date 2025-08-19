@@ -105,9 +105,9 @@ export default function SummaryScreen() {
           </View>
 
           <View style={styles.summarySection}>
-            <Text style={styles.summaryLabel}>여행 요약</Text>
+            <Text style={styles.summaryLabel}>AI 여행 요약</Text>
             {summaryLoading ? (
-              <Text style={styles.summaryText}>여행 요약을 생성하고 있습니다...</Text>
+              <Text style={styles.summaryText}>AI가 여행 요약을 생성하고 있습니다...</Text>
             ) : (
               <Text style={styles.summaryText}>{summary}</Text>
             )}
