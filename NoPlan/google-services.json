@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "530830998480",
+    "project_id": "noplan-2a606",
+    "storage_bucket": "noplan-2a606.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:530830998480:android:458af1188a012a04b857d5",
+        "android_client_info": {
+          "package_name": "com.donggguk.noplan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfkpgot_vN9ChtbjV2Lo2SRbj7Q7n9tvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
