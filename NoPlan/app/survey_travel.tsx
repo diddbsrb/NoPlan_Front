@@ -54,7 +54,9 @@ const COMPANION_OPTIONS = [
 
 export default function SurveyTravel() {
   const router = useRouter();
-  const { setSurvey, setIsTraveling } = useTravelSurvey();
+  // const { setSurvey, setIsTraveling } = useTravelSurvey();
+  const { setIsTraveling } = useTravelSurvey();
+  
   const [step, setStep] = useState(1);
   const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
   const [selectedTravelType, setSelectedTravelType] = useState<number | null>(null);
@@ -311,37 +313,20 @@ export default function SurveyTravel() {
     setLoading(true);
     setError(null);
     try {
-      // adjectives: 선택된 키워드
       const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx].label).join(',');
       
+      // 🆕 API로 여행 정보 저장 (프론트 상태에 저장 안함)
       await travelService.createTripWithAuth(
         region,
         TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
         COMPANION_OPTIONS[selectedCompanion].label,
         adjectives
       );
-      // radius 설정: 도보=1000, 대중교통=2000, 자가용=3000
-      let radius = 2000;
-      if (selectedTravelType === 1) radius = 1000;
-      else if (selectedTravelType === 2) radius = 3000;
-      setSurvey({
-        mapX: coords.longitude,
-        mapY: coords.latitude,
-        radius,
-        adjectives,
-        region,
-        transportation: TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
-        companion: COMPANION_OPTIONS[selectedCompanion].label,
-      });
       
-      // 여행 시작: 여행 상태를 true로 설정
+      // 🆕 여행 시작: 여행 상태를 true로 설정
       await setIsTraveling(true);
       
-      // 🆕 여행 상태가 제대로 반영될 때까지 잠시 대기
-      console.log('[survey_travel] 여행 상태를 true로 설정 완료, 잠시 대기...');
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      console.log('[survey_travel] home_travel로 이동 시작');
+      console.log('[survey_travel] 여행 상태를 true로 설정 완료, home_travel로 이동');
       router.replace('/home_travel');
     } catch (e) {
       setError('여행 생성에 실패했습니다.');

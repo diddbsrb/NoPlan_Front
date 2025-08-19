@@ -1,12 +1,9 @@
 // app/survey_destination.tsx
 import * as Font from 'expo-font';
-import * as Location from 'expo-location';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { requestUserPermission } from '../utils/pushNotificationHelper';
 import CustomTopBar from './(components)/CustomTopBar';
-import { TravelSurveyData, useTravelSurvey } from './(components)/TravelSurveyContext';
 
 const DEST_OPTIONS = [
   { label: '식당', image: require('../assets/images/식당.jpg') },
@@ -19,9 +16,7 @@ const DEST_OPTIONS = [
 export default function SurveyDestination() {
   const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
-  const { survey, setSurvey } = useTravelSurvey();
   const [loading, setLoading] = useState(false);
-  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   // 폰트 로드
   useEffect(() => {
@@ -29,87 +24,25 @@ export default function SurveyDestination() {
       await Font.loadAsync({
         'Pretendard-Light': require('../assets/fonts/Pretendard-Light.otf'),
       });
-      setFontsLoaded(true);
     }
     loadFonts();
   }, []);
 
-  // 🆕 화면이 포커스될 때마다 survey 상태 로깅
-  useFocusEffect(
-    useCallback(() => {
-      // 🆕 현재 survey 상태 로깅 (adjectives 포함)
-      console.log('[survey_destination] 현재 survey 상태:', {
-        adjectives: survey.adjectives,
-        transportation: survey.transportation,
-        companion: survey.companion,
-        region: survey.region
-      });
-      
-      // 🆕 수동 선택 화면이므로 자동 진행 없음
-      setSelected(null);
-    }, [survey.adjectives, survey.transportation, survey.companion, survey.region])
-  );
 
-  // 🆕 다음 버튼 로직을 함수로 분리
+  // 🆕 다음 버튼 로직 수정 - 위치 정보 없이 바로 list로 이동
   const handleNextButton = async (selectedIndex: number) => {
     setLoading(true);
     try {
-      // 현재 위치 받아서 글로벌 상태에 업데이트
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') throw new Error('위치 권한이 필요합니다.');
+      // 🆕 위치 정보 확인 없이 바로 list로 이동
+      // list 페이지에서 위치 정보를 확인하도록 수정
       
-      // 위치 권한이 허용되면 알림 권한도 함께 요청
-      try {
-        await requestUserPermission();
-        console.log('[survey_destination] 알림 권한 요청 완료');
-      } catch (error) {
-        console.log('[survey_destination] 알림 권한 요청 실패:', error);
-        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
-      }
-      
-      let location = await Location.getCurrentPositionAsync({});
-
-      // 이동수단에 따른 반경 설정
-      const radiusMap: { [key: string]: number } = {
-        '도보': 1000,
-        '대중교통': 2000,
-        '자가용': 3000,
-      };
-      const radius = radiusMap[survey.transportation || '대중교통'] || 500;
-
-      // 키워드 설정
-      const adjectives = survey.adjectives || '';
-
-      // 🆕 수동 선택 시 autoRecommendType 제거하여 자동 추천과 구분
-      const { autoRecommendType, ...surveyWithoutAuto } = survey;
-      const newSurvey: TravelSurveyData = {
-        ...surveyWithoutAuto,
-        mapX: location.coords.longitude,
-        mapY: location.coords.latitude,
-        radius,
-        adjectives,
-        // autoRecommendType은 제거됨 (수동 선택임을 명시)
-      };
-      
-      console.log('[survey_destination] 🎯 수동 선택 처리');
-      console.log('[survey_destination] setSurvey request body:', newSurvey);
-      console.log('[survey_destination] Location data:', {
-        longitude: location.coords.longitude,
-        latitude: location.coords.latitude,
-        radius,
-        transportation: survey.transportation
-      });
-      console.log('[survey_destination] Adjectives being set:', adjectives);
-      setSurvey(newSurvey);
-
-      // 목적지별 API type 매핑
       const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
       const type = typeMap[selectedIndex];
-      console.log('[survey_destination] Navigating to list with type:', type);
+      console.log('[survey_destination] list로 이동:', type);
       router.replace({ pathname: '/list', params: { type } });
     } catch (e) {
       console.error('[survey_destination] Error:', e);
-      alert('위치 정보를 가져올 수 없습니다.');
+      alert('처리 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

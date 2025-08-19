@@ -3,7 +3,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Font from 'expo-font';
-import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useState } from 'react';
 import {
@@ -17,14 +16,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
   travelService,
   Trip,
   VisitedContent,
 } from '../../service/travelService';
-import { userService, UserInfo } from '../../service/userService';
-import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
+import { UserInfo, userService } from '../../service/userService';
+import { saveLastScreen } from '../../utils/pushNotificationHelper';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -62,7 +61,7 @@ interface RecommendationContext {
 
 export default function HomeTravel() {
   const router = useRouter();
-  const { survey, setSurvey, setIsTraveling, isTraveling } = useTravelSurvey();
+  const { setIsTraveling, isTraveling } = useTravelSurvey();
   const [showModal, setShowModal] = useState(false);
   const [sections, setSections] = useState<TripSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +71,17 @@ export default function HomeTravel() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TripItem | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  
+  // 🆕 최신 여행 정보를 저장할 상태 추가
+  const [latestTripInfo, setLatestTripInfo] = useState<{
+    region?: string;
+    transportation?: string;
+    companion?: string;
+    adjectives?: string;
+  }>({});
+  
+  // 🆕 최신 여행 데이터만 저장할 상태 추가
+  const [latestTrip, setLatestTrip] = useState<TripWithDate | null>(null);
 
   // 폰트 로드
   useEffect(() => {
@@ -180,56 +190,20 @@ export default function HomeTravel() {
     }
   };
 
-  // 자동 추천 처리 함수
+  // 🆕 자동 추천 처리 함수 수정 - 위치 정보 없이 바로 list로 이동
   const handleAutoRecommendation = async (type: RecommendationType) => {
-    setRecommendationLoading(true);
     try {
-      // 현재 위치 가져오기
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('위치 권한', '위치 권한이 필요합니다.');
-        return;
-      }
+      // 🆕 위치 정보 확인 없이 바로 list로 이동
+      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> list로 이동`);
       
-      // 위치 권한이 허용되면 알림 권한도 함께 요청
-      try {
-        await requestUserPermission();
-        console.log('[home_travel] 알림 권한 요청 완료');
-      } catch (error) {
-        console.log('[home_travel] 알림 권한 요청 실패:', error);
-        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
-      }
-      
-      const location = await Location.getCurrentPositionAsync({});
-      
-      // 이동수단에 따른 반경 설정
-      const radiusMap: { [key: string]: number } = {
-        '도보': 1000,
-        '대중교통': 2000,
-        '자가용': 3000,
-      };
-      const radius = radiusMap[survey.transportation || '대중교통'] || 500;
-      
-      // survey context 업데이트 (자동 추천 타입 포함)
-      const newSurvey: TravelSurveyData = {
-        ...survey,
-        mapX: location.coords.longitude,
-        mapY: location.coords.latitude,
-        radius,
-        adjectives: survey.adjectives || '',
-        autoRecommendType: type,
-      };
-      
-      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> autoRecommendType으로 설정`);
-      setSurvey(newSurvey);
-      
-      // survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
-      router.replace({ pathname: '/list', params: { type } });
+      // 🆕 list 페이지에서 위치 정보를 확인하도록 수정
+      router.replace({ 
+        pathname: '/list', 
+        params: { type } 
+      });
     } catch (e) {
       console.error('자동 추천 처리 실패:', e);
-      Alert.alert('오류', '위치 정보를 가져올 수 없습니다.');
-    } finally {
-      setRecommendationLoading(false);
+      Alert.alert('오류', '추천을 처리할 수 없습니다.');
     }
   };
 
@@ -239,13 +213,11 @@ export default function HomeTravel() {
     setError(null);
 
     try {
-      // 여행 상태 확인 및 설정
       if (!isTraveling) {
         console.log('[home_travel] 여행 상태가 false입니다. true로 설정합니다.');
         await setIsTraveling(true);
       }
       
-      // 1) 트립 전체 조회
       const trips = (await travelService.getTripData()) as TripWithDate[];
 
       if (!trips.length) {
@@ -254,26 +226,23 @@ export default function HomeTravel() {
         return;
       }
 
-      // 2) 최신 트립 고르기
       const latest = trips
         .slice()
         .sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
 
-      // 최신 여행 정보로 survey 상태 업데이트
+      // 🆕 최신 여행 정보를 상태에 저장 (survey context 사용 안함)
       if (latest) {
-        const updatedSurvey = {
-          ...survey,
+        setLatestTripInfo({
           region: latest.region,
-          transportation: latest.transportation || survey.transportation,
-          companion: latest.companion || survey.companion,
-          adjectives: latest.adjectives || survey.adjectives,
-        };
-        setSurvey(updatedSurvey);
+          transportation: latest.transportation,
+          companion: latest.companion,
+          adjectives: latest.adjectives,
+        });
+        setLatestTrip(latest); // 최신 여행 데이터만 저장
       }
 
-      // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
       const visited = allVisited.filter((c) => c.trip === latest.id);
 
@@ -281,16 +250,13 @@ export default function HomeTravel() {
         console.log('[HomeTravel] 최근 여행에 방문지가 없습니다');
       }
 
-      // 4) 시간순 정렬
       visited.sort((a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
-      // 추천 컨텍스트 생성
       const recommendationContext = getRecommendationContext(visited);
       setRecommendationContext(recommendationContext);
 
-      // 5) SectionList용 포맷 변환
       const grouped: TripSection[] = [
         {
           date: `${latest.region} (${latest.created_at.split('T')[0]})`,
@@ -298,8 +264,7 @@ export default function HomeTravel() {
             time: c.created_at.split('T')[1].slice(0, 5),
             place: c.title,
             category: c.category,
-            image: c.first_image || undefined, // 빈 문자열이면 undefined로 설정하여 기본 이미지 사용
-            // 추가 속성들도 포함
+            image: c.first_image || undefined,
             address: c.addr1,
             overview: c.overview,
             hashtags: c.hashtags,
@@ -428,7 +393,8 @@ export default function HomeTravel() {
                        <View style={styles.heroTextWrap}>
               <Text style={styles.title} numberOfLines={0}>
                 오늘의 여정은 <Text style={styles.highlight}>{(() => {
-                  const adjectives = survey.adjectives?.split(',').map(adj => adj.trim()).filter(adj => adj) || ['스껄한'];
+                  // 🆕 latestTripInfo에서 형용사 가져오기
+                  const adjectives = latestTripInfo.adjectives?.split(',').map(adj => adj.trim()).filter(adj => adj) || ['스껄한'];
                   return adjectives[Math.floor(Math.random() * adjectives.length)];
                 })()}</Text> 여행이에요 ✨{'\n'}
                 <Text style={styles.highlight}>{userInfo?.name || '000'}</Text>님, 즐거운 순간을 함께 만들어가요!
@@ -551,27 +517,22 @@ export default function HomeTravel() {
                  onPress={async () => {
                    setShowModal(false);
                    try {
-                     // 최신 trip 가져오기
-                     const trips = await travelService.getTripData();
-                     const latest = trips.sort((a, b) => b.id - a.id)[0];
+                     // 🆕 여행 요약 생성 없이 바로 summary 페이지로 이동
+                     if (!latestTrip) {
+                       throw new Error('여행 정보를 찾을 수 없습니다.');
+                     }
                      
-                     // 여행 요약 생성
-                     const summaryData = await travelService.summarizeTrip(latest.id);
-                     
-                     // summary.tsx로 이동하면서 요약 데이터 전달
+                     // 🆕 summary 페이지에서 여행 요약을 생성하도록 수정
                      router.replace({
                        pathname: '/summary',
                        params: { 
-                         tripId: latest.id.toString(),
-                         summary: summaryData.summary,
-                         region: latest.region
+                         tripId: latestTrip.id.toString(),
+                         region: latestTrip.region
                        }
                      });
                    } catch (e) {
-                     console.error('여행 요약 생성 실패:', e);
-                     // 요약 생성 실패 시에도 여행 상태를 false로 설정
+                     console.error('여행 종료 처리 실패:', e);
                      await setIsTraveling(false);
-                     // 요약 생성 실패 시 바로 홈으로 이동
                      router.replace('/home');
                    }
                  }}

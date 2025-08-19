@@ -13,17 +13,22 @@ import {
 } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 // ★★★ 여행 완료 후 알림 스케줄링을 위한 import 추가 ★★★
+import { travelService } from '../../service/travelService';
 import { schedulePostTravelRecommendation } from '../../utils/pushNotificationHelper';
 
 export default function SummaryScreen() {
   const router = useRouter();
-  const { tripId, summary, region } = useLocalSearchParams<{
+  const { tripId, region } = useLocalSearchParams<{
     tripId: string;
-    summary: string;
+    // 🆕 summary 파라미터 제거 - 여기서 생성할 예정
+    // summary: string;
     region: string;
   }>();
   const { setIsTraveling } = useTravelSurvey();
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  
+  // 🆕 여행 요약 상태 추가
+  const [summary, setSummary] = useState<string>('');
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   // 폰트 로드
   useEffect(() => {
@@ -32,10 +37,34 @@ export default function SummaryScreen() {
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
         'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
-      setFontsLoaded(true);
     }
     loadFonts();
   }, []);
+
+  // 🆕 컴포넌트 마운트 시 여행 요약 생성
+  useEffect(() => {
+    const generateSummary = async () => {
+      if (!tripId) return;
+      
+      try {
+        setSummaryLoading(true);
+        console.log('[summary.tsx] 여행 요약 생성 시작, tripId:', tripId);
+        
+        // 🆕 여행 요약 생성 API 호출
+        const summaryData = await travelService.summarizeTrip(parseInt(tripId));
+        setSummary(summaryData.summary);
+        
+        console.log('[summary.tsx] 여행 요약 생성 완료:', summaryData.summary);
+      } catch (error) {
+        console.error('[summary.tsx] 여행 요약 생성 실패:', error);
+        setSummary('여행 요약을 생성할 수 없습니다.');
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+
+    generateSummary();
+  }, [tripId]);
 
   // 🆕 홈으로 돌아가기 버튼 클릭 시 여행 상태 변경
   const handleGoHome = async () => {
@@ -77,7 +106,11 @@ export default function SummaryScreen() {
 
           <View style={styles.summarySection}>
             <Text style={styles.summaryLabel}>여행 요약</Text>
-            <Text style={styles.summaryText}>{summary}</Text>
+            {summaryLoading ? (
+              <Text style={styles.summaryText}>여행 요약을 생성하고 있습니다...</Text>
+            ) : (
+              <Text style={styles.summaryText}>{summary}</Text>
+            )}
           </View>
         </View>
 
@@ -184,6 +217,7 @@ const styles = StyleSheet.create({
     color: '#6C757D',
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: 30,
   },
   bottomSection: {
     padding: 24,
