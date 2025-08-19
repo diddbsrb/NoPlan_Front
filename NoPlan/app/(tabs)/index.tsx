@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32, // 140에서 32로 줄여서 텍스트에 맞는 적절한 패딩 설정
     alignItems: 'center',
     position: 'absolute',
-    bottom: 20, // 탭 바 제거로 인한 여백 조정
+    bottom: 60, // 20에서 60으로 변경하여 버튼을 위로 올림
     alignSelf: 'center',
     minWidth: 350, // 최소 너비 설정으로 텍스트가 잘리지 않도록 함
     shadowColor: '#000',

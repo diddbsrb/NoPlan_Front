@@ -402,39 +402,40 @@ export default function HomeTravel() {
             </View>
          </View>
 
-        {/* 중앙 아바타 */}
+        {/* 중앙 아바타와 말풍선 */}
         <View style={styles.avatarWrap}>
-          <View style={styles.avatarRing}>
-            <Image
-              source={require('../../assets/images/main_character.png')}
-              style={styles.avatar}
-            />
-          </View>
-          <Text style={styles.avatarCaption} numberOfLines={0}>
-            {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
-          </Text>
-        </View>
-
-        {/* 추천 버튼 */}
-        {recommendationContext && !loading && !error && (
-          <View style={styles.recommendationSection}>
-            <TouchableOpacity
-              style={[
-                styles.recommendationButton,
-                recommendationLoading && styles.recommendationButtonDisabled
-              ]}
-              onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
-              disabled={recommendationLoading || loading}
-            >
-              <Text style={[
-                styles.recommendationButtonText,
-                recommendationLoading && styles.recommendationButtonTextDisabled
-              ]}>
-                {recommendationLoading ? '위치 확인 중...' : recommendationContext.buttonText}
+          <Image
+            source={require('../../assets/images/robot.png')}
+            style={styles.avatar}
+          />
+          <View style={styles.speechBubbleContainer}>
+            <View style={styles.speechBubbleTriangle} />
+            <View style={styles.speechBubble}>
+              <Text style={styles.avatarCaption} numberOfLines={0}>
+                {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
               </Text>
-            </TouchableOpacity>
+              
+              {/* 추천 버튼을 말풍선 안으로 이동 */}
+              {recommendationContext && !loading && !error && (
+                <TouchableOpacity
+                  style={[
+                    styles.recommendationButton,
+                    recommendationLoading && styles.recommendationButtonDisabled
+                  ]}
+                  onPress={() => handleAutoRecommendation(recommendationContext.recommendationType)}
+                  disabled={recommendationLoading || loading}
+                >
+                  <Text style={[
+                    styles.recommendationButtonText,
+                    recommendationLoading && styles.recommendationButtonTextDisabled
+                  ]}>
+                    {recommendationLoading ? '위치 확인 중...' : recommendationContext.buttonText}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        )}
+        </View>
 
           {/* 카드 리스트 - 방문한 장소들 */}
           <View style={styles.scrollContainer}>
@@ -760,32 +761,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: -50,
   },
-  avatarRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 6,
-  },
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 50,
-    borderWidth: 1,
-    borderColor: '#659ECF',
+    resizeMode: 'contain',
+  },
+  speechBubbleContainer: {
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  speechBubbleTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderBottomWidth: 12,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: 'rgba(255, 255, 255, 0.85)',
+    marginBottom: -1,
+  },
+  speechBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 20,
+    padding: 16,
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    alignItems: 'center',
+    minWidth: 200,
   },
   avatarCaption: {
-    marginTop: 15,
     fontFamily: 'Pretendard-Medium',
     fontSize: 15,
     color: '#333',
     textAlign: 'center',
-    paddingHorizontal: 10,
+    marginBottom: 4,
   },
 
   recommendationSection: {
@@ -794,11 +809,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recommendationButton: {
-    backgroundColor: 'rgba(101, 158, 207, 0.6)',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    backgroundColor: '#659ECF',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    marginTop: 4,
   },
   recommendationButtonText: {
     color: '#fff',
@@ -814,6 +830,7 @@ const styles = StyleSheet.create({
 
   scrollContainer: {
     flex: 1,
+    marginTop: 20, // 말풍선과 방문한 장소 사이 간격 추가
     marginBottom: 20, // 탭 바 제거로 인한 여백 조정
   },
   listContent: {

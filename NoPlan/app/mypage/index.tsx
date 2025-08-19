@@ -576,11 +576,15 @@ export default function MyPage() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>여행 기록 상세보기</Text>
-            <ScrollView>
+            <ScrollView 
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+            >
               {selectedTrip?.tripInfo?.summary && (
                 <View style={styles.summarySection}>
-                  <Text style={styles.summaryTitle}>여행 요약</Text>
-                  <Text style={styles.summaryText}>{selectedTrip.tripInfo.summary}</Text>
+                  <Text style={styles.summaryTitle}>AI 여행 요약</Text>
+                  <Text style={styles.summaryText} numberOfLines={10} ellipsizeMode="tail">{selectedTrip.tripInfo.summary}</Text>
                 </View>
               )}
               <Text style={styles.visitedPlacesTitle}>방문한 장소들</Text>
@@ -597,8 +601,8 @@ export default function MyPage() {
                 
                 return (
                   <View key={content.content_id} style={styles.modalCard}>
-                    <Text style={styles.cardTitle}>{content.title}</Text>
-                    <Text style={styles.locationText}>{content.addr1}</Text>
+                    <Text style={styles.cardTitle} numberOfLines={2} ellipsizeMode="tail">{content.title}</Text>
+                    <Text style={styles.locationText} numberOfLines={2} ellipsizeMode="tail">{content.addr1}</Text>
                     <View style={styles.imageBox}>
                       <Image 
                         source={imageSource} 
@@ -783,11 +787,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     textAlign: 'left',
     marginBottom: 4,
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   locationText: {
     fontSize: 13,
     color: '#888',
     textAlign: 'left',
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   wishlistImageBox: {
     width: '100%',
@@ -848,8 +856,15 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
-    flex: 1,
     textAlign: 'left',
+    marginBottom: 15,
+  },
+  modalScrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  modalScrollContent: {
+    paddingBottom: 20,
   },
   imageBox: {
     width: '100%',
@@ -894,6 +909,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#666',
     textAlign: 'left',
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   visitedPlacesTitle: {
     fontSize: 16,
