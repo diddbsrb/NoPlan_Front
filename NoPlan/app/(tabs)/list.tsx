@@ -1,20 +1,22 @@
+import * as Font from 'expo-font';
+import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import * as Font from 'expo-font';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  BackHandler,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Animated,
 } from 'react-native';
 import CustomTopBar from '../(components)/CustomTopBar';
-import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import { bookmarkService } from '../../service/bookmarkService';
+import { travelService } from '../../service/travelService';
 import { saveLastScreen } from '../../utils/pushNotificationHelper';
 
 const DEFAULT_IMAGES = {
@@ -27,22 +29,29 @@ const DEFAULT_IMAGES = {
 export default function List() {
   const router = useRouter();
   const { type } = useLocalSearchParams();
-  const {
-    survey,
-    setSurvey,
-  } = useTravelSurvey();
-  const { mapX, mapY, radius, adjectives } = survey;
   
-  // 🆕 type 파라미터가 없으면 autoRecommendType 사용
-  const finalType = type || survey.autoRecommendType || 'restaurants';
+  // 🆕 필요한 데이터를 하나의 상태로 통합 관리
+  const [tripParams, setTripParams] = useState<{
+    mapX: number | null;
+    mapY: number | null;
+    radius: number | null;
+    adjectives: string;
+    transportation: string;
+  }>({
+    mapX: null,
+    mapY: null,
+    radius: null,
+    adjectives: '',
+    transportation: ''
+  });
+  
+  const finalType = type || 'restaurants';
 
   const [places, setPlaces] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // ✅ 화면 진입 시 로딩 화면 표시
   const [error, setError] = useState<string | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  // contentId → bookmarkId 매핑
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
-  const [fontsLoaded, setFontsLoaded] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState<{ [contentId: number]: boolean }>({});
 
   // 🆕 로딩 멘트 관련 상태
@@ -82,7 +91,6 @@ export default function List() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
       });
-      setFontsLoaded(true);
     }
     loadFonts();
   }, []);
@@ -105,37 +113,180 @@ export default function List() {
     }, [])
   );
 
-  // 화면이 포커스될 때마다 마지막 화면 정보 저장
+  // 🆕 화면이 포커스될 때마다 위치 정보와 여행 정보 가져오기
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[List] 화면 포커스됨 - 마지막 화면 정보 저장');
+      console.log('[List] 화면 포커스됨 - 위치 정보 및 여행 정보 가져오기');
       saveLastScreen('list', { type: finalType });
-    }, [finalType])
-  );
-
-  // 🆕 화면이 포커스될 때마다 survey 상태 로깅 및 autoRecommendType 처리
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log('[list.tsx] 화면 포커스됨 - 현재 survey 상태:', {
-        transportation: survey.transportation,
-        companion: survey.companion,
-        region: survey.region,
-        mapX: survey.mapX,
-        mapY: survey.mapY,
-        radius: survey.radius,
-        autoRecommendType: survey.autoRecommendType,
-        finalType
+      
+      // 🆕 이미 데이터가 있고 로딩이 완료된 경우에만 API 호출 생략
+      if (places.length > 0 && !loading && tripParams.mapX !== null) {
+        console.log('[List] 이미 데이터가 있고 파라미터가 설정됨, API 호출 생략');
+        return;
+      }
+      
+      const loadLocationAndTripInfo = async () => {
+        try {
+          // 1. 위치 권한 요청 및 현재 위치 가져오기
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert('위치 권한', '위치 권한이 필요합니다.');
+            return;
+          }
+          
+          const location = await Location.getCurrentPositionAsync({});
+          console.log('[List] 위치 정보 확인:', location.coords.latitude, location.coords.longitude);
+          
+          // 2. 최신 여행 정보 가져오기 (이동수단, 형용사 등)
+          const trips = await travelService.getTripData();
+          if (trips && trips.length > 0) {
+            const latest = trips.sort((a, b) => b.id - a.id)[0];
+            
+            // 이동수단에 따른 반경 설정
+            const radiusMap: { [key: string]: number } = {
+              '도보': 1000,
+              '대중교통': 2000,
+              '자가용': 3000,
+            };
+            const calculatedRadius = radiusMap[latest.transportation || '대중교통'] || 2000;
+            
+            // 🆕 모든 파라미터를 하나의 상태로 통합 저장
+            const newParams = {
+              mapX: location.coords.longitude,
+              mapY: location.coords.latitude,
+              radius: calculatedRadius,
+              adjectives: latest.adjectives?.trim() || '',
+              transportation: latest.transportation || ''
+            };
+            
+            // 🆕 한 번에 모든 상태 업데이트
+            setTripParams(newParams);
+            
+            console.log('[List] 모든 파라미터 설정 완료:', newParams);
+          } else {
+            // 🆕 여행 정보가 없는 경우에도 위치 정보는 설정
+            const defaultParams = {
+              mapX: location.coords.longitude,
+              mapY: location.coords.latitude,
+              radius: 2000,
+              adjectives: '',
+              transportation: '대중교통'
+            };
+            
+            // 🆕 한 번에 모든 상태 업데이트
+            setTripParams(defaultParams);
+            
+            console.log('[List] 여행 정보 없음, 기본값으로 설정:', defaultParams);
+          }
+        } catch (error) {
+          console.error('[List] 위치 정보 또는 여행 정보 로드 실패:', error);
+          Alert.alert('오류', '필요한 정보를 가져올 수 없습니다.');
+        }
+      };
+      
+      loadLocationAndTripInfo();
+      
+      // 뒤로가기 핸들러 설정
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        console.log('[List] 기기 뒤로가기 버튼 눌림 - home_travel로 이동');
+        router.replace('/home_travel');
+        return true;
       });
       
-      // 🆕 autoRecommendType이 있으면 자동으로 API 호출
-      if (survey.autoRecommendType && survey.mapX && survey.mapY && survey.radius) {
-        console.log('[list.tsx] autoRecommendType 감지됨, 자동 API 호출 시작:', survey.autoRecommendType);
-        console.log('[list.tsx] finalType:', finalType);
-        // autoRecommendType이 있으면 useEffect에서 자동으로 API 호출됨
-        // 여기서는 로깅만 하고 실제 처리는 useEffect에서 진행
-      }
-    }, [survey, finalType])
+      return () => {
+        backHandler.remove();
+      };
+    }, [finalType, router]) // 🆕 places.length, loading 제거로 불필요한 재실행 방지
   );
+
+  // 🆕 API 호출 useEffect 수정 - 의존성 배열 최적화
+  useEffect(() => {
+    // 🆕 이미 데이터가 있고 로딩이 완료된 경우에만 API 호출 생략
+    if (places.length > 0 && !loading && tripParams.mapX !== null) {
+      console.log('[list.tsx] 이미 데이터가 있고 파라미터가 설정됨, API 호출 생략');
+      return;
+    }
+    
+    // 🆕 모든 파라미터가 설정되지 않을 경우에만 로그 출력
+    if (!finalType || tripParams.mapX == null || tripParams.mapY == null || tripParams.radius == null) {
+      console.log('[list.tsx] Missing required params:', { 
+        finalType, 
+        mapX: tripParams.mapX, 
+        mapY: tripParams.mapY, 
+        radius: tripParams.radius 
+      });
+      return;
+    }
+    
+    console.log('[list.tsx] All required params present, proceeding with API call');
+
+    let cancelled = false;
+
+    const fetchPlaces = async () => {
+      setError(null);
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 🆕 null 체크 후 안전하게 접근
+      const params = new URLSearchParams({
+        mapX: tripParams.mapX!.toString(),
+        mapY: tripParams.mapY!.toString(),
+        radius: tripParams.radius!.toString(),
+        adjectives: tripParams.adjectives!.trim()
+      });
+      
+      // // 🆕 adjectives가 있으면 항상 API 파라미터에 포함 (빈칸이 아닌 경우만)
+      // if (tripParams.adjectives && tripParams.adjectives.trim() !== '') {
+      //   params.append('adjectives', tripParams.adjectives.trim());
+      //   console.log('[list.tsx] adjectives 파라미터 추가됨:', tripParams.adjectives.trim());
+      // }
+
+      const apiUrl = `https://no-plan.cloud/api/v1/tours/${finalType}/?${params.toString()}`;
+      console.log('[list.tsx] API URL:', apiUrl);
+      
+      try {
+        const response = await fetch(apiUrl);
+        
+        console.log('[list.tsx] Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[list.tsx] API error response:', errorText);
+          
+          if (errorText.includes('RateLimitError') || response.status === 429) {
+            throw new Error('요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요.');
+          }
+          
+          throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const responseText = await response.text();
+          console.error('[list.tsx] Non-JSON response:', responseText.substring(0, 500));
+          throw new Error('API returned non-JSON response');
+        }
+        
+        const data = await response.json();
+        
+        if (!cancelled) {
+          setPlaces(Array.isArray(data) ? data : []);
+          setPageIndex(0);
+        }
+      } catch (e) {
+        console.error('[list.tsx] API error:', e);
+        if (!cancelled) {
+          const errorMessage = e instanceof Error ? e.message : '목록을 불러오지 못했습니다.';
+          setError(errorMessage);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchPlaces();
+    return () => { cancelled = true; };
+  }, [finalType, tripParams.mapX, tripParams.mapY, tripParams.radius, tripParams.adjectives]); // 🆕 필요한 파라미터만 의존성 배열에 포함
 
   const toggleFavorite = async (item: any) => {
     const contentId = item.contentid;
@@ -148,12 +299,12 @@ export default function List() {
         // 로딩 상태 시작
         setBookmarkLoading(prev => ({ ...prev, [contentId]: true }));
         
-                 // 북마크 추가 시 상세 정보 먼저 가져오기
-         let overview = '';
-         try {
-           // Rate Limit 방지를 위한 지연 시간 추가
-           await new Promise(resolve => setTimeout(resolve, 500));
-           const detailResponse = await fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentId}/`);
+        // 북마크 추가 시 상세 정보 먼저 가져오기
+        let overview = '';
+        try {
+          // Rate Limit 방지를 위한 지연 시간 추가
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const detailResponse = await fetch(`https://www.no-plan.cloud/api/v1/tours/detail/${contentId}/`);
           if (detailResponse.ok) {
             const detailData = await detailResponse.json();
             overview = detailData.overview || '';
@@ -197,119 +348,12 @@ export default function List() {
   const totalPages = Math.max(Math.ceil(places.length / 5), 1);
   const displayedPlaces = places.slice(pageIndex * 5, pageIndex * 5 + 5);
 
-  useEffect(() => {
-    console.log('[list.tsx] useEffect triggered with:', {
-      type,
-      finalType,
-      mapX,
-      mapY,
-      radius
-    });
-    
-    if (!finalType || mapX == null || mapY == null || radius == null) {
-      console.log('[list.tsx] Missing required params:', { finalType, mapX, mapY, radius });
-      return;
-    }
-    
-    console.log('[list.tsx] All required params present, proceeding with API call');
-
-    let cancelled = false;
-
-    const fetchPlaces = async () => {
-      setLoading(true);
-      setError(null);
-
-      // Rate Limit 방지를 위한 지연 시간 추가
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const params = new URLSearchParams({
-        mapX: mapX.toString(),
-        mapY: mapY.toString(),
-        radius: radius.toString(),
-      });
-      
-             // adjectives가 존재하고 비어있지 않을 때만 추가
-       if (adjectives && adjectives.trim() !== '') {
-         params.append('adjectives', adjectives.trim());
-         console.log('[list.tsx] adjectives 파라미터 추가됨:', adjectives.trim());
-       }
-
-      const apiUrl = `https://no-plan.cloud/api/v1/tours/${finalType}/?${params.toString()}`;
-      console.log('[list.tsx] API URL:', apiUrl);
-      
-      try {
-        const response = await fetch(apiUrl);
-        
-        // 응답 상태 확인
-        console.log('[list.tsx] Response status:', response.status);
-        console.log('[list.tsx] Response headers:', response.headers);
-        
-                 if (!response.ok) {
-           // 에러 응답의 내용을 텍스트로 먼저 확인
-           const errorText = await response.text();
-           console.error('[list.tsx] API error response:', errorText);
-           
-           // Rate Limit 에러인지 확인
-           if (errorText.includes('RateLimitError') || response.status === 429) {
-             throw new Error('요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요.');
-           }
-           
-           throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 200)}`);
-         }
-        
-        // 응답이 JSON인지 확인
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          const responseText = await response.text();
-          console.error('[list.tsx] Non-JSON response:', responseText.substring(0, 500));
-          throw new Error('API returned non-JSON response');
-        }
-        
-        const data = await response.json();
-        console.log('[list.tsx] API response:', data);
-        
-        if (!cancelled) {
-          setPlaces(Array.isArray(data) ? data : []);
-          setPageIndex(0);
-          
-          // 🆕 autoRecommendType이 있었으면 API 호출 완료 후 제거
-          if (survey.autoRecommendType) {
-            console.log('[list.tsx] autoRecommendType 제거 중:', survey.autoRecommendType);
-            const { autoRecommendType, ...surveyWithoutAuto } = survey;
-            setSurvey(surveyWithoutAuto);
-            console.log('[list.tsx] autoRecommendType 제거 완료');
-          }
-        }
-      } catch (e) {
-        console.error('[list.tsx] API error:', e);
-        if (!cancelled) {
-          const errorMessage = e instanceof Error ? e.message : '목록을 불러오지 못했습니다.';
-          setError(errorMessage);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchPlaces();
-    return () => { cancelled = true; };
-  }, [finalType, mapX, mapY, radius]);
-
-  // 🆕 autoRecommendType이 변경될 때만 API 호출
-  useEffect(() => {
-    if (survey.autoRecommendType && mapX && mapY && radius) {
-      console.log('[list.tsx] autoRecommendType 변경 감지, 자동 API 호출:', survey.autoRecommendType);
-      // autoRecommendType이 있으면 자동으로 API 호출
-      // 기존 useEffect에서 처리되므로 여기서는 로깅만
-    }
-  }, [survey.autoRecommendType, mapX, mapY, radius]);
-
-     const handleRetry = () => {
-     // Rate Limit 방지를 위해 2초 대기 후 재시도
-     setTimeout(() => {
-       setPageIndex(prev => (prev + 1) % totalPages);
-     }, 2000);
-   };
+  const handleRetry = () => {
+    // Rate Limit 방지를 위해 2초 대기 후 재시도
+    setTimeout(() => {
+      setPageIndex(prev => (prev + 1) % totalPages);
+    }, 2000);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -319,7 +363,7 @@ export default function List() {
           // 🆕 로딩 중일 때는 로딩 화면만 표시
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingTitle}>잠시만 기다려주세요</Text>
-            <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#123A86" />
+            <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#659ECF" />
             <Animated.Text 
               style={[
                 styles.loadingText,
@@ -333,7 +377,7 @@ export default function List() {
           // 🆕 로딩 완료 후 나머지 컴포넌트들 표시
           <>
             <Text style={styles.title}>
-              이런 곳 <Text style={{ color: '#123A86' }}>어떠세요?</Text>
+              이런 곳 <Text style={{ color: '#659ECF' }}>어떠세요?</Text>
             </Text>
             <Text style={styles.desc}>클릭 시 상세정보를 볼 수 있습니다</Text>
 
@@ -359,7 +403,7 @@ export default function List() {
                         pathname: '/info',
                         params: { 
                           contentid: item.contentid, 
-                          places: JSON.stringify(places),
+                          place: JSON.stringify(item), // 클릭한 장소만 전달
                           type: finalType
                         },
                       });
@@ -389,7 +433,7 @@ export default function List() {
                         disabled={bookmarkLoading[item.contentid]}
                       >
                         {bookmarkLoading[item.contentid] ? (
-                          <ActivityIndicator size="small" color="#123A86" />
+                          <ActivityIndicator size="small" color="#659ECF" />
                         ) : (
                           <Text style={[styles.star, favorites[item.contentid] ? styles.filled : undefined]}>
                             {favorites[item.contentid] ? '★' : '☆'}
@@ -405,7 +449,8 @@ export default function List() {
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                !loading && !error ? (
+                // 🆕 로딩 중이거나 에러가 있을 때는 빈 결과 메시지를 표시하지 않음
+                !loading && !error && places.length === 0 ? (
                   <Text style={{ textAlign: 'center', color: '#888', marginTop: 40 }}>
                     추천 결과가 없습니다.
                   </Text>
@@ -440,7 +485,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
   filled: {
-    color: '#123A86',
+    color: '#659ECF',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -508,7 +553,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 36,
@@ -526,7 +571,7 @@ const styles = StyleSheet.create({
   loadingTitle: {
     fontSize: 20,
     fontFamily: 'Pretendard-Medium',
-    color: '#123A86',
+    color: '#659ECF',
     textAlign: 'center',
     marginBottom: 16,
   },

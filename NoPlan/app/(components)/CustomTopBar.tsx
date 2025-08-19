@@ -52,7 +52,7 @@ export default function CustomTopBar({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={32} color="#123A86" />
+          <Ionicons name="chevron-back" size={32} color="#659ECF" />
         </TouchableOpacity>
       ) : (
         <View style={styles.iconPlaceholder} />
@@ -75,7 +75,7 @@ export default function CustomTopBar({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#123A86" />
+          <Ionicons name="person" size={28} color="#659ECF" />
         </TouchableOpacity>
       ) : (
         <View style={styles.iconPlaceholder} />
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
     textShadowColor: '#B2D1D4',

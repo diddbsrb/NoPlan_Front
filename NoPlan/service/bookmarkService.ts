@@ -109,7 +109,6 @@ export const bookmarkService = {
       console.log(
         '[bookmarkService] getBookmarks response:',
         res.status,
-        res.data
       )
       if (Array.isArray(res.data)) {
         return res.data.map(toCamelResponse)

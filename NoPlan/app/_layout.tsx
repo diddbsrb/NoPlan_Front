@@ -3,7 +3,7 @@
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { BackHandler, ToastAndroid } from 'react-native';
@@ -80,6 +80,8 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  const router = useRouter();
+  const pathname = usePathname();
 
   // ★★★ 5. 전역 안드로이드 뒤로가기 버튼 핸들러 ★★★
   useEffect(() => {
@@ -87,17 +89,56 @@ export default function RootLayout() {
     let backPressTimer: NodeJS.Timeout;
 
     const backAction = () => {
-      if (backPressCount === 0) {
-        backPressCount = 1;
-        ToastAndroid.show('뒤로가기 한 번 더 누르면 앱 종료', ToastAndroid.SHORT);
-        backPressTimer = setTimeout(() => {
-          backPressCount = 0;
-        }, 2000); // 2초 내에 다시 누르면 앱 종료
-        return true; // 기본 동작 방지
-      } else {
-        // 두 번째 뒤로가기: 앱 종료
-        BackHandler.exitApp();
+      // 현재 네비게이션 상태 확인
+      const currentRoute = router.canGoBack();
+      
+      // home_travel, home, index, app_guide, user_info 화면인지 확인
+      const isHomeTravel = pathname.includes('home_travel');
+      const isHome = pathname.includes('home') && !pathname.includes('home_travel');
+      const isIndex = pathname.includes('index') || pathname === '/(tabs)' || pathname === '/';
+      const isAppGuide = pathname.includes('app_guide');
+      const isUserInfo = pathname.includes('user_info');
+      const isList = pathname.includes('list');
+      
+      // list 화면인 경우 home_travel로 이동
+      if (isList) {
+        router.replace('/(tabs)/home_travel');
         return true;
+      }
+      
+      // 이 화면들 중 하나인 경우 앱 종료 옵션 제공
+      if (isHomeTravel || isHome || isIndex || isAppGuide || isUserInfo) {
+        if (backPressCount === 0) {
+          backPressCount = 1;
+          ToastAndroid.show('뒤로가기 한 번 더 누르면 앱 종료', ToastAndroid.SHORT);
+          backPressTimer = setTimeout(() => {
+            backPressCount = 0;
+          }, 2000); // 2초 내에 다시 누르면 앱 종료
+          return true; // 기본 동작 방지
+        } else {
+          // 두 번째 뒤로가기: 앱 종료
+          BackHandler.exitApp();
+          return true;
+        }
+      } else {
+        // 다른 화면에서는 이전 화면으로 돌아가기
+        if (currentRoute) {
+          router.back();
+          return true;
+        } else {
+          // 루트 화면인 경우 앱 종료 옵션 제공
+          if (backPressCount === 0) {
+            backPressCount = 1;
+            ToastAndroid.show('뒤로가기 한 번 더 누르면 앱 종료', ToastAndroid.SHORT);
+            backPressTimer = setTimeout(() => {
+              backPressCount = 0;
+            }, 2000);
+            return true;
+          } else {
+            BackHandler.exitApp();
+            return true;
+          }
+        }
       }
     };
 
@@ -109,7 +150,7 @@ export default function RootLayout() {
         clearTimeout(backPressTimer);
       }
     };
-  }, []);
+  }, [router, pathname]);
 
   // ★★★ 6. 푸시 알림 설정을 위한 useEffect 훅을 추가합니다. ★★★
   useEffect(() => {
@@ -181,7 +222,6 @@ export default function RootLayout() {
   }, [loaded]); // 'loaded' 상태가 true가 되면 이 훅이 실행됩니다.
 
     // ★★★ 6. 알림 액션 리스너 추가 ★★★
-  const router = useRouter();
   
   useEffect(() => {
     if (loaded) {
@@ -190,42 +230,43 @@ export default function RootLayout() {
         console.log('[알림 백그라운드] 이벤트 타입:', type);
         console.log('[알림 백그라운드] 상세 정보:', detail);
         
-        console.log('[알림 백그라운드] EventType.PRESS 값:', EventType.PRESS);
-        console.log('[알림 백그라운드] EventType.ACTION_PRESS 값:', EventType.ACTION_PRESS);
-        console.log('[알림 백그라운드] type 값:', type);
-        console.log('[알림 백그라운드] type === EventType.PRESS:', type === EventType.PRESS);
-        console.log('[알림 백그라운드] type === EventType.ACTION_PRESS:', type === EventType.ACTION_PRESS);
-        
-        // 알림 클릭 이벤트 처리 (PRESS 또는 ACTION_PRESS)
+        // 모든 이벤트 타입을 처리 (PRESS, ACTION_PRESS, DELIVERED 등)
         if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
-           // 액션 ID 가져오기
-           const actionId = detail.pressAction?.id || 'default';
+           // 액션 ID 가져오기 (여러 방법으로 시도)
+           let actionId = 'default';
+           
+           if (detail.pressAction?.id) {
+             actionId = detail.pressAction.id;
+           } else if (detail.notification?.data?.actionId) {
+             const dataActionId = detail.notification.data.actionId;
+             actionId = typeof dataActionId === 'string' ? dataActionId : 'default';
+           }
+           
            console.log('[알림 백그라운드] 액션 ID:', actionId);
            console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
            
            // 알림 데이터와 액션 ID를 함께 전달 (async 처리)
-           handleNotificationAction(actionId, detail.notification?.data || {}).then(navigationData => {
+           try {
+             const navigationData = await handleNotificationAction(actionId, detail.notification?.data || {});
              console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
           
-             if (navigationData) {
-               console.log('[알림 백그라운드] 네비게이션 데이터:', navigationData);
-               
-               if (navigationData.screen) {
-                 console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
-                 try {
-                   router.push({
-                     pathname: `/${navigationData.screen}` as any,
-                     params: navigationData.params
-                   });
-                   console.log('[알림 백그라운드] 화면 이동 성공');
-                 } catch (error) {
-                   console.error('[알림 백그라운드] 화면 이동 실패:', error);
-                 }
+             if (navigationData && navigationData.screen) {
+               console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
+               try {
+                 router.push({
+                   pathname: `/${navigationData.screen}` as any,
+                   params: navigationData.params
+                 });
+                 console.log('[알림 백그라운드] 화면 이동 성공');
+               } catch (error) {
+                 console.error('[알림 백그라운드] 화면 이동 실패:', error);
                }
              } else {
-               console.log('[알림 백그라운드] 네비게이션 데이터가 null입니다.');
+               console.log('[알림 백그라운드] 네비게이션 데이터가 null이거나 screen이 없습니다.');
              }
-           });
+           } catch (error) {
+             console.error('[알림 백그라운드] handleNotificationAction 처리 실패:', error);
+           }
          }
        });
 

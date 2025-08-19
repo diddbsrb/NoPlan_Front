@@ -1,16 +1,14 @@
+import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import React, { useCallback, useEffect, useState } from 'react';
-import * as Font from 'expo-font';
 // *** 변경점 1: Alert와 Linking을 import 합니다. ***
-import { Alert, Image, StyleSheet, Switch, Text, TouchableOpacity, View, Linking, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Alert, Image, Linking, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
-import { userService } from '../../service/userService';
 import { authService } from '../../service/authService';
 // ★★★ 경로가 수정되었습니다. (../가 두 개에서 한 개로 변경) ★★★
-import { useAuth } from '../(contexts)/AuthContext';
 import messaging from '@react-native-firebase/messaging';
+import { useAuth } from '../(contexts)/AuthContext';
 
 console.log('🧩 InfoEditComponent 렌더됨');
 
@@ -44,7 +42,25 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
     loadFonts();
   }, []);
 
-  // ★★★ userService.getUserInfo() 호출을 제거하고 AuthContext의 userInfo만 사용합니다. ★★★
+  // 사용자 정보 새로고침 (컴포넌트 마운트 시에만)
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        await refreshUserInfo();
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+    loadUserInfo();
+  }, []); // 빈 의존성 배열로 변경
+
+  // 사용자 정보 디버깅 (userInfo가 변경될 때만)
+  useEffect(() => {
+    if (userInfo) {
+      console.log('🔍 InfoEditComponent - 현재 userInfo:', userInfo);
+      console.log('🔍 InfoEditComponent - 사용자 이름:', userInfo?.name);
+    }
+  }, [userInfo]);
   
   // 권한 상태 확인 함수를 별도로 분리
   const checkPermissions = async () => {
@@ -82,13 +98,13 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
   }, []);
   
   /**
-   * *** 변경점 2: 위치 설정 토글 클릭 시 알림을 띄우는 함수 ***
-   * 사용자가 직접 권한을 변경할 수 있도록 디바이스 설정 화면으로 안내합니다.
+   * *** 위치 권한 토글 클릭 시 권한 요청하는 함수 ***
+   * 사용자가 직접 위치 권한을 변경할 수 있도록 디바이스 설정 화면으로 안내합니다.
    */
   const handleLocationSettingPress = () => {
     Alert.alert(
-      "권한 설정 안내",
-      "위치 정보 제공을 변경하시려면 기기의 설정 메뉴로 이동해야 합니다. 설정 화면으로 이동하시겠습니까?",
+      "위치 권한 안내",
+      "위치 정보 제공을 위해 위치 권한이 필요합니다. 설정 화면으로 이동하시겠습니까?",
       [
         {
           text: "취소",
@@ -111,32 +127,74 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
   };
 
   /**
-   * *** 알림 설정 토글 클릭 시 설정 화면으로 유도하는 함수 ***
-   * 사용자가 직접 알림 권한을 변경할 수 있도록 디바이스 설정 화면으로 안내합니다.
+   * *** 알림 권한 토글 클릭 시 권한 요청하는 함수 ***
+   * 사용자가 직접 알림 권한을 변경할 수 있도록 권한 요청 또는 설정 화면으로 안내합니다.
    */
-  const handleNotificationSettingPress = () => {
-    Alert.alert(
-      "알림 설정 안내",
-      "알림 설정을 변경하시려면 기기의 설정 메뉴로 이동해야 합니다. 설정 화면으로 이동하시겠습니까?",
-      [
-        {
-          text: "취소",
-          style: "cancel"
-        },
-        { 
-          text: "설정으로 이동",
-          onPress: async () => {
-            await Linking.openSettings();
-            // 설정 화면에서 돌아온 후 잠시 대기 후 권한 상태 재확인
-            setTimeout(() => {
-              console.log('🔔 설정 화면에서 돌아옴 - 알림 권한 상태 재확인');
-              checkPermissions();
-            }, 500);
-          },
-          style: 'default'
-        }
-      ]
-    );
+  const handleNotificationSettingPress = async () => {
+    try {
+      // 현재 알림 권한 상태 확인
+      const currentStatus = await messaging().hasPermission();
+      
+      if (currentStatus === messaging.AuthorizationStatus.AUTHORIZED || 
+          currentStatus === messaging.AuthorizationStatus.PROVISIONAL) {
+        // 이미 권한이 있으면 설정 화면으로 이동
+        Alert.alert(
+          "알림 설정 안내",
+          "알림 설정을 변경하시려면 기기의 설정 메뉴로 이동해야 합니다. 설정 화면으로 이동하시겠습니까?",
+          [
+            { text: "취소", style: "cancel" },
+            { 
+              text: "설정으로 이동",
+              onPress: async () => {
+                await Linking.openSettings();
+                setTimeout(() => {
+                  console.log('🔔 설정 화면에서 돌아옴 - 알림 권한 상태 재확인');
+                  checkPermissions();
+                }, 500);
+              },
+              style: 'default'
+            }
+          ]
+        );
+      } else {
+        // 권한이 없으면 권한 요청
+        Alert.alert(
+          "알림 권한 요청",
+          "앱에서 알림을 받으시려면 알림 권한이 필요합니다. 권한을 허용하시겠습니까?",
+          [
+            { text: "취소", style: "cancel" },
+            { 
+              text: "권한 허용",
+              onPress: async () => {
+                try {
+                  const authStatus = await messaging().requestPermission();
+                  console.log('🔔 알림 권한 요청 결과:', authStatus);
+                  
+                  if (authStatus === messaging.AuthorizationStatus.AUTHORIZED || 
+                      authStatus === messaging.AuthorizationStatus.PROVISIONAL) {
+                    Alert.alert("성공", "알림 권한이 허용되었습니다!");
+                  } else {
+                    Alert.alert("권한 거부", "알림 권한이 거부되었습니다. 설정에서 수동으로 변경할 수 있습니다.");
+                  }
+                  
+                  // 권한 상태 재확인
+                  setTimeout(() => {
+                    checkPermissions();
+                  }, 500);
+                } catch (error) {
+                  console.error('알림 권한 요청 실패:', error);
+                  Alert.alert("오류", "알림 권한 요청 중 오류가 발생했습니다.");
+                }
+              },
+              style: 'default'
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('알림 권한 확인 실패:', error);
+      Alert.alert("오류", "알림 권한 확인 중 오류가 발생했습니다.");
+    }
   };
 
   // ★★★ 카카오 계정 연결 함수 ★★★
@@ -228,7 +286,7 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
       <View style={styles.card}>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이름</Text>
-          <Text style={styles.value}>{userInfo.name ?? '회원님'}</Text>
+          <Text style={styles.value}>{userInfo.name || '회원'}</Text>
         </View>
         <View style={styles.infoBlock}>
           <Text style={styles.label}>이메일</Text>
@@ -266,20 +324,21 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
             disabled={true} 
             value={isLocationEnabled}
             trackColor={{ false: '#ccc', true: '#b2dffc' }}
-            thumbColor={isLocationEnabled ? '#123A86' : '#f4f3f4'}
+            thumbColor={isLocationEnabled ? '#659ECF' : '#f4f3f4'}
             style={{ opacity: 0.7 }}
           />
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 현재 위치 기반으로 더 나은 추천을 위해 수집됩니다.</Text>
         
-        <TouchableOpacity onPress={onNotifications} style={styles.settingRow}>
+        <TouchableOpacity onPress={handleNotificationSettingPress} style={styles.settingRow}>
           <Text style={styles.label}>알림 설정</Text>
-          <View style={styles.settingValue}>
-            <Text style={styles.settingValueText}>
-              {isAlarmEnabled ? '활성화' : '비활성화'}
-            </Text>
-            <Text style={styles.arrow}>›</Text>
-          </View>
+          <Switch
+            value={isAlarmEnabled}
+            onValueChange={() => handleNotificationSettingPress()}
+            trackColor={{ false: '#ccc', true: '#b2dffc' }}
+            thumbColor={isAlarmEnabled ? '#659ECF' : '#f4f3f4'}
+            style={{ opacity: 0.7 }}
+          />
         </TouchableOpacity>
         <Text style={styles.subtext}>고객님의 일정에 대한 알림을 제공합니다.</Text>
         
@@ -333,7 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   link: {
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
   },
   linkedText: {
@@ -366,7 +425,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   logoutText: {
-    color: '#123A86',
+    color: '#659ECF',
     fontSize: 13,
   },
   deleteButton: {
@@ -383,7 +442,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,

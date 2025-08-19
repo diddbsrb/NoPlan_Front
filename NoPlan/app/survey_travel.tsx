@@ -54,7 +54,9 @@ const COMPANION_OPTIONS = [
 
 export default function SurveyTravel() {
   const router = useRouter();
-  const { setSurvey, setIsTraveling } = useTravelSurvey();
+  // const { setSurvey, setIsTraveling } = useTravelSurvey();
+  const { setIsTraveling } = useTravelSurvey();
+  
   const [step, setStep] = useState(1);
   const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
   const [selectedTravelType, setSelectedTravelType] = useState<number | null>(null);
@@ -195,7 +197,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#123A86' }}>키워드</Text>를 선택해주세요.
+              이번 여행의 <Text style={{ color: '#659ECF' }}>키워드</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               원하는 여행 스타일 1~3개 선택 {'\n'}(최대 3개)
@@ -219,16 +221,16 @@ export default function SurveyTravel() {
                     style={styles.keywordIcon} 
                     resizeMode="contain"
                   />
-                  <Text
-                    style={[
-                      styles.keywordLabel,
-                      {
-                        color: selectedKeywords.includes(idx) ? '#fff' : '#333',
-                      }
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
+                                     <Text
+                     style={[
+                       styles.keywordLabel,
+                       {
+                         color: selectedKeywords.includes(idx) ? '#659ECF' : '#333',
+                       }
+                     ]}
+                   >
+                     {opt.label}
+                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -238,7 +240,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#123A86' }}>방식</Text>을 선택해주세요.
+              이번 여행의 <Text style={{ color: '#659ECF' }}>방식</Text>을 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               거리를 고려해 최적의 여행지를 찾아드립니다.
@@ -270,7 +272,7 @@ export default function SurveyTravel() {
         return (
           <>
             <Text style={styles.title}>
-              이번 여행의 <Text style={{ color: '#123A86' }}>동반자</Text>를 선택해주세요.
+              이번 여행의 <Text style={{ color: '#659ECF' }}>동반자</Text>를 선택해주세요.
             </Text>
             <Text style={styles.desc}>
               여행 인원에 따른 최적의 여행지를 찾아드립니다.
@@ -311,37 +313,20 @@ export default function SurveyTravel() {
     setLoading(true);
     setError(null);
     try {
-      // adjectives: 선택된 키워드
       const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx].label).join(',');
       
+      // 🆕 API로 여행 정보 저장 (프론트 상태에 저장 안함)
       await travelService.createTripWithAuth(
         region,
         TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
         COMPANION_OPTIONS[selectedCompanion].label,
         adjectives
       );
-      // radius 설정: 도보=1000, 대중교통=2000, 자가용=3000
-      let radius = 2000;
-      if (selectedTravelType === 1) radius = 1000;
-      else if (selectedTravelType === 2) radius = 3000;
-      setSurvey({
-        mapX: coords.longitude,
-        mapY: coords.latitude,
-        radius,
-        adjectives,
-        region,
-        transportation: TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
-        companion: COMPANION_OPTIONS[selectedCompanion].label,
-      });
       
-      // 여행 시작: 여행 상태를 true로 설정
+      // 🆕 여행 시작: 여행 상태를 true로 설정
       await setIsTraveling(true);
       
-      // 🆕 여행 상태가 제대로 반영될 때까지 잠시 대기
-      console.log('[survey_travel] 여행 상태를 true로 설정 완료, 잠시 대기...');
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      console.log('[survey_travel] home_travel로 이동 시작');
+      console.log('[survey_travel] 여행 상태를 true로 설정 완료, home_travel로 이동');
       router.replace('/home_travel');
     } catch (e) {
       setError('여행 생성에 실패했습니다.');
@@ -364,7 +349,7 @@ export default function SurveyTravel() {
             key={n}
             style={[
               styles.progressBar,
-              { backgroundColor: step === n ? '#123A86' : '#E0E0E0' },
+              { backgroundColor: step === n ? '#659ECF' : '#E0E0E0' },
             ]}
           />
         ))}
@@ -435,8 +420,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   circleSelected: { 
-    backgroundColor: '#123A86',
-    borderColor: '#123A86',
+    backgroundColor: '#F8F9FA',
+    borderColor: '#659ECF',
+    borderWidth: 3,
   },
   keywordIcon: {
     width: 40,
@@ -501,7 +487,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
   },
-  imageSelected: { borderColor: '#123A86' },
+  imageSelected: { borderColor: '#659ECF' },
 
   progressBarContainer: {
     flexDirection: 'row',
@@ -530,14 +516,14 @@ const styles = StyleSheet.create({
   backButton: {
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#123A86',
+    borderColor: '#659ECF',
   },
   backText: {
-    color: '#123A86',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
   },
   nextButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
   },
   nextDisabled: {
     backgroundColor: '#E0E0E0',

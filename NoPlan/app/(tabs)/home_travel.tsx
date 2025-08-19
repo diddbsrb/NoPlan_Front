@@ -1,9 +1,8 @@
-// app/(tabs)/test.tsx
+// app/(tabs)/home_travel.tsx
 
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Font from 'expo-font';
-import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useState } from 'react';
 import {
@@ -17,13 +16,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { TravelSurveyData, useTravelSurvey } from '../(components)/TravelSurveyContext';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 import {
   travelService,
   Trip,
   VisitedContent,
 } from '../../service/travelService';
-import { requestUserPermission, saveLastScreen } from '../../utils/pushNotificationHelper';
+import { UserInfo, userService } from '../../service/userService';
+import { saveLastScreen } from '../../utils/pushNotificationHelper';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -61,7 +61,7 @@ interface RecommendationContext {
 
 export default function HomeTravel() {
   const router = useRouter();
-  const { survey, setSurvey, setIsTraveling, isTraveling } = useTravelSurvey();
+  const { setIsTraveling, isTraveling } = useTravelSurvey();
   const [showModal, setShowModal] = useState(false);
   const [sections, setSections] = useState<TripSection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +70,18 @@ export default function HomeTravel() {
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TripItem | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  
+  // 🆕 최신 여행 정보를 저장할 상태 추가
+  const [latestTripInfo, setLatestTripInfo] = useState<{
+    region?: string;
+    transportation?: string;
+    companion?: string;
+    adjectives?: string;
+  }>({});
+  
+  // 🆕 최신 여행 데이터만 저장할 상태 추가
+  const [latestTrip, setLatestTrip] = useState<TripWithDate | null>(null);
 
   // 폰트 로드
   useEffect(() => {
@@ -178,56 +190,20 @@ export default function HomeTravel() {
     }
   };
 
-  // 자동 추천 처리 함수
+  // 🆕 자동 추천 처리 함수 수정 - 위치 정보 없이 바로 list로 이동
   const handleAutoRecommendation = async (type: RecommendationType) => {
-    setRecommendationLoading(true);
     try {
-      // 현재 위치 가져오기
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('위치 권한', '위치 권한이 필요합니다.');
-        return;
-      }
+      // 🆕 위치 정보 확인 없이 바로 list로 이동
+      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> list로 이동`);
       
-      // 위치 권한이 허용되면 알림 권한도 함께 요청
-      try {
-        await requestUserPermission();
-        console.log('[home_travel] 알림 권한 요청 완료');
-      } catch (error) {
-        console.log('[home_travel] 알림 권한 요청 실패:', error);
-        // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
-      }
-      
-      const location = await Location.getCurrentPositionAsync({});
-      
-      // 이동수단에 따른 반경 설정
-      const radiusMap: { [key: string]: number } = {
-        '도보': 1000,
-        '대중교통': 2000,
-        '자가용': 3000,
-      };
-      const radius = radiusMap[survey.transportation || '대중교통'] || 500;
-      
-      // survey context 업데이트 (자동 추천 타입 포함)
-      const newSurvey: TravelSurveyData = {
-        ...survey,
-        mapX: location.coords.longitude,
-        mapY: location.coords.latitude,
-        radius,
-        adjectives: survey.adjectives || '',
-        autoRecommendType: type,
-      };
-      
-      console.log(`[HomeTravel] 🎯 자동 추천 처리: ${type} -> autoRecommendType으로 설정`);
-      setSurvey(newSurvey);
-      
-      // survey_destination.tsx를 거치지 않고 바로 list.tsx로 이동
-      router.replace({ pathname: '/list', params: { type } });
+      // 🆕 list 페이지에서 위치 정보를 확인하도록 수정
+      router.replace({ 
+        pathname: '/list', 
+        params: { type } 
+      });
     } catch (e) {
       console.error('자동 추천 처리 실패:', e);
-      Alert.alert('오류', '위치 정보를 가져올 수 없습니다.');
-    } finally {
-      setRecommendationLoading(false);
+      Alert.alert('오류', '추천을 처리할 수 없습니다.');
     }
   };
 
@@ -237,13 +213,11 @@ export default function HomeTravel() {
     setError(null);
 
     try {
-      // 여행 상태 확인 및 설정
       if (!isTraveling) {
         console.log('[home_travel] 여행 상태가 false입니다. true로 설정합니다.');
         await setIsTraveling(true);
       }
       
-      // 1) 트립 전체 조회
       const trips = (await travelService.getTripData()) as TripWithDate[];
 
       if (!trips.length) {
@@ -252,26 +226,23 @@ export default function HomeTravel() {
         return;
       }
 
-      // 2) 최신 트립 고르기
       const latest = trips
         .slice()
         .sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0];
 
-      // 최신 여행 정보로 survey 상태 업데이트
+      // 🆕 최신 여행 정보를 상태에 저장 (survey context 사용 안함)
       if (latest) {
-        const updatedSurvey = {
-          ...survey,
+        setLatestTripInfo({
           region: latest.region,
-          transportation: latest.transportation || survey.transportation,
-          companion: latest.companion || survey.companion,
-          adjectives: latest.adjectives || survey.adjectives,
-        };
-        setSurvey(updatedSurvey);
+          transportation: latest.transportation,
+          companion: latest.companion,
+          adjectives: latest.adjectives,
+        });
+        setLatestTrip(latest); // 최신 여행 데이터만 저장
       }
 
-      // 3) 전체 방문지 조회 → 클라이언트 필터
       const allVisited = (await travelService.getVisitedContents()) as VisitedContentWithDate[];
       const visited = allVisited.filter((c) => c.trip === latest.id);
 
@@ -279,16 +250,13 @@ export default function HomeTravel() {
         console.log('[HomeTravel] 최근 여행에 방문지가 없습니다');
       }
 
-      // 4) 시간순 정렬
       visited.sort((a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
-      // 추천 컨텍스트 생성
       const recommendationContext = getRecommendationContext(visited);
       setRecommendationContext(recommendationContext);
 
-      // 5) SectionList용 포맷 변환
       const grouped: TripSection[] = [
         {
           date: `${latest.region} (${latest.created_at.split('T')[0]})`,
@@ -296,8 +264,7 @@ export default function HomeTravel() {
             time: c.created_at.split('T')[1].slice(0, 5),
             place: c.title,
             category: c.category,
-            image: c.first_image || undefined, // 빈 문자열이면 undefined로 설정하여 기본 이미지 사용
-            // 추가 속성들도 포함
+            image: c.first_image || undefined,
             address: c.addr1,
             overview: c.overview,
             hashtags: c.hashtags,
@@ -317,9 +284,20 @@ export default function HomeTravel() {
     }
   };
 
+  // 사용자 정보 가져오기
+  const fetchUserInfo = async () => {
+    try {
+      const userData = await userService.getUserInfo();
+      setUserInfo(userData);
+    } catch (error) {
+      console.error('사용자 정보 가져오기 실패:', error);
+    }
+  };
+
   // 컴포넌트 마운트 시에만 실행
   useEffect(() => {
     fetchData();
+    fetchUserInfo();
   }, []);
 
   // 카테고리별 기본 이미지 설정 (CardItem과 공유)
@@ -376,7 +354,7 @@ export default function HomeTravel() {
     <SafeAreaView style={styles.safe}>
       {/* 배경 이미지 */}
       <Image
-        source={require('../../assets/images/home/bg4.jpeg')}
+        source={require('../../assets/images/home_travel_screen.jpeg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
@@ -394,7 +372,7 @@ export default function HomeTravel() {
         </TouchableOpacity>
         <View style={styles.topBarCenter}>
           <Image
-            source={require('../../assets/images/noplan_logo_white.png')}
+            source={require('../../assets/images/noplan_logo_blue.png')}
             style={styles.topBarLogo}
             resizeMode="contain"
           />
@@ -405,7 +383,7 @@ export default function HomeTravel() {
           onPress={() => router.push('/mypage')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+          <Ionicons name="person" size={28} color="#659ECF" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -414,23 +392,28 @@ export default function HomeTravel() {
                      {/* 중앙 타이틀 */}
                        <View style={styles.heroTextWrap}>
               <Text style={styles.title} numberOfLines={0}>
-                안녕하세요.{'\n'}NOPLAN입니다
+                오늘의 여정은 <Text style={styles.highlight}>{(() => {
+                  // 🆕 latestTripInfo에서 형용사 가져오기
+                  const adjectives = latestTripInfo.adjectives?.split(',').map(adj => adj.trim()).filter(adj => adj) || ['스껄한'];
+                  return adjectives[Math.floor(Math.random() * adjectives.length)];
+                })()}</Text> 여행이에요 ✨{'\n'}
+                <Text style={styles.highlight}>{userInfo?.name || '000'}</Text>님, 즐거운 순간을 함께 만들어가요!
               </Text>
             </View>
          </View>
 
-         {/* 중앙 아바타 - 히어로 하단에 겹치도록 */}
-         <View style={styles.avatarWrap}>
-                       <View style={styles.avatarRing}>
-              <Image
-                source={require('../../assets/images/noplan_logo_blue.png')}
-                style={styles.avatar}
-              />
-            </View>
-           <Text style={styles.avatarCaption} numberOfLines={0}>
-             {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
-           </Text>
-         </View>
+        {/* 중앙 아바타 */}
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarRing}>
+            <Image
+              source={require('../../assets/images/main_character.png')}
+              style={styles.avatar}
+            />
+          </View>
+          <Text style={styles.avatarCaption} numberOfLines={0}>
+            {recommendationContext ? recommendationContext.message : '새로운 여행을 시작해보세요'}
+          </Text>
+        </View>
 
         {/* 추천 버튼 */}
         {recommendationContext && !loading && !error && (
@@ -498,21 +481,18 @@ export default function HomeTravel() {
             style={styles.tabItem}
             onPress={() => setShowModal(true)}
           >
-            <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>종료</Text>
-            </View>
-            <Text style={styles.tabLabel}>여행 종료</Text>
+            <Text style={styles.tabIconText}>여행 종료</Text>
           </TouchableOpacity>
+          
+          {/* 가운데 세로선 */}
+          <View style={styles.tabBarDivider} />
           
           <TouchableOpacity 
             activeOpacity={0.8} 
             style={styles.tabItem}
             onPress={() => router.push('/survey_destination')}
           >
-            <View style={styles.tabIcon}>
-              <Text style={styles.tabIconText}>다음</Text>
-            </View>
-            <Text style={styles.tabLabel}>다음 행선지</Text>
+            <Text style={styles.tabIconText}>다음 행선지</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -537,27 +517,22 @@ export default function HomeTravel() {
                  onPress={async () => {
                    setShowModal(false);
                    try {
-                     // 최신 trip 가져오기
-                     const trips = await travelService.getTripData();
-                     const latest = trips.sort((a, b) => b.id - a.id)[0];
+                     // 🆕 여행 요약 생성 없이 바로 summary 페이지로 이동
+                     if (!latestTrip) {
+                       throw new Error('여행 정보를 찾을 수 없습니다.');
+                     }
                      
-                     // 여행 요약 생성
-                     const summaryData = await travelService.summarizeTrip(latest.id);
-                     
-                     // summary.tsx로 이동하면서 요약 데이터 전달
+                     // 🆕 summary 페이지에서 여행 요약을 생성하도록 수정
                      router.replace({
                        pathname: '/summary',
                        params: { 
-                         tripId: latest.id.toString(),
-                         summary: summaryData.summary,
-                         region: latest.region
+                         tripId: latestTrip.id.toString(),
+                         region: latestTrip.region
                        }
                      });
                    } catch (e) {
-                     console.error('여행 요약 생성 실패:', e);
-                     // 요약 생성 실패 시에도 여행 상태를 false로 설정
+                     console.error('여행 종료 처리 실패:', e);
                      await setIsTraveling(false);
-                     // 요약 생성 실패 시 바로 홈으로 이동
                      router.replace('/home');
                    }
                  }}
@@ -653,18 +628,6 @@ export default function HomeTravel() {
   );
 }
 
-const TabItem = memo(({ label, active = false }: { label: string; active?: boolean }) => {
-  return (
-    <TouchableOpacity activeOpacity={0.8} style={styles.tabItem}>
-      <View style={styles.tabIcon}>
-        <Text style={styles.tabIconText}>
-          {label.slice(0, 1)}
-        </Text>
-      </View>
-      <Text style={styles.tabLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-});
 
 const CardItem = memo(({ 
   item, 
@@ -693,9 +656,14 @@ const CardItem = memo(({
         </View>
         {item.hashtags && (
           <View style={styles.cardHashtags}>
-            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => (
-              <Text key={index} style={styles.cardHashtag}>#{tag.trim()}</Text>
-            ))}
+            {item.hashtags.split('#').filter(tag => tag.trim()).slice(0, 3).map((tag, index) => {
+              const trimmedTag = tag.trim();
+              return (
+                <Text key={index} style={styles.cardHashtag} numberOfLines={1} ellipsizeMode="tail">
+                  #{trimmedTag}
+                </Text>
+              );
+            })}
           </View>
         )}
       </View>
@@ -720,7 +688,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     height: '100%',
-    opacity: 0.3, // 배경 이미지에 낮은 투명도 적용
+    opacity: 0.4, // 배경 이미지에 낮은 투명도 적용
   },
   container: { flex: 1 },
   loadingContainer: { 
@@ -753,7 +721,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: R,
     overflow: 'hidden',
     paddingHorizontal: 20,
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 투명도를 더 줄여서 거의 불투명하게
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // 투명도 살짝 올림
   },
   heroTextWrap: {
     flex: 1,
@@ -764,31 +732,29 @@ const styles = StyleSheet.create({
   },
   title: {
      textAlign: 'center',
-     color: '#F4F7FB',
+     color: '#000000', // 검정색으로 변경
      fontSize: 20,
      lineHeight: 28,
      fontFamily: 'Pretendard-Medium',
      marginBottom: 15, // 아바타와의 간격을 늘려서 글씨가 가려지지 않도록 함
    },
-  subtitle: {
+  highlight: {
+     color: '#659ECF', // 파란색으로 변경
+     fontFamily: 'Pretendard-Medium',
+   },
+  recommendationMessageWrap: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  recommendationMessage: {
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 15,
+    color: '#333',
     textAlign: 'center',
-    color: '#AFC2E2',
-    fontSize: 12,
-    letterSpacing: 0.2,
+    paddingHorizontal: 20,
   },
 
-  glowWrap: {
-    position: 'absolute',
-    left: 0, right: 0, bottom: -60,
-    alignItems: 'center',
-  },
-  glowDisc: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#F7D4A3',
-    opacity: 0.35,
-  },
 
   avatarWrap: {
     alignItems: 'center',
@@ -807,23 +773,19 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: '#659ECF',
   },
   avatarCaption: {
-    marginTop: 10,
+    marginTop: 15,
     fontFamily: 'Pretendard-Medium',
-    color: '#263453',
+    fontSize: 15,
+    color: '#333',
     textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  avatarSubCaption: {
-    marginTop: 4,
-    color: '#7A8AA8',
-    fontSize: 12,
-    textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
 
   recommendationSection: {
@@ -832,7 +794,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   recommendationButton: {
-    backgroundColor: '#263453',
+    backgroundColor: 'rgba(101, 158, 207, 0.6)',
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -850,39 +812,43 @@ const styles = StyleSheet.create({
     color: '#888',
   },
 
-                       scrollContainer: {
-         flex: 1,
-         marginBottom: 100, // 하단 버튼과의 간격
-       },
-       listContent: {
-         paddingHorizontal: 20, // 30에서 20으로 줄임
-         paddingTop: 12,
-         paddingBottom: 20, // 스크롤 컨테이너 하단 여백
-         gap: 6, // 12에서 6으로 줄임
-       },
+  scrollContainer: {
+    flex: 1,
+    marginBottom: 100, // 하단 버튼과의 간격
+  },
+  listContent: {
+    paddingHorizontal: 20, // 30에서 20으로 줄임
+    paddingTop: 12,
+    paddingBottom: 20, // 스크롤 컨테이너 하단 여백
+    gap: 3, // 6에서 3으로 더 줄임
+  },
 
   card: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
-    padding: 18, // 14에서 18로 늘림
+    padding: 10, // 14에서 10으로 더 줄임
     alignItems: 'flex-start', // center에서 flex-start로 변경하여 상단 정렬
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
     flex: 1, // 우측 공간을 줄이기 위해 flex: 1 추가
-    minHeight: 80, // 최소 높이 추가
+    minHeight: 60, // 70에서 60으로 더 줄임
   },
   cardLeft: { marginRight: 12 },
   cardThumb: { width: 48, height: 48, borderRadius: 12 },
-  cardMid: { flex: 1 },
+  cardMid: { 
+    flex: 1, 
+    maxWidth: '70%', // 최대 너비 제한으로 우측 영역 보호
+    marginRight: 8, // 우측 여백 추가
+  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8, 
   },
-  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#263453', fontSize: 14, flex: 1 },
+  cardTitle: { fontFamily: 'Pretendard-Medium', color: '#333', fontSize: 14, flex: 1 },
   cardCategory: { 
     color: '#8A9BB6', 
     fontSize: 12,
@@ -892,14 +858,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 10,
     gap: 6,
+    flexWrap: 'wrap', // 줄바꿈 허용
+    maxWidth: '100%', // 최대 너비 제한
   },
   cardHashtag: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#7A8AA8',
     backgroundColor: '#F1F4F9',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    maxWidth: '100%', // 최대 너비 제한
+    flexShrink: 1, // 필요시 축소 허용
   },
   cardRight: { paddingLeft: 8 }, // 우측 여백 줄임
   chevWrap: {
@@ -914,28 +884,33 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 18,
     right: 18,
-    bottom: 24,
-    backgroundColor: '#263453',
+    bottom: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 26,
-    height: 64,
+    height: 55,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 10,
+    justifyContent: 'space-between', // space-around에서 space-between으로 변경
+    paddingHorizontal: 30,
     shadowColor: '#000',
     shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 10,
   },
-  tabItem: { alignItems: 'center', justifyContent: 'center', gap: 6 },
-  tabIcon: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
+  tabItem: { 
+    alignItems: 'center', 
     justifyContent: 'center',
+    flex: 1, // 전체 너비를 균등하게 분할
+    paddingVertical: 15, // 세로 터치 영역 확장
+    paddingHorizontal: 20, // 가로 터치 영역 확장
   },
-  tabIconText: { color: '#C4D2EA', fontFamily: 'Pretendard-Medium', fontSize: 14 },
-  tabLabel: { color: '#AFC2E2', fontSize: 11, fontFamily: 'Pretendard-Medium' },
+  tabIconText: { color: '#333', fontFamily: 'Pretendard-Medium', fontSize: 15 },
+  tabBarDivider: {
+    width: 2,
+    height: 20,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 10,
+  },
 
   // 모달 스타일
   modalOverlay: { 
@@ -985,7 +960,7 @@ const styles = StyleSheet.create({
     fontSize: 15 
   },
   modalBtnBlue: { 
-    backgroundColor: '#263453', 
+    backgroundColor: '#659ECF', 
     borderRadius: 8, 
     paddingVertical: 10, 
     paddingHorizontal: 18, 
@@ -1071,6 +1046,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 30, // 해시태그 아래 여백 추가
   },
   hashtag: {
     backgroundColor: '#e0f7fa',
@@ -1088,7 +1064,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(38, 52, 83, 0.7)', // 히어로와 동일한 배경색 적용
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // 흰색에 투명도 0.85
     paddingTop: 55,
     paddingBottom: 17,
     paddingHorizontal: 16,
@@ -1104,10 +1080,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#659ECF',
   },
   helpIcon: {
-    color: '#FFFFFF',
+    color: '#659ECF',
     fontSize: 20,
     fontFamily: 'Pretendard-Medium',
   },
@@ -1122,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 22,
-    color: '#FFFFFF',
+    color: '#659ECF',
     fontFamily: 'Pretendard-Medium',
     letterSpacing: 1,
   },
@@ -1145,7 +1121,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#263453',
+    backgroundColor: '#659ECF',
     borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
@@ -1155,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   timelineTime: {
     fontSize: 11,
-    color: '#8A9BB6',
+    color: '#333',
     marginTop: 6,
     fontFamily: 'Pretendard-Medium',
     textAlign: 'center',

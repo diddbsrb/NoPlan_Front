@@ -2,13 +2,13 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Image,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 // ★★★ AuthContext import 추가 ★★★
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   blue: {
-    color: '#80BFE8',
+    color: '#A9D1F4',
     fontFamily: 'Pretendard-Medium',
   },
   subtext: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#D4E8F9',
+    backgroundColor: '#A9D1F4',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

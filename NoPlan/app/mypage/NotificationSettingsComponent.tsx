@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import {
-    checkNotificationPermission,
-    sendTestNotification
+  createNotificationChannels,
+  requestUserPermission,
+  scheduleWeekdayLunchNotification,
+  scheduleWeekendTravelNotification,
+  schedulePostTravelRecommendation,
 } from '../../utils/pushNotificationHelper';
 
 interface NotificationPreferences {
@@ -43,7 +47,7 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
       setIsLoading(true);
       
       // 알림 권한 확인
-      const permission = await checkNotificationPermission();
+      const permission = await requestUserPermission();
       setHasPermission(permission);
       
       // 로컬 설정은 기본값 사용 (모든 알림 활성화)
@@ -93,21 +97,6 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
       setPreferences(preferences);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleTestNotification = async (type: 'lunch' | 'weekend' | 'travel') => {
-    if (!hasPermission) {
-      Alert.alert('알림 권한 필요', '테스트 알림을 받으려면 알림 권한을 허용해주세요.');
-      return;
-    }
-
-    try {
-      await sendTestNotification(type);
-      Alert.alert('성공', '테스트 알림을 발송했습니다.');
-    } catch (error) {
-      console.error('테스트 알림 발송 실패:', error);
-      Alert.alert('오류', '테스트 알림 발송에 실패했습니다.');
     }
   };
 
@@ -191,39 +180,6 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
             trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
             thumbColor={preferences.travel_recommendations ? '#FFFFFF' : '#FFFFFF'}
           />
-        </View>
-      </View>
-
-      <View style={styles.testSection}>
-        <Text style={styles.testTitle}>테스트 알림</Text>
-        <Text style={styles.testDescription}>
-          알림이 제대로 작동하는지 테스트해보세요
-        </Text>
-        
-        <View style={styles.testButtons}>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => handleTestNotification('lunch')}
-            disabled={isSaving}
-          >
-            <Text style={styles.testButtonText}>점심 알림 테스트</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => handleTestNotification('weekend')}
-            disabled={isSaving}
-          >
-            <Text style={styles.testButtonText}>주말 알림 테스트</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={() => handleTestNotification('travel')}
-            disabled={isSaving}
-          >
-            <Text style={styles.testButtonText}>여행 알림 테스트</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -334,47 +290,7 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 20,
   },
-  testSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 20,
-    borderRadius: 12,
-    marginHorizontal: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  testTitle: {
-    fontSize: 18,
-    fontFamily: 'Pretendard-Medium',
-    color: '#1C1C1E',
-    marginBottom: 8,
-  },
-  testDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-  },
-  testButtons: {
-    gap: 10,
-  },
-  testButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  testButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
-  },
+
   savingIndicator: {
     flexDirection: 'row',
     justifyContent: 'center',

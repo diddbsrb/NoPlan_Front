@@ -4,18 +4,18 @@ import * as Font from 'expo-font';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    Linking,
-    PanResponder,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Linking,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -57,9 +57,9 @@ const MAX_OVERSHOOT = 100;
 
 export default function Info() {
   const router = useRouter();
-  const { contentid, places: placesParam, type } = useLocalSearchParams<{
+  const { contentid, place: placeParam, type } = useLocalSearchParams<{
     contentid: string;
-    places: string;
+    place: string;
     type?: string;
   }>();
 
@@ -84,26 +84,43 @@ export default function Info() {
     loadFonts();
   }, []);
 
-  // 1) 리스트에서 받은 placesParam 파싱
-  const listPlaces: ListPlace[] = useMemo(() => {
-    if (!placesParam) return [];
+  // 1) 리스트에서 받은 placeParam 파싱 (단일 장소)
+  const current: ListPlace | null = useMemo(() => {
+    if (!placeParam) return null;
     try {
-      const decoded = decodeURIComponent(placesParam);
-      return JSON.parse(decoded) as ListPlace[];
+      const decoded = decodeURIComponent(placeParam);
+      return JSON.parse(decoded) as ListPlace;
     } catch {
-      return [];
+      return null;
     }
-  }, [placesParam]);
-
-  // 2) 현재 contentid에 해당하는 항목
-  const current = listPlaces.find(p => p.contentid === contentid);
+  }, [placeParam]);
 
   // 화면이 포커스될 때마다 마지막 화면 정보 저장
   useFocusEffect(
     useCallback(() => {
       console.log('[Info] 화면 포커스됨 - 마지막 화면 정보 저장');
-      saveLastScreen('info', { contentid, places: placesParam, type });
-    }, [contentid, placesParam, type])
+      
+      // placeParam 정보 확인
+      if (placeParam) {
+        console.log('[Info] placeParam 길이:', placeParam.length);
+        console.log('[Info] placeParam 크기 (bytes):', new Blob([placeParam]).size);
+        
+        try {
+          const decoded = decodeURIComponent(placeParam);
+          const parsed = JSON.parse(decoded);
+          console.log('[Info] placeParam 파싱된 객체:', parsed);
+          
+          // 전체 크기 확인
+          const fullParams = { contentid, place: placeParam, type };
+          const paramsString = JSON.stringify(fullParams);
+          console.log('[Info] 전체 params 크기 (bytes):', new Blob([paramsString]).size);
+        } catch (error) {
+          console.log('[Info] placeParam 파싱 실패:', error);
+        }
+      }
+      
+      saveLastScreen('info', { contentid, place: placeParam, type });
+    }, [contentid, placeParam, type])
   );
 
   // 🆕 Detail API 호출 제거 - current 데이터만 사용
@@ -221,11 +238,11 @@ export default function Info() {
     );
   }
   
-  // 데이터가 없고 위치 정보도 없는 경우 로딩 표시
+  // 데이터가 없는 경우 로딩 표시
   if (!current) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#123A86" />
+        <ActivityIndicator size="large" color="#659ECF" />
         <Text style={{ marginTop: 16, color: '#666' }}>정보를 불러오는 중...</Text>
       </View>
     );
@@ -267,7 +284,7 @@ export default function Info() {
     console.log('[info] 방문 기록 저장 시작');
     
     Alert.alert(
-      '방문했어요',
+      '방문할게요',
       '이 장소를 방문 목록에 추가하시겠습니까?',
       [
         { text: '취소', style: 'cancel' },
@@ -423,7 +440,7 @@ export default function Info() {
               <Text style={styles.primaryButtonText}>경로 탐색</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.secondaryButton} onPress={handleVisit}>
-              <Text style={styles.secondaryButtonText}>방문했어요</Text>
+              <Text style={styles.secondaryButtonText}>방문할게요</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -452,7 +469,7 @@ const CrowdStatus = ({ status }: { status: string | null }) => {
   
   return (
     <View style={styles.crowdStatus}>
-      <Text style={styles.crowdLabel}>현재 혼잡도</Text>
+      <Text style={styles.crowdLabel}>예상 혼잡도</Text>
       <View style={styles.crowdInfo}>
         <Text style={styles.crowdIcon}>{crowdInfo.icon}</Text>
         <Text style={[styles.crowdText, { color: crowdInfo.color }]}>
@@ -496,10 +513,10 @@ const styles = StyleSheet.create({
   },
   cardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 18, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'center' },
-  cardSubtitle: { fontSize: 14, color: '#123A86', marginTop: 4, textAlign: 'center' },
+  cardSubtitle: { fontSize: 14, color: '#333', marginTop: 4, textAlign: 'center' },
 
   star: { fontSize: 24, color: '#ccc' },
-  filled: { color: '#123A86' },
+  filled: { color: '#659ECF' },
 
   sheet: {
     position: 'absolute',
@@ -524,7 +541,7 @@ const styles = StyleSheet.create({
   sheetHeaderText: { flex: 1 },
 
   sheetTitle: { fontSize: 20, fontFamily: 'Pretendard-Medium', color: '#333', textAlign: 'left' },
-  sheetSubtitle: { fontSize: 14, color: '#123A86', marginTop: 2, textAlign: 'left' },
+  sheetSubtitle: { fontSize: 14, color: '#333', marginTop: 2, textAlign: 'left' },
 
   sheetContent: { paddingHorizontal: 16, paddingBottom: 50 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
@@ -561,7 +578,7 @@ const styles = StyleSheet.create({
   buttonsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -570,14 +587,14 @@ const styles = StyleSheet.create({
   primaryButtonText: { fontSize: 16, color: '#fff', fontFamily: 'Pretendard-Medium' },
   secondaryButton: {
     flex: 1,
-    borderColor: '#123A86',
+    borderColor: '#659ECF',
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginLeft: 8,
   },
-  secondaryButtonText: { fontSize: 16, color: '#123A86', fontFamily: 'Pretendard-Medium' },
+  secondaryButtonText: { fontSize: 16, color: '#659ECF', fontFamily: 'Pretendard-Medium' },
 
   backBtn: {
     position: 'absolute',
@@ -587,13 +604,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  backText: { fontSize: 24, color: '#123A86' },
+  backText: { fontSize: 24, color: '#659ECF' },
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: 'red', marginBottom: 20 },
   retryButton: {
-    backgroundColor: '#123A86',
+    backgroundColor: '#659ECF',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

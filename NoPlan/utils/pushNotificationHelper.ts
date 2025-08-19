@@ -163,13 +163,6 @@ export async function createNotificationChannels() {
 /** 4-1. 여행 종료 후 48시간 뒤 1회 알림 */
 export async function schedulePostTravelRecommendation() {
   try {
-    // 로그인 상태 확인
-    const isLoggedIn = await checkLoginStatus();
-    if (!isLoggedIn) {
-      console.log('로그아웃 상태이므로 여행 종료 후 추천 알림을 스케줄링하지 않습니다.');
-      return;
-    }
-
     await ensureChannel('travel-recommendations', '여행 추천');
 
     const trigger: TimestampTrigger = {
@@ -181,15 +174,15 @@ export async function schedulePostTravelRecommendation() {
     await notifee.createTriggerNotification(
       {
         id: `post-travel-${Date.now()}`,
-        title: '다시 여행을 떠나볼까요? 🚀',
-        body: '새로운 여행으로 또 다른 추억을 만들어보세요!',
+        title: '새로운 여행을 떠나볼까요? 🚀',
+        body: '즉흥 여행으로 새로운 추억을 만들어보세요!',
         data: { screen: 'survey_travel', type: 'post_travel_recommendation' },
         android: {
           channelId: 'travel-recommendations',
           importance: AndroidImportance.HIGH,
-          style: { type: AndroidStyle.BIGTEXT, text: '새로운 여행으로 또 다른 추억을 만들어보세요! 지금 바로 여행을 시작해보세요.' },
+          style: { type: AndroidStyle.BIGTEXT, text: '즉흥 여행으로 새로운 추억을 만들어보세요! 지금 바로 여행을 시작해보세요.' },
           actions: [
-            { title: '여행 시작하기', pressAction: { id: 'start_travel', launchActivity: 'default' } },
+            { title: '시작하기', pressAction: { id: 'start_travel', launchActivity: 'default' } },
             { title: '나중에', pressAction: { id: 'dismiss' } },
           ],
         },
@@ -209,13 +202,6 @@ export async function schedulePostTravelRecommendation() {
  */
 export async function scheduleWeekdayLunchNotification() {
   try {
-    // 로그인 상태 확인
-    const isLoggedIn = await checkLoginStatus();
-    if (!isLoggedIn) {
-      console.log('로그아웃 상태이므로 여행 중 알림을 스케줄링하지 않습니다.');
-      return;
-    }
-
     const isTraveling = await checkTravelStatus();
     if (!isTraveling) {
       console.log('여행 중이 아니므로 평일 점심/스마트 알림을 스케줄링하지 않습니다.');
@@ -260,26 +246,17 @@ export async function scheduleWeekdayLunchNotification() {
     };
 
     const rec = await getRecommendationTypeBasedOnLastVisit();
-    
-    // 점심 시간대에 맞는 멘트로 수정
-    const lunchMessage = rec.type === 'restaurants' 
-      ? '점심 시간이에요! 맛있는 식사 어떠세요?' 
-      : rec.type === 'cafes'
-      ? '점심 후 커피 한 잔 어떠세요?'
-      : rec.type === 'attractions'
-      ? '점심 후 관광지도 둘러보세요!'
-      : '점심 후 다음 장소를 찾아보세요!';
 
     await notifee.createTriggerNotification(
       {
         id: 'weekday-lunch',
-        title: `점심 시간! ${rec.buttonText} 🍽️`,
-        body: lunchMessage,
+        title: `여행 중 ${rec.buttonText} 🎯`,
+        body: rec.message,
         data: { screen: 'home_travel', type: 'smart_recommendation', category: rec.type },
         android: {
           channelId: 'lunch-recommendations',
           importance: AndroidImportance.HIGH,
-          style: { type: AndroidStyle.BIGTEXT, text: `${lunchMessage} 지금 확인해보세요.` },
+          style: { type: AndroidStyle.BIGTEXT, text: `${rec.message} 지금 확인해보세요.` },
           actions: [
             { title: rec.buttonText, pressAction: { id: `find_${rec.type}`, launchActivity: 'default' } },
             { title: '나중에', pressAction: { id: 'dismiss' } },
@@ -344,7 +321,7 @@ export async function scheduleWeekdayLunchNotification() {
           },
           actions: [
             {
-              title: afternoonType === 'cafes' ? '카페 찾기' : afternoonType === 'attractions' ? '관광지 찾기' : afternoonType === 'restaurants' ? '식당 찾기' : '다음 찾기',
+              title: afternoonType === 'cafes' ? '카페 찾기' : '관광지 찾기',
               pressAction: { id: `find_${afternoonType}`, launchActivity: 'default' },
             },
             { title: '나중에', pressAction: { id: 'dismiss' } },
@@ -374,15 +351,6 @@ export async function scheduleWeekdayLunchNotification() {
     if (now.getHours() >= 18) {
       eveningType = 'accommodations';
       eveningMessage = '하루가 가고 있어요! 숙소는 정하셨나요?';
-    } else {
-      // 저녁 시간대에 맞는 멘트로 수정
-      eveningMessage = eveningType === 'restaurants'
-        ? '저녁 식사 어떠세요?'
-        : eveningType === 'cafes'
-        ? '저녁 후 커피 한 잔 어떠세요?'
-        : eveningType === 'attractions'
-        ? '저녁까지 관광지도 둘러보세요!'
-        : '저녁 후 다음 장소를 찾아보세요!';
     }
 
     const eveningTrigger: TimestampTrigger = {
@@ -393,7 +361,7 @@ export async function scheduleWeekdayLunchNotification() {
     await notifee.createTriggerNotification(
       {
         id: 'evening-smart',
-        title: `저녁 시간! ${eveningType === 'accommodations' ? '숙소' : eveningType === 'restaurants' ? '저녁' : eveningType === 'cafes' ? '카페' : eveningType === 'attractions' ? '관광지' : '다음'} 추천 🌆`,
+        title: `여행 중 ${eveningType === 'accommodations' ? '숙소' : eveningType === 'restaurants' ? '저녁' : '다음'} 추천 🎯`,
         body: eveningMessage,
         data: { screen: 'home_travel', type: 'evening_recommendation', category: eveningType },
         android: {
@@ -433,33 +401,12 @@ export async function scheduleWeekdayLunchNotification() {
     console.log('여행 중 저녁 스마트 알림이 스케줄링되었습니다:', eveningTime);
   } catch (error) {
     console.error('평일 점심/스마트 알림 스케줄링 실패:', error);
-    // 백그라운드에서 실패 시에도 기본 알림은 발송
-    try {
-      await ensureChannel('default', '기본 알림');
-      await notifee.displayNotification({
-        id: 'fallback-notification',
-        title: '여행 추천 🎒',
-        body: '새로운 장소를 찾아보세요!',
-        android: { channelId: 'default', importance: AndroidImportance.HIGH },
-        ios: { categoryId: 'default' },
-      });
-      console.log('백그라운드 실패 시 기본 알림 발송 완료');
-    } catch (fallbackError) {
-      console.error('백그라운드 기본 알림 발송도 실패:', fallbackError);
-    }
   }
 }
 
 /** 4-3. 주말 여행 추천 (금 18시/토 9시/일 9시) — 반복 주기 */
 export async function scheduleWeekendTravelNotification() {
   try {
-    // 로그인 상태 확인
-    const isLoggedIn = await checkLoginStatus();
-    if (!isLoggedIn) {
-      console.log('로그아웃 상태이므로 주말 여행 알림을 스케줄링하지 않습니다.');
-      return;
-    }
-
     const isTraveling = await checkTravelStatus();
     if (isTraveling) {
       console.log('여행 중이므로 주말 여행 알림을 스케줄링하지 않습니다.');
@@ -472,20 +419,20 @@ export async function scheduleWeekendTravelNotification() {
       {
         id: 'weekend-travel-fri-18',
         ts: nextDowTime(5, 18, 0), // 금 18:00
-        title: '금요일 저녁! 🎒',
-        body: '이번 주말은 즉흥 여행 어떠세요? 새로운 곳을 탐험해보세요!',
+        title: '이번 주말은 즉흥 여행 어떠세요? 🎒',
+        body: '새로운 곳을 탐험해보세요!',
       },
       {
         id: 'weekend-travel-sat-9',
         ts: nextDowTime(6, 9, 0), // 토 9:00
         title: '토요일 아침! 🎒',
-        body: '오늘은 새로운 여행을 시작해보세요! 특별한 추억을 만들어보세요!',
+        body: '오늘은 새로운 여행을 시작해보세요!',
       },
       {
         id: 'weekend-travel-sun-9',
         ts: nextDowTime(0, 9, 0), // 일 9:00
         title: '일요일 아침! 🎒',
-        body: '주말 마지막, 특별한 여행을 시작해보세요! 새로운 경험을 해보세요!',
+        body: '주말 마지막, 특별한 여행을 시작해보세요!',
       },
     ];
 
@@ -507,7 +454,7 @@ export async function scheduleWeekendTravelNotification() {
             importance: AndroidImportance.HIGH,
             style: { type: AndroidStyle.BIGTEXT, text: s.body },
             actions: [
-              { title: '여행 시작하기', pressAction: { id: 'start_weekend_travel', launchActivity: 'default' } },
+              { title: '시작하기', pressAction: { id: 'start_weekend_travel', launchActivity: 'default' } },
               { title: '나중에', pressAction: { id: 'dismiss' } },
             ],
           },
@@ -563,16 +510,6 @@ export async function cancelAllNotifications() {
 /** 4-6. 여행 상태에 따른 재설정 */
 export async function resetNotificationsBasedOnTravelStatus() {
   try {
-    // 로그인 상태 확인
-    const isLoggedIn = await checkLoginStatus();
-    if (!isLoggedIn) {
-      console.log('로그아웃 상태이므로 알림 재설정을 하지 않습니다.');
-      // 로그아웃 시 모든 알림 취소
-      await cancelAllNotifications();
-      await cancelAllWeekendTravelNotifications();
-      return;
-    }
-
     const isTraveling = await checkTravelStatus();
 
     // 여행 중 알림(트리거) ID들
@@ -622,22 +559,22 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
     switch (type) {
       case 'lunch':
         notification.title = '점심 시간이에요! 🍽️';
-        notification.body = '맛있는 점심 식사 어떠세요? 근처 맛집을 추천해드릴게요!';
+        notification.body = '근처 맛집을 추천해드릴까요?';
         notification.data = { screen: 'survey_destination', type: 'lunch_recommendation', category: 'restaurants' };
         notification.android.channelId = 'lunch-recommendations';
         notification.android.actions = [
-          { title: '맛집 찾기', pressAction: { id: 'find_restaurants', launchActivity: 'default' } },
+          { title: '시작하기', pressAction: { id: 'find_restaurants', launchActivity: 'default' } },
           { title: '나중에', pressAction: { id: 'dismiss' } },
         ];
         notification.ios.categoryId = 'lunch-recommendations';
         break;
       case 'weekend':
-        notification.title = '주말 여행 어떠세요? 🎒';
-        notification.body = '즉흥 여행으로 새로운 추억을 만들어보세요!';
+        notification.title = '이번 주말은 즉흥 여행 어떠세요? 🎒';
+        notification.body = '새로운 곳을 탐험해보세요!';
         notification.data = { screen: 'survey_travel', type: 'weekend_travel_recommendation' };
         notification.android.channelId = 'weekend-travel';
         notification.android.actions = [
-          { title: '여행 시작하기', pressAction: { id: 'start_weekend_travel', launchActivity: 'default' } },
+          { title: '시작하기', pressAction: { id: 'start_weekend_travel', launchActivity: 'default' } },
           { title: '나중에', pressAction: { id: 'dismiss' } },
         ];
         notification.ios.categoryId = 'weekend-travel';
@@ -648,7 +585,7 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
         notification.data = { screen: 'survey_travel', type: 'travel_recommendation' };
         notification.android.channelId = 'travel-recommendations';
         notification.android.actions = [
-          { title: '여행 시작하기', pressAction: { id: 'start_travel', launchActivity: 'default' } },
+          { title: '시작하기', pressAction: { id: 'start_travel', launchActivity: 'default' } },
           { title: '나중에', pressAction: { id: 'dismiss' } },
         ];
         notification.ios.categoryId = 'travel-recommendations';
@@ -695,14 +632,27 @@ export async function testBackgroundNotifications() {
   try {
     console.log('[백그라운드 테스트] 시작...');
     
-    // 1. 1분 후 알림 (빠른 테스트)
-    await scheduleTestNotification();
+    // 1. 알림 권한 확인
+    const hasPermission = await ensureNotificationPermission();
+    if (!hasPermission) {
+      console.error('[백그라운드 테스트] 알림 권한이 없습니다.');
+      throw new Error('알림 권한이 필요합니다. 설정에서 알림 권한을 허용해주세요.');
+    }
     
-    // 2. 5분 후 알림 (중간 테스트)
-    await scheduleDelayedTestNotification(5);
+    // 2. 채널 생성
+    await ensureChannel('test-background', '백그라운드 테스트');
     
-    // 3. 10분 후 알림 (긴 테스트)
-    await scheduleDelayedTestNotification(10);
+    // 3. 기존 테스트 알림 취소
+    await cancelTestNotifications();
+    
+    // 4. 10초 후 알림 (빠른 테스트)
+    await scheduleDelayedTestNotification(0.17);
+    
+    // 5. 1분 후 알림 (중간 테스트)
+    await scheduleDelayedTestNotification(1);
+    
+    // 6. 3분 후 알림 (긴 테스트)
+    await scheduleDelayedTestNotification(3);
     
     console.log('[백그라운드 테스트] 모든 테스트 알림이 스케줄링되었습니다.');
     console.log('[백그라운드 테스트] 앱을 완전히 종료하고 알림을 기다려보세요.');
@@ -710,7 +660,7 @@ export async function testBackgroundNotifications() {
     return true;
   } catch (error) {
     console.error('[백그라운드 테스트] 실패:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -736,7 +686,13 @@ export async function scheduleDelayedTestNotification(minutes: number) {
         id: `test-background-${minutes}min`,
         title: `백그라운드 테스트 (${minutes}분 후) 🔔`,
         body: `앱이 종료된 상태에서도 알림이 잘 작동합니다! (${minutes}분 후 발송)`,
-        data: { screen: 'home_travel', type: 'background_test', minutes },
+        data: { 
+          screen: 'home_travel', 
+          type: 'background_test', 
+          minutes,
+          actionId: 'open_app', // 액션 ID를 명시적으로 추가
+          testType: 'background_delayed'
+        },
         android: {
           channelId: 'test-background',
           importance: AndroidImportance.HIGH,
@@ -749,14 +705,42 @@ export async function scheduleDelayedTestNotification(minutes: number) {
             { title: '확인', pressAction: { id: 'dismiss' } },
           ],
         },
-        ios: { categoryId: 'test-background' },
+        ios: { 
+          categoryId: 'test-background',
+        },
       },
       trigger
     );
     
     console.log(`[백그라운드 테스트] ${minutes}분 후 테스트 알림 스케줄링 완료`);
+    console.log(`[백그라운드 테스트] 알림 ID: test-background-${minutes}min`);
+    console.log(`[백그라운드 테스트] 액션 ID: open_app, dismiss`);
   } catch (error) {
     console.error(`[백그라운드 테스트] ${minutes}분 후 알림 스케줄링 실패:`, error);
+    throw error;
+  }
+}
+
+/** 모든 테스트 알림 취소 */
+export async function cancelTestNotifications() {
+  try {
+    const testIds = [
+      'test-notification',
+      'test-background-0.17min',
+      'test-background-1min', 
+      'test-background-3min'
+    ];
+    
+    for (const id of testIds) {
+      await notifee.cancelNotification(id);
+    }
+    
+    // 트리거 알림도 취소
+    await notifee.cancelTriggerNotifications(testIds);
+    
+    console.log('[테스트 알림] 모든 테스트 알림이 취소되었습니다.');
+  } catch (error) {
+    console.error('[테스트 알림] 취소 실패:', error);
   }
 }
 
@@ -788,23 +772,69 @@ export async function checkScheduledNotifications() {
   }
 }
 
-/** 모든 테스트 알림 취소 */
-export async function cancelTestNotifications() {
+/** 즉시 테스트 알림 발송 (포그라운드 테스트용) */
+export async function sendImmediateTestNotification() {
   try {
-    const testIds = [
-      'test-notification',
-      'test-background-1min',
-      'test-background-5min', 
-      'test-background-10min'
-    ];
+    await ensureChannel('test-immediate', '즉시 테스트');
     
-    for (const id of testIds) {
-      await notifee.cancelNotification(id);
-    }
+    await notifee.displayNotification({
+      id: 'test-immediate',
+      title: '즉시 테스트 알림 🔔',
+      body: '알림이 즉시 표시됩니다!',
+      data: { screen: 'home_travel', type: 'immediate_test' },
+      android: {
+        channelId: 'test-immediate',
+        importance: AndroidImportance.HIGH,
+        style: { 
+          type: AndroidStyle.BIGTEXT, 
+          text: '즉시 테스트 알림이 성공적으로 표시되었습니다!' 
+        },
+        actions: [
+          { title: '확인', pressAction: { id: 'dismiss' } },
+        ],
+      },
+      ios: { 
+        categoryId: 'test-immediate',
+        sound: 'default',
+      },
+    });
     
-    console.log('[테스트 알림] 모든 테스트 알림이 취소되었습니다.');
+    console.log('[즉시 테스트] 알림 발송 완료');
+    return true;
   } catch (error) {
-    console.error('[테스트 알림] 취소 실패:', error);
+    console.error('[즉시 테스트] 알림 발송 실패:', error);
+    throw error;
+  }
+}
+
+/** 알림 권한 상태 상세 확인 */
+export async function getDetailedNotificationStatus() {
+  try {
+    const notifeeSettings = await notifee.getNotificationSettings();
+    const fcmSettings = await messaging().hasPermission();
+    
+    const status = {
+      notifee: {
+        authorizationStatus: notifeeSettings.authorizationStatus,
+        isAuthorized: notifeeSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED,
+        isProvisional: notifeeSettings.authorizationStatus === AuthorizationStatus.PROVISIONAL,
+      },
+      fcm: {
+        hasPermission: fcmSettings === messaging.AuthorizationStatus.AUTHORIZED,
+        status: fcmSettings,
+      },
+      summary: {
+        canSendNotifications: notifeeSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED || 
+                              notifeeSettings.authorizationStatus === AuthorizationStatus.PROVISIONAL,
+        canSendBackgroundNotifications: notifeeSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED,
+      }
+    };
+    
+    console.log('[알림 상태] 상세 정보:', status);
+    return status;
+  } catch (error) {
+    console.error('[알림 상태] 확인 실패:', error);
+    throw error;
   }
 }
 
@@ -837,6 +867,9 @@ export async function handleNotificationAction(actionId: string, notificationDat
       return isTraveling ? goLastOrHome({ category: 'accommodations' }) : { screen: 'survey_travel', params: { fromNotification: true, category: 'accommodations' } };
     case 'find_cafes':
       return isTraveling ? goLastOrHome({ category: 'cafes' }) : { screen: 'survey_travel', params: { fromNotification: true, category: 'cafes' } };
+    case 'open_app':
+      // 백그라운드 테스트용 액션
+      return isTraveling ? goLastOrHome() : { screen: 'home_travel', params: { fromNotification: true, testType: 'background' } };
     case 'dismiss':
       return null;
     default:
@@ -853,26 +886,12 @@ export async function handleNotificationAction(actionId: string, notificationDat
  * 6. 상태 저장/조회 & 추천 타입
  * ------------------------------------------------ */
 
-export async function checkLoginStatus(): Promise<boolean> {
-  try {
-    const isLoggedIn = await SecureStore.getItemAsync('isLoggedIn');
-    console.log('[알림] 로그인 상태 확인:', isLoggedIn);
-    return isLoggedIn === 'true';
-  } catch (error) {
-    console.error('로그인 상태 확인 실패:', error);
-    // 백그라운드에서 실패 시 기본값으로 false 반환 (알림 비활성화)
-    return false;
-  }
-}
-
 export async function checkTravelStatus(): Promise<boolean> {
   try {
     const isTraveling = await SecureStore.getItemAsync('isTraveling');
-    console.log('[알림] 여행 상태 확인:', isTraveling);
     return isTraveling === 'true';
   } catch (error) {
     console.error('여행 상태 확인 실패:', error);
-    // 백그라운드에서 실패 시 기본값으로 false 반환 (주말 알림 활성화)
     return false;
   }
 }
@@ -942,26 +961,7 @@ export async function getRecommendationTypeBasedOnLastVisit(): Promise<{
     }
   } catch (error) {
     console.error('마지막 방문지 기반 추천 타입 결정 실패:', error);
-    
-    // 백그라운드에서 토큰 만료 등으로 실패 시 현재 시간대에 맞는 기본 추천 반환
-    const currentHour = new Date().getHours();
-    
-    if (currentHour >= 6 && currentHour < 11) {
-      // 아침 시간대
-      return { type: 'restaurants', message: '아침 식사 어떠세요? 맛있는 아침을 추천해드릴게요!', buttonText: '아침 식당 추천받기' };
-    } else if (currentHour >= 11 && currentHour < 15) {
-      // 점심 시간대
-      return { type: 'restaurants', message: '점심 시간이에요! 맛있는 식사 어떠세요?', buttonText: '식당 추천받기' };
-    } else if (currentHour >= 15 && currentHour < 18) {
-      // 오후 시간대
-      return { type: 'cafes', message: '오후 커피 한 잔 어떠세요?', buttonText: '카페 추천받기' };
-    } else if (currentHour >= 18 && currentHour < 22) {
-      // 저녁 시간대
-      return { type: 'restaurants', message: '저녁 식사 어떠세요?', buttonText: '식당 추천받기' };
-    } else {
-      // 밤 시간대
-      return { type: 'accommodations', message: '하루가 가고 있어요! 숙소는 정하셨나요?', buttonText: '숙소 추천받기' };
-    }
+    return { type: 'restaurants', message: '다음 행선지를 찾아보세요!', buttonText: '식당 추천받기' };
   }
 }
 

@@ -4,18 +4,18 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Image,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { getLastScreen } from '../../utils/pushNotificationHelper';
-import { Dimensions } from 'react-native';
 
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
@@ -24,7 +24,6 @@ const imageList = [
   require('../../assets/images/home/bg2.jpeg'),
   require('../../assets/images/home/bg3.jpeg'),
   require('../../assets/images/home/bg4.jpeg'),
-  require('../../assets/images/home/bg5.jpeg'),
 ];
 
 export default function HomeScreen() {
@@ -38,6 +37,82 @@ export default function HomeScreen() {
   
   // 화면 크기 가져오기
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+  // 반응형 스타일 함수
+  const getResponsiveStyles = () => {
+    return StyleSheet.create({
+      container: {
+        flex: 1,
+      },
+      background: { 
+        flex: 1, 
+        width: '100%', 
+        height: '100%',
+        position: 'absolute',
+      },
+      overlayBackground: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      },
+      overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(147, 144, 144, 0.3)',
+      },
+      uiContainer: {
+        flex: 1,
+        justifyContent: 'space-between',
+        paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
+        paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
+        zIndex: 2,
+      },
+      header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: Math.max(12, screenHeight * 0.015), // 화면 높이의 1.5% 또는 최소 12px
+        marginLeft: -Math.min(30, screenWidth * 0.08), // 화면 너비의 8% 또는 최대 30px
+        marginRight: Math.max(5, screenWidth * 0.01), // 화면 너비의 1% 또는 최소 5px
+      },
+      logo: { 
+        width: Math.min(100, screenWidth * 0.25), // 화면 너비의 25% 또는 최대 100px
+        height: Math.min(30, screenHeight * 0.04) // 화면 높이의 4% 또는 최대 30px
+      },
+      center: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: screenHeight * 0.55, // 화면 높이의 55%
+      },
+      title: {
+        fontSize: Math.max(18, Math.min(24, screenWidth * 0.05)), // 화면 너비의 5% 또는 18-24px 범위
+        fontFamily: 'Pretendard-Medium',
+        color: '#fff',
+        textAlign: 'center',
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      },
+      button: {
+        backgroundColor: 'rgba(255,255,255,0.65)',
+        paddingVertical: Math.max(16, screenHeight * 0.02), // 화면 높이의 2% 또는 최소 16px
+        paddingHorizontal: Math.max(32, screenWidth * 0.1), // 화면 너비의 10% 또는 최소 32px
+        borderRadius: Math.max(8, screenWidth * 0.02), // 화면 너비의 2% 또는 최소 8px
+        marginBottom: Math.max(2, screenHeight * 0.002), // 화면 높이의 0.2% 또는 최소 2px
+        alignItems: 'center',
+        alignSelf: 'center',
+        minWidth: Math.min(350, screenWidth * 0.8), // 화면 너비의 80% 또는 최대 350px
+      },
+      buttonText: { 
+        color: '#000', 
+        fontFamily: 'Pretendard-Medium', 
+        fontSize: Math.max(14, Math.min(18, screenWidth * 0.04)), // 화면 너비의 4% 또는 14-18px 범위
+        textAlign: 'center', // 텍스트 중앙 정렬
+        includeFontPadding: false, // 안드로이드에서 폰트 패딩 제거
+      },
+    });
+  };
 
   // 여행 상태 확인 함수
   const checkTravelStatus = async (): Promise<boolean> => {
@@ -123,6 +198,9 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [currentImageIndex]);
 
+  // 반응형 스타일 가져오기
+  const styles = getResponsiveStyles();
+
   return (
     <View style={styles.container}>
       {/* 첫 번째 배경 이미지 */}
@@ -164,78 +242,9 @@ export default function HomeScreen() {
           style={styles.button}
           onPress={handleStartButton}
         >
-          <Text style={styles.buttonText}>지금 시작하기</Text>
+          <Text style={styles.buttonText} numberOfLines={1} ellipsizeMode="tail">지금 시작하기</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: { 
-    flex: 1, 
-    width: '100%', 
-    height: '100%',
-    position: 'absolute',
-  },
-  overlayBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(147, 144, 144, 0.3)',
-  },
-  uiContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
-    paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
-    zIndex: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: Math.max(12, screenHeight * 0.015), // 화면 높이의 1.5% 또는 최소 12px
-    marginLeft: -Math.min(30, screenWidth * 0.08), // 화면 너비의 8% 또는 최대 30px
-  },
-  logo: { 
-    width: Math.min(100, screenWidth * 0.25), // 화면 너비의 25% 또는 최대 100px
-    height: Math.min(30, screenHeight * 0.04) // 화면 높이의 4% 또는 최대 30px
-  },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: screenHeight * 0.55, // 화면 높이의 55%
-  },
-  title: {
-    fontSize: Math.max(18, Math.min(24, screenWidth * 0.05)), // 화면 너비의 5% 또는 18-24px 범위
-    fontFamily: 'Pretendard-Medium',
-    color: '#fff',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  button: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    paddingVertical: Math.max(16, screenHeight * 0.02), // 화면 높이의 2% 또는 최소 16px
-    paddingHorizontal: Math.max(120, screenWidth * 0.35), // 화면 너비의 35% 또는 최소 120px
-    borderRadius: Math.max(8, screenWidth * 0.02), // 화면 너비의 2% 또는 최소 8px
-    marginBottom: Math.max(2, screenHeight * 0.002), // 화면 높이의 0.2% 또는 최소 2px
-    alignItems: 'center',
-    alignSelf: 'center',
-  },
-  buttonText: { 
-    color: '#000', 
-    fontFamily: 'Pretendard-Medium', 
-    fontSize: Math.max(13, Math.min(16, screenWidth * 0.035)) // 화면 너비의 3.5% 또는 13-16px 범위
-  },
-});
