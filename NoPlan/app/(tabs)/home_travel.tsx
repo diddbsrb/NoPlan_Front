@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
 
   scrollContainer: {
     flex: 1,
-    marginBottom: 100, // 하단 버튼과의 간격
+    marginBottom: 20, // 탭 바 제거로 인한 여백 조정
   },
   listContent: {
     paddingHorizontal: 20, // 30에서 20으로 줄임
