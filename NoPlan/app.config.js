@@ -58,7 +58,6 @@ const withNetworkSecurityConfig = (config) => {
   });
 
   // 2. withDangerousMod를 사용하여 res/xml/network_security_config.xml 파일을 직접 생성합니다.
-  // 이 방식은 Expo 버전에 상관없이 가장 확실하게 동작합니다.
   return withDangerousMod(configWithAndroidManifest, [
     'android',
     async (config) => {
@@ -71,8 +70,23 @@ const withNetworkSecurityConfig = (config) => {
         fs.mkdirSync(xmlDir, { recursive: true });
       }
 
-      // 네트워크 보안 설정 XML 내용을 정의합니다.
-      const networkSecurityConfig = `
+      let networkSecurityConfigContent;
+
+      // [수정된 부분] EAS 빌드 프로필에 따라 다른 네트워크 보안 설정을 적용합니다.
+      // 'development' 프로필로 빌드할 때는 모든 http(암호화되지 않은) 통신을 허용하여 로컬 개발 서버에 접속할 수 있도록 합니다.
+      if (process.env.EAS_BUILD_PROFILE === 'development') {
+        networkSecurityConfigContent = `
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+        `;
+      } else {
+        // 'production' 이나 'preview' 등 다른 프로필의 경우, 특정 도메인(tong.visitkorea.or.kr)을 제외한 http 통신을 차단합니다.
+        networkSecurityConfigContent = `
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">tong.visitkorea.or.kr</domain>
@@ -83,15 +97,17 @@ const withNetworkSecurityConfig = (config) => {
         </trust-anchors>
     </base-config>
 </network-security-config>
-      `;
+        `;
+      }
 
       // 파일을 씁니다.
-      fs.writeFileSync(networkSecurityConfigFile, networkSecurityConfig.trim());
+      fs.writeFileSync(networkSecurityConfigFile, networkSecurityConfigContent.trim());
 
       return config;
     },
   ]);
 };
+
 
 // 메인 설정을 내보냅니다.
 module.exports = ({ config }) => {
@@ -135,7 +151,7 @@ module.exports = ({ config }) => {
     },
     plugins: [
       withForcedKotlinVersion,
-      withNetworkSecurityConfig,
+      withNetworkSecurityConfig, // 수정된 플러그인이 여기에서 사용됩니다.
       'expo-router',
       'expo-secure-store',
       '@react-native-firebase/app',
