@@ -230,7 +230,7 @@ export default function SurveyTravel() {
                   key={opt.label}
                   style={[
                     styles.travelTypeOption,
-                    selectedTravelType === idx && styles.imageSelected,
+                    selectedTravelType === idx && styles.travelTypeOptionSelected,
                   ]}
                   onPress={() => setSelectedTravelType(idx)}
                   activeOpacity={0.8}
@@ -262,7 +262,7 @@ export default function SurveyTravel() {
                   key={opt.label}
                   style={[
                     styles.companionOption,
-                    selectedCompanion === idx && styles.imageSelected,
+                    selectedCompanion === idx && styles.companionOptionSelected,
                   ]}
                   onPress={() => setSelectedCompanion(idx)}
                   activeOpacity={0.8}
@@ -430,6 +430,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  travelTypeOptionSelected: {
+    borderColor: '#659ECF',
+    borderWidth: 3,
+    shadowColor: '#659ECF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 
   companionGrid: {
     flexDirection: 'row',
@@ -449,6 +458,15 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
+  companionOptionSelected: {
+    borderColor: '#659ECF',
+    borderWidth: 3,
+    shadowColor: '#659ECF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
 
   optionImage: { width: '100%', height: '100%' },
   overlay: {
@@ -463,7 +481,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
   },
-  imageSelected: { borderColor: '#659ECF' },
+
 
   progressBarContainer: {
     flexDirection: 'row',
