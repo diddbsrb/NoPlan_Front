@@ -120,6 +120,13 @@ const styles = StyleSheet.create({
   },
   selectedOption: {
     borderColor: '#659ECF',
+    borderWidth: 3,
+    borderRadius: 20,
+    shadowColor: '#659ECF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   optionImage: {
     width: '100%',

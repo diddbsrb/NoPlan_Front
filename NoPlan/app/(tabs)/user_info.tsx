@@ -1,7 +1,7 @@
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, Keyboard, Platform } from 'react-native';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import { userService } from '../../service/userService';
 
@@ -11,6 +11,7 @@ const InfoInputScreen = () => {
   const [selectedGenderId, setSelectedGenderId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
@@ -24,6 +25,21 @@ const InfoInputScreen = () => {
       setFontsLoaded(true);
     }
     loadFonts();
+  }, []);
+
+  // 키보드 이벤트 리스너
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
   }, []);
 
   const genderOptions = [
@@ -84,6 +100,7 @@ const InfoInputScreen = () => {
       <TouchableOpacity style={styles.button} onPress={handleStart} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? '저장 중...' : '여행 시작하기'}</Text>
       </TouchableOpacity>
+      
       <Text style={styles.footer}>해당 과정은 첫 실행 한 번만 진행됩니다.</Text>
     </SafeAreaView>
   );
@@ -145,8 +162,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 11,
     color: '#aaa',
-    position: 'absolute',
-    bottom: 30,
+    marginTop: 250,
     textAlign: 'center',
   },
 });
