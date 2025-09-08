@@ -24,6 +24,7 @@ import {
 } from '../../service/travelService';
 import { UserInfo, userService } from '../../service/userService';
 import { saveLastScreen } from '../../utils/pushNotificationHelper';
+import * as SecureStore from 'expo-secure-store';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -43,6 +44,7 @@ interface TripItem {
   hashtags?: string;
   recommendReason?: string;
   coordinates?: { x: string; y: string };
+  id?: number; // visited-content 고유 id 추가
 }
 interface TripSection {
   date: string;
@@ -71,6 +73,9 @@ export default function HomeTravel() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TripItem | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<TripItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   // 🆕 최신 여행 정보를 저장할 상태 추가
   const [latestTripInfo, setLatestTripInfo] = useState<{
@@ -270,6 +275,7 @@ export default function HomeTravel() {
             hashtags: c.hashtags,
             recommendReason: c.recommend_reason,
             coordinates: { x: c.mapx, y: c.mapy },
+            id: c.id, // visited-content 고유 id 추가
           })),
         },
       ];
@@ -292,6 +298,50 @@ export default function HomeTravel() {
     } catch (error) {
       console.error('사용자 정보 가져오기 실패:', error);
     }
+  };
+
+  // 방문지 삭제 함수
+  const deleteVisitedContent = async (itemId: number) => {
+    try {
+      setDeleting(true);
+      const accessToken = await SecureStore.getItemAsync('accessToken');
+      const response = await fetch(`https://no-plan.cloud/api/v1/users/visited-contents/${itemId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('삭제 요청이 실패했습니다.');
+      }
+
+      // 삭제 성공 시 UI 업데이트
+      setSections(prevSections => 
+        prevSections.map(section => ({
+          ...section,
+          data: section.data.filter(item => item.id !== itemId)
+        }))
+      );
+
+      // 삭제 모달 닫기
+      setDeleteModalVisible(false);
+      setItemToDelete(null);
+      
+      Alert.alert('삭제 완료', '방문지가 삭제되었습니다.');
+    } catch (error) {
+      console.error('방문지 삭제 실패:', error);
+      Alert.alert('삭제 실패', '방문지 삭제에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // 삭제 확인 함수
+  const handleDeletePress = (item: TripItem) => {
+    setItemToDelete(item);
+    setDeleteModalVisible(true);
   };
 
   // 컴포넌트 마운트 시에만 실행
@@ -463,6 +513,7 @@ export default function HomeTravel() {
                   <CardItem 
                     item={item} 
                     onPress={() => setSelectedItem(item)}
+                    onDelete={() => handleDeletePress(item)}
                     getDefaultImage={getDefaultImage}
                     getCategoryDisplayName={getCategoryDisplayName}
                   />
@@ -539,6 +590,48 @@ export default function HomeTravel() {
                  }}
                >
                  <Text style={styles.modalBtnTextBlue}>여행 종료</Text>
+               </TouchableOpacity>
+             </View>
+           </View>
+         </View>
+       </Modal>
+
+       {/* 삭제 확인 모달 */}
+       <Modal
+         visible={deleteModalVisible}
+         transparent
+         animationType="fade"
+         onRequestClose={() => setDeleteModalVisible(false)}
+       >
+         <View style={styles.modalOverlay}>
+           <View style={styles.modalBox}>
+             <Text style={styles.modalTitle}>방문지를 삭제하시겠어요?</Text>
+             <Text style={styles.modalDesc}>
+               "{itemToDelete?.place}" 방문지를 삭제합니다.{'\n'}
+               삭제된 방문지는 다시 되돌릴 수 없습니다.
+             </Text>
+             <View style={styles.modalBtnRow}>
+               <TouchableOpacity 
+                 style={styles.modalBtnGray} 
+                 onPress={() => {
+                   setDeleteModalVisible(false);
+                   setItemToDelete(null);
+                 }}
+               >
+                 <Text style={styles.modalBtnTextGray}>취소</Text>
+               </TouchableOpacity>
+               <TouchableOpacity
+                 style={[styles.modalBtnRed, deleting && styles.modalBtnDisabled]}
+                 onPress={() => {
+                   if (itemToDelete?.id) {
+                     deleteVisitedContent(itemToDelete.id);
+                   }
+                 }}
+                 disabled={deleting}
+               >
+                 <Text style={[styles.modalBtnTextRed, deleting && styles.modalBtnTextDisabled]}>
+                   {deleting ? '삭제 중...' : '삭제'}
+                 </Text>
                </TouchableOpacity>
              </View>
            </View>
@@ -633,11 +726,13 @@ export default function HomeTravel() {
 const CardItem = memo(({ 
   item, 
   onPress, 
+  onDelete,
   getDefaultImage, 
   getCategoryDisplayName 
 }: { 
   item: TripItem; 
   onPress: () => void;
+  onDelete: () => void;
   getDefaultImage: (category?: string) => any;
   getCategoryDisplayName: (category?: string) => string;
 }) => {
@@ -672,6 +767,16 @@ const CardItem = memo(({
         <View style={styles.chevWrap}>
           <Text style={styles.chevText}>›</Text>
         </View>
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={(e) => {
+            e.stopPropagation(); // 카드 클릭 이벤트 방지
+            onDelete();
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="trash-outline" size={16} color="#ff4444" />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -888,7 +993,11 @@ const styles = StyleSheet.create({
     maxWidth: '100%', // 최대 너비 제한
     flexShrink: 1, // 필요시 축소 허용
   },
-  cardRight: { paddingLeft: 8 }, // 우측 여백 줄임
+  cardRight: { 
+    paddingLeft: 8, // 우측 여백 줄임
+    alignItems: 'center',
+    gap: 8, // 화살표와 휴지통 버튼 사이 간격
+  },
   chevWrap: {
     width: 28, height: 28, borderRadius: 14, // 크기 줄임
     backgroundColor: '#F1F4F9',
@@ -896,6 +1005,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chevText: { color: '#1C2E4A', fontSize: 16, fontFamily: 'Pretendard-Medium' }, // 폰트 크기 줄임
+  deleteButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFF5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE0E0',
+  },
 
   tabBar: {
     position: 'absolute',
@@ -941,7 +1060,7 @@ const styles = StyleSheet.create({
     borderRadius: 16, 
     padding: 28, 
     alignItems: 'center', 
-    width: 280, 
+    width: 350, 
     shadowColor: '#000', 
     shadowOpacity: 0.1, 
     shadowRadius: 10, 
@@ -967,9 +1086,12 @@ const styles = StyleSheet.create({
   modalBtnGray: { 
     backgroundColor: '#E0E0E0', 
     borderRadius: 8, 
-    paddingVertical: 10, 
-    paddingHorizontal: 18, 
-    marginRight: 8 
+    paddingVertical: 12, 
+    paddingHorizontal: 24, 
+    marginRight: 4,
+    minWidth: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalBtnTextGray: { 
     color: '#888', 
@@ -979,14 +1101,38 @@ const styles = StyleSheet.create({
   modalBtnBlue: { 
     backgroundColor: '#659ECF', 
     borderRadius: 8, 
-    paddingVertical: 10, 
-    paddingHorizontal: 18, 
-    marginLeft: 8 
+    paddingVertical: 12, 
+    paddingHorizontal: 24, 
+    marginLeft: 4,
+    minWidth: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalBtnTextBlue: { 
     color: '#fff', 
     fontFamily: 'Pretendard-Medium', 
     fontSize: 15 
+  },
+  modalBtnRed: { 
+    backgroundColor: '#ff4444', 
+    borderRadius: 8, 
+    paddingVertical: 12, 
+    paddingHorizontal: 24, 
+    marginLeft: 4,
+    minWidth: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnTextRed: { 
+    color: '#fff', 
+    fontFamily: 'Pretendard-Medium', 
+    fontSize: 15 
+  },
+  modalBtnDisabled: {
+    backgroundColor: '#E0E0E0',
+  },
+  modalBtnTextDisabled: {
+    color: '#888',
   },
 
   // 장소 상세 정보 모달 스타일

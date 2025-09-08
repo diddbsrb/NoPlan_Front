@@ -602,7 +602,10 @@ const styles = StyleSheet.create({
     left: 16,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderRadius: 20,
-    padding: 6,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backText: { fontSize: 24, color: '#659ECF' },
 
