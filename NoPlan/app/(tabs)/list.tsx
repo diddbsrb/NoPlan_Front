@@ -2,7 +2,7 @@
 import * as Font from 'expo-font';
 import * as Location from 'expo-location';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -55,9 +55,11 @@ export default function List() {
   const [pageIndex, setPageIndex] = useState(0);
   const [favorites, setFavorites] = useState<{ [contentId: number]: number }>({});
   const [bookmarkLoading, setBookmarkLoading] = useState<{ [contentId: number]: boolean }>({});
+  const [retryLoading, setRetryLoading] = useState(false);
 
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
+  const flatListRef = useRef<FlatList>(null);
   
   const loadingMessages = [
     "장소를 불러오는데 최대 약 30초의 시간이 소요됩니다.",
@@ -302,8 +304,23 @@ export default function List() {
   const displayedPlaces = places.slice(pageIndex * 5, pageIndex * 5 + 5);
 
   const handleRetry = () => {
+    setRetryLoading(true);
     setTimeout(() => {
-      setPageIndex(prev => (prev + 1) % totalPages);
+      const newPageIndex = (pageIndex + 1) % totalPages;
+      setPageIndex(newPageIndex);
+      setRetryLoading(false);
+      
+      // 모든 추천 결과를 다 본 후 처음으로 돌아온 경우 알림
+      if (newPageIndex === 0 && pageIndex === totalPages - 1) {
+        Alert.alert(
+          '모든 추천 결과를 확인했습니다.',
+          '모든 추천 결과를 다 보셨습니다. 처음 추천 결과로 돌아갑니다.',
+          [{ text: '확인', style: 'default' }]
+        );
+      }
+      
+      // 스크롤을 최상단으로 이동
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     }, 2000);
   };
 
@@ -334,6 +351,7 @@ export default function List() {
             {error && <Text style={{ color: 'red', textAlign: 'center', margin: 12 }}>{error}</Text>}
 
             <FlatList
+              ref={flatListRef}
               data={displayedPlaces}
               keyExtractor={(_, idx) => idx.toString()}
               showsVerticalScrollIndicator={false}
@@ -408,7 +426,11 @@ export default function List() {
               ListFooterComponent={
                 <View style={styles.bottomArea}>
                   <Text style={styles.bottomDesc}>이 중에서 가고싶은 곳이 없다면?</Text>
-                  <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                  <TouchableOpacity 
+                    style={styles.retryButton} 
+                    onPress={handleRetry}
+                    disabled={retryLoading}
+                  >
                     <Text style={styles.retryButtonText}>재추천 받기</Text>
                   </TouchableOpacity>
                 </View>
@@ -417,6 +439,16 @@ export default function List() {
           </>
         )}
       </View>
+      
+      {/* 재추천 로딩 모달 */}
+      {retryLoading && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <ActivityIndicator size="large" color="#659ECF" />
+            <Text style={styles.modalText}>재추천 중입니다...</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -511,6 +543,37 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Pretendard-Medium',
     fontSize: 16,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+    minWidth: 200,
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: 'Pretendard-Medium',
+    color: '#888',
+    marginTop: 16,
+    textAlign: 'center',
+    alignSelf: 'center',
   },
   loadingContainer: {
     flex: 1,
