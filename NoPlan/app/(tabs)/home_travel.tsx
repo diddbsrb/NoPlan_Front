@@ -884,7 +884,7 @@ const styles = StyleSheet.create({
   },
   speechBubbleContainer: {
     alignItems: 'center',
-    marginTop: 15,
+    marginTop: 8,
   },
   speechBubbleTriangle: {
     width: 0,
@@ -902,7 +902,8 @@ const styles = StyleSheet.create({
   speechBubble: {
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 20,
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginHorizontal: 20,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -946,8 +947,8 @@ const styles = StyleSheet.create({
 
   scrollContainer: {
     flex: 1,
-    marginTop: 20, // 말풍선과 방문한 장소 사이 간격 추가
-    marginBottom: 20, // 탭 바 제거로 인한 여백 조정
+    marginTop: 10, // 말풍선과 방문한 장소 사이 간격 추가
+    marginBottom: 95, // 하단 고정 탭바 높이(55) + 여유 공간으로 경계선 상향
   },
   listContent: {
     paddingHorizontal: 20, // 30에서 20으로 줄임
