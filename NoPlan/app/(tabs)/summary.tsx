@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import { useTravelSurvey } from '../(components)/TravelSurveyContext';
 // ★★★ 여행 완료 후 알림 스케줄링을 위한 import 추가 ★★★
@@ -97,6 +98,15 @@ export default function SummaryScreen() {
         </View>
       </View>
 
+      {/* 전역 요약 헤더 (가운데 정렬 및 아이콘 확대) */}
+      <View style={styles.globalSummaryHeader}>
+        <Image
+          source={require('../../assets/images/icon/Summary_icon.png')}
+          style={styles.globalSummaryIcon}
+        />
+        <Text style={styles.globalSummaryHeaderText}>AI의 여행 요약이에요</Text>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.summaryCard}>
           <View style={styles.regionSection}>
@@ -114,6 +124,7 @@ export default function SummaryScreen() {
           </View>
         </View>
 
+        {/* 하단 메시지 섹션 */}
         <View style={styles.messageSection}>
           <Text style={styles.messageTitle}>소중한 추억이 되었길 바라요!</Text>
           <Text style={styles.messageText}>
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 16,
-    marginBottom: 20,
+    marginBottom: 24,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
@@ -159,16 +170,26 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 8,
   },
+  globalSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  globalSummaryIcon: { width: 40, height: 40, marginRight: 10, resizeMode: 'contain' },
+  globalSummaryHeaderText: { fontSize: 20, color: '#2a6fb1', fontFamily: 'Pretendard-Medium' },
   content: {
     flex: 1,
     padding: 24,
-    paddingTop: 32,
+    paddingTop: 20,
   },
   summaryCard: {
     backgroundColor: '#F8F9FA',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 5,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#E9ECEF',
   },
@@ -203,7 +224,8 @@ const styles = StyleSheet.create({
   },
   messageSection: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24,
+    marginTop: 10,
   },
   messageTitle: {
     fontSize: 20,
