@@ -397,7 +397,16 @@ export default function Info() {
           
           {/* 추천 이유 */}
           {recommendReason && (
-            <Text style={styles.overview}>{recommendReason}</Text>
+            <View style={styles.recommendBox}>
+              <View style={styles.recommendHeader}>
+                <Image
+                  source={require('../assets/images/icon/AI_icon.png')}
+                  style={styles.recommendIcon}
+                />
+                <Text style={styles.recommendHeaderText}>AI가 이렇게 추천했어요</Text>
+              </View>
+              <Text style={styles.overview}>{recommendReason}</Text>
+            </View>
           )}
 
           {/* 해시태그 */}
@@ -545,6 +554,24 @@ const styles = StyleSheet.create({
 
   sheetContent: { paddingHorizontal: 16, paddingBottom: 50 },
   overview: { fontSize: 14, color: '#444', lineHeight: 20, marginBottom: 12, marginTop: 8 },
+
+  // 추천 이유 박스 스타일
+  recommendBox: {
+    backgroundColor: '#eef6ff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#659ECF',
+  },
+  recommendHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  recommendIcon: { width: 28, height: 28, marginRight: 6, resizeMode: 'contain' },
+  recommendHeaderText: { fontSize: 12, color: '#2a6fb1', fontFamily: 'Pretendard-Medium' },
 
   // 혼잡도 스타일 추가
   crowdStatus: {
