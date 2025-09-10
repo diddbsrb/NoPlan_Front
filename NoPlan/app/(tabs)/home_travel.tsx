@@ -25,6 +25,7 @@ import {
 import { UserInfo, userService } from '../../service/userService';
 import { saveLastScreen } from '../../utils/pushNotificationHelper';
 import * as SecureStore from 'expo-secure-store';
+import apiClient from '../../service/apiClient';
 
 interface TripWithDate extends Trip {
   created_at: string;
@@ -304,18 +305,10 @@ export default function HomeTravel() {
   const deleteVisitedContent = async (itemId: number) => {
     try {
       setDeleting(true);
-      const accessToken = await SecureStore.getItemAsync('accessToken');
-      const response = await fetch(`https://no-plan.cloud/api/v1/users/visited-contents/${itemId}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('삭제 요청이 실패했습니다.');
-      }
+      console.log(`[HomeTravel] 방문지 삭제 시작: ID ${itemId}`);
+      
+      const response = await apiClient.delete(`/users/visited-contents/${itemId}/`);
+      console.log('[HomeTravel] 삭제 응답:', response.status);
 
       // 삭제 성공 시 UI 업데이트
       setSections(prevSections => 
@@ -325,14 +318,28 @@ export default function HomeTravel() {
         }))
       );
 
-      // 삭제 모달 닫기
+      // 삭제 모달과 상세정보 모달 모두 닫기
       setDeleteModalVisible(false);
       setItemToDelete(null);
+      setSelectedItem(null); // 상세정보 모달도 닫기
       
+      console.log('[HomeTravel] 방문지 삭제 완료');
       Alert.alert('삭제 완료', '방문지가 삭제되었습니다.');
-    } catch (error) {
-      console.error('방문지 삭제 실패:', error);
-      Alert.alert('삭제 실패', '방문지 삭제에 실패했습니다. 다시 시도해주세요.');
+    } catch (error: any) {
+      console.error('[HomeTravel] 방문지 삭제 실패:', error);
+      console.error('[HomeTravel] 에러 응답:', error.response?.data);
+      console.error('[HomeTravel] 에러 상태:', error.response?.status);
+      
+      let errorMessage = '방문지 삭제에 실패했습니다. 다시 시도해주세요.';
+      if (error.response?.status === 401) {
+        errorMessage = '인증이 필요합니다. 다시 로그인해주세요.';
+      } else if (error.response?.status === 404) {
+        errorMessage = '삭제할 방문지를 찾을 수 없습니다.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      Alert.alert('삭제 실패', errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -513,7 +520,6 @@ export default function HomeTravel() {
                   <CardItem 
                     item={item} 
                     onPress={() => setSelectedItem(item)}
-                    onDelete={() => handleDeletePress(item)}
                     getDefaultImage={getDefaultImage}
                     getCategoryDisplayName={getCategoryDisplayName}
                   />
@@ -714,6 +720,23 @@ export default function HomeTravel() {
                    <Text style={styles.placeInfoValue}>{selectedItem.overview}</Text>
                  </View>
                )}
+
+               {/* 방문하지 않았어요 버튼 */}
+               <View style={styles.deleteButtonContainer}>
+                 <TouchableOpacity
+                   style={[styles.deleteButtonInModal, deleting && styles.deleteButtonDisabled]}
+                   onPress={() => {
+                     if (selectedItem?.id) {
+                       handleDeletePress(selectedItem);
+                     }
+                   }}
+                   disabled={deleting}
+                 >
+                   <Text style={[styles.deleteButtonText, deleting && styles.deleteButtonTextDisabled]}>
+                     {deleting ? '삭제 중...' : '방문하지 않았어요'}
+                   </Text>
+                 </TouchableOpacity>
+               </View>
              </ScrollView>
            </View>
          </View>
@@ -726,13 +749,11 @@ export default function HomeTravel() {
 const CardItem = memo(({ 
   item, 
   onPress, 
-  onDelete,
   getDefaultImage, 
   getCategoryDisplayName 
 }: { 
   item: TripItem; 
   onPress: () => void;
-  onDelete: () => void;
   getDefaultImage: (category?: string) => any;
   getCategoryDisplayName: (category?: string) => string;
 }) => {
@@ -767,16 +788,6 @@ const CardItem = memo(({
         <View style={styles.chevWrap}>
           <Text style={styles.chevText}>›</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.deleteButton} 
-          onPress={(e) => {
-            e.stopPropagation(); // 카드 클릭 이벤트 방지
-            onDelete();
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="trash-outline" size={16} color="#ff4444" />
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -1220,6 +1231,33 @@ const styles = StyleSheet.create({
   hashtagText: {
     fontSize: 14,
     color: '#00796b',
+  },
+
+  // 방문하지 않았어요 버튼 스타일
+  deleteButtonContainer: {
+    marginTop: 0,
+    marginBottom: 30,
+    alignItems: 'center',
+  },
+  deleteButtonInModal: {
+    backgroundColor: '#ffcccc',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 200,
+  },
+  deleteButtonText: {
+    color: '#cc0000',
+    fontFamily: 'Pretendard-Medium',
+    fontSize: 16,
+  },
+  deleteButtonDisabled: {
+    backgroundColor: '#E0E0E0',
+  },
+  deleteButtonTextDisabled: {
+    color: '#888',
   },
 
   // 커스텀 상단바 스타일

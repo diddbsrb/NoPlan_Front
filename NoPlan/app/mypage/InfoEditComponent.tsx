@@ -17,10 +17,11 @@ interface Props {
   onPassword: () => void;
   onDelete: () => void;
   onTerms: () => void;
+  onCopyright: () => void;
   onNotifications: () => void;
 }
 
-const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTerms, onNotifications }) => {
+const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTerms, onNotifications, onCopyright }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(true);
   const [isAlarmEnabled, setIsAlarmEnabled] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
@@ -344,6 +345,10 @@ const InfoEditComponent: React.FC<Props> = ({ onBack, onPassword, onDelete, onTe
         
         <TouchableOpacity onPress={onTerms} style={styles.termsRow}>
           <Text style={styles.label}>개인정보 처리방침</Text>
+          <Text style={styles.link}>보기</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onCopyright} style={styles.termsRow}>
+          <Text style={styles.label}>저작권 정보</Text>
           <Text style={styles.link}>보기</Text>
         </TouchableOpacity>
         
