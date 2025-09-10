@@ -20,10 +20,10 @@ import { getLastScreen } from '../../utils/pushNotificationHelper';
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
 const imageList = [
-  require('../../assets/images/home/bg1.jpeg'),
-  require('../../assets/images/home/bg2.jpeg'),
-  require('../../assets/images/home/bg3.jpeg'),
-  require('../../assets/images/home/bg4.jpeg'),
+  require('../../assets/images/home/bg1.jpg'),
+  require('../../assets/images/home/bg2.jpg'),
+  require('../../assets/images/home/bg3.jpg'),
+  require('../../assets/images/home/bg4.jpg'),
 ];
 
 export default function HomeScreen() {
