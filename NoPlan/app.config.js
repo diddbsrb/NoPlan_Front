@@ -135,7 +135,7 @@ module.exports = ({ config }) => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/noplan_logo_blue.png',
+        foregroundImage: './assets/images/logo/logo_icon.png',
         backgroundColor: '#ffffff',
       },
       package: 'com.donggguk.noplan',
@@ -147,7 +147,7 @@ module.exports = ({ config }) => {
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/noplan_logo_blue.png',
+      favicon: './assets/images/logo/logo_icon.png',
     },
     plugins: [
       withForcedKotlinVersion,
