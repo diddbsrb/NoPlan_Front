@@ -118,11 +118,11 @@ module.exports = ({ config }) => {
     slug: 'NoPlan',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/noplan_logo_blue.png',
+    icon: './assets/images/logo/logo_icon.png',
     scheme: 'noplan',
     userInterfaceStyle: 'automatic',
     splash: {
-      image: './assets/images/noplan_logo_blue.png',
+      image: './assets/images/logo/logo_icon.png',
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },

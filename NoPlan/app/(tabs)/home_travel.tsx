@@ -411,7 +411,7 @@ export default function HomeTravel() {
     <SafeAreaView style={styles.safe}>
       {/* 배경 이미지 */}
       <Image
-        source={require('../../assets/images/home_travel_screen.jpeg')}
+        source={require('../../assets/images/home/bg2.jpg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
