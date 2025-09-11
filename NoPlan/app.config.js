@@ -1,13 +1,9 @@
 // app.config.js
 
-// [수정] withDangerousMod를 추가로 import 합니다.
-const { withProjectBuildGradle, withAndroidManifest, withDangerousMod } = require('@expo/config-plugins');
-// [추가] 파일 시스템과 경로 모듈을 가져옵니다.
-const fs = require('fs');
-const path = require('path');
+const { withProjectBuildGradle } = require('@expo/config-plugins');
 
 /**
- * 코틀린 버전 강제 설정을 위한 커스텀 플러그인
+ * 코틀린 버전 강제 설정을 위한 커스텀 플러그인 (기존 설정 유지)
  * @param {import('@expo/config-types').ExpoConfig} config
  */
 const withForcedKotlinVersion = (config) => {
@@ -15,7 +11,9 @@ const withForcedKotlinVersion = (config) => {
     if (config.modResults.language !== 'groovy') {
       return config;
     }
+
     let contents = config.modResults.contents;
+
     const allProjectsRegex = /allprojects\s*{/;
     if (!allProjectsRegex.test(contents)) {
       contents += `
@@ -27,6 +25,7 @@ allprojects {
 }
 `;
     }
+    
     const extBlock = `
     ext {
         kotlinVersion = "1.8.22"
@@ -36,78 +35,11 @@ allprojects {
       /allprojects\s*{/,
       `allprojects {${extBlock}`
     );
+
     config.modResults.contents = contents;
     return config;
   });
 };
-
-/**
- * 안드로이드 네트워크 보안 설정을 위한 커스텀 플러그인 (가장 안정적인 방식)
- * @param {import('@expo/config-types').ExpoConfig} config
- */
-const withNetworkSecurityConfig = (config) => {
-  // 1. AndroidManifest.xml에 networkSecurityConfig 속성을 추가합니다.
-  const configWithAndroidManifest = withAndroidManifest(config, (config) => {
-    const manifest = config.modResults.manifest;
-    const application = manifest.application[0];
-    if (!application.$) {
-      application.$ = {};
-    }
-    application.$['android:networkSecurityConfig'] = '@xml/network_security_config';
-    return config;
-  });
-
-  // 2. withDangerousMod를 사용하여 res/xml/network_security_config.xml 파일을 직접 생성합니다.
-  return withDangerousMod(configWithAndroidManifest, [
-    'android',
-    async (config) => {
-      const projectRoot = config.modRequest.projectRoot;
-      const xmlDir = path.join(projectRoot, 'android', 'app', 'src', 'main', 'res', 'xml');
-      const networkSecurityConfigFile = path.join(xmlDir, 'network_security_config.xml');
-
-      // res/xml 폴더가 없으면 생성합니다.
-      if (!fs.existsSync(xmlDir)) {
-        fs.mkdirSync(xmlDir, { recursive: true });
-      }
-
-      let networkSecurityConfigContent;
-
-      // [수정된 부분] EAS 빌드 프로필에 따라 다른 네트워크 보안 설정을 적용합니다.
-      // 'development' 프로필로 빌드할 때는 모든 http(암호화되지 않은) 통신을 허용하여 로컬 개발 서버에 접속할 수 있도록 합니다.
-      if (process.env.EAS_BUILD_PROFILE === 'development') {
-        networkSecurityConfigContent = `
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-</network-security-config>
-        `;
-      } else {
-        // 'production' 이나 'preview' 등 다른 프로필의 경우, 특정 도메인(tong.visitkorea.or.kr)을 제외한 http 통신을 차단합니다.
-        networkSecurityConfigContent = `
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">tong.visitkorea.or.kr</domain>
-    </domain-config>
-    <base-config cleartextTrafficPermitted="false">
-        <trust-anchors>
-            <certificates src="system" />
-        </trust-anchors>
-    </base-config>
-</network-security-config>
-        `;
-      }
-
-      // 파일을 씁니다.
-      fs.writeFileSync(networkSecurityConfigFile, networkSecurityConfigContent.trim());
-
-      return config;
-    },
-  ]);
-};
-
 
 // 메인 설정을 내보냅니다.
 module.exports = ({ config }) => {
@@ -118,11 +50,11 @@ module.exports = ({ config }) => {
     slug: 'NoPlan',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/logo/logo_icon.png',
+    icon: './assets/images/icon.png',
     scheme: 'noplan',
     userInterfaceStyle: 'automatic',
     splash: {
-      image: './assets/images/logo/logo_icon.png',
+      image: './assets/images/splash-icon.png',
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
@@ -135,7 +67,7 @@ module.exports = ({ config }) => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/logo/logo_icon.png',
+        foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
       package: 'com.donggguk.noplan',
@@ -147,13 +79,14 @@ module.exports = ({ config }) => {
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/logo/logo_icon.png',
+      favicon: './assets/images/favicon.png',
     },
     plugins: [
+      // 기존 플러그인 설정은 모두 그대로 유지합니다.
       withForcedKotlinVersion,
-      withNetworkSecurityConfig, // 수정된 플러그인이 여기에서 사용됩니다.
       'expo-router',
       'expo-secure-store',
+      // ★★★ Firebase 알림 플러그인 추가 ★★★
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',
       [
@@ -169,6 +102,7 @@ module.exports = ({ config }) => {
             repositories: [
               { url: 'https://devrepo.kakao.com/nexus/content/groups/public/' },
             ],
+            // ★★★ 기본 빌드 설정 추가 ★★★
             compileSdkVersion: 34,
             targetSdkVersion: 34,
             minSdkVersion: 23,

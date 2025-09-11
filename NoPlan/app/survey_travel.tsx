@@ -19,36 +19,42 @@ import { travelService } from '../service/travelService';
 import { requestUserPermission } from '../utils/pushNotificationHelper';
 import CustomTopBar from './(components)/CustomTopBar';
 import { useTravelSurvey } from './(components)/TravelSurveyContext';
-import { ImageAssets } from '../assets/images/ImageAssets'; // [변경] ImageAssets import
 
-// [변경] ImageAssets를 사용하도록 배열들 수정
+// 기존 headerShown 옵션은 레이아웃에서 관리하므로 제거/주석 처리
+// export const options = {
+//   headerShown: false,
+// };
+
 const KEYWORD_OPTIONS = [
-  { label: '고즈넉한', icon: ImageAssets.adjective_tranquil },
-  { label: '낭만적인', icon: ImageAssets.adjective_romantic },
-  { label: '모던한', icon: ImageAssets.adjective_modern },
-  { label: '힙한', icon: ImageAssets.adjective_hip },
-  { label: '고급스러운', icon: ImageAssets.adjective_luxurious },
-  { label: '전통적인', icon: ImageAssets.adjective_traditional },
-  { label: '활동적인', icon: ImageAssets.adjective_active },
-  { label: '산뜻한', icon: ImageAssets.adjective_fresh },
-  { label: '정겨운', icon: ImageAssets.adjective_friendly },
+  { label: '고즈넉한', icon: require('../assets/images/adjectives/icon_고즈넉한.png') },
+  { label: '낭만적인', icon: require('../assets/images/adjectives/icon_낭만적인.png') },
+  { label: '모던한', icon: require('../assets/images/adjectives/icon_모던한.png') },
+  { label: '힙한', icon: require('../assets/images/adjectives/icon_힙한.png') },
+  { label: '고급스러운', icon: require('../assets/images/adjectives/icon_고급스러운.png') },
+  { label: '전통적인', icon: require('../assets/images/adjectives/icon_전통적인.png') },
+  { label: '활동적인', icon: require('../assets/images/adjectives/icon_활동적인.png') },
+  { label: '산뜻한', icon: require('../assets/images/adjectives/icon_산뜻한.png') },
+  { label: '정겨운', icon: require('../assets/images/adjectives/icon_정겨운.png') },
 ];
 
 const TRAVEL_TYPE_OPTIONS = [
-  { label: '대중교통', image: ImageAssets.travel_public },
-  { label: '도보',     image: ImageAssets.travel_walking },
-  { label: '자가용',   image: ImageAssets.travel_car },
+  { label: '대중교통', image: require('../assets/images/대중교통.jpg') },
+  { label: '도보',     image: require('../assets/images/도보.jpg') },
+  { label: '자가용',   image: require('../assets/images/자가용.jpg') },
 ];
 
 const COMPANION_OPTIONS = [
-  { label: '혼자', image: ImageAssets.companion_solo },
-  { label: '연인', image: ImageAssets.companion_couple },
-  { label: '친구', image: ImageAssets.companion_friends },
-  { label: '가족', image: ImageAssets.companion_family },
+  { label: '혼자', image: require('../assets/images/혼자.jpg') },
+  { label: '연인', image: require('../assets/images/연인.jpg') },
+  { label: '친구', image: require('../assets/images/친구.jpg') },
+  { label: '가족', image: require('../assets/images/가족.jpg') },
 ];
+
+
 
 export default function SurveyTravel() {
   const router = useRouter();
+  // const { setSurvey, setIsTraveling } = useTravelSurvey();
   const { setIsTraveling } = useTravelSurvey();
   
   const [step, setStep] = useState(1);
@@ -61,6 +67,9 @@ export default function SurveyTravel() {
   const [error, setError] = useState<string | null>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   
+  // 슬라이드 모달 관련 상태 제거
+
+  // 알림 권한 상태 확인 및 설정 안내 함수
   const checkNotificationPermission = async () => {
     try {
       const authStatus = await messaging().hasPermission();
@@ -92,6 +101,7 @@ export default function SurveyTravel() {
     }
   };
 
+  // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
@@ -101,6 +111,8 @@ export default function SurveyTravel() {
     }
     loadFonts();
   }, []);
+
+  // 슬라이드 자동 전환 및 애니메이션 제거
 
   useFocusEffect(
     useCallback(() => {
@@ -112,16 +124,20 @@ export default function SurveyTravel() {
       setError(null);
       setLoading(true);
       (async () => {
+        // 알림 권한 요청 (위치 권한과 완전히 독립적으로 실행)
         try {
           await requestUserPermission();
+          // 알림 권한 요청 후 권한 상태 확인 및 설정 안내
           setTimeout(() => {
             checkNotificationPermission();
-          }, 1000);
+          }, 1000); // 1초 후에 권한 상태 확인
         } catch (e) {
           console.log('알림 권한 요청 실패:', e);
+          // 알림 권한 실패는 앱 동작에 영향을 주지 않으므로 무시
         }
         
         try {
+          // 위치 권한 요청 및 위치 획득
           let { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {
             setError('위치 권한이 필요합니다.');
@@ -129,17 +145,22 @@ export default function SurveyTravel() {
             return;
           }
           
+          // 위치 권한이 허용되면 알림 권한도 함께 요청
           try {
             await requestUserPermission();
             console.log('[survey_travel] 알림 권한 요청 완료');
           } catch (error) {
             console.log('[survey_travel] 알림 권한 요청 실패:', error);
+            // 알림 권한 실패해도 위치 기반 서비스는 계속 진행
           }
           
           let location = await Location.getCurrentPositionAsync({});
           setCoords({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+          // 지역명 조회
           const res = await travelService.getRegionArea(location.coords.latitude, location.coords.longitude);
+          // 응답 구조 확인용 콘솔
           console.log('region api res:', res);
+          // Axios 응답에서 실제 데이터는 res.data에 있음
           const regionName = (res as any)?.data?.region_1depth_name || '';
           if (!regionName) {
             setError('지역 정보를 찾을 수 없습니다.');
@@ -230,7 +251,7 @@ export default function SurveyTravel() {
                   key={opt.label}
                   style={[
                     styles.travelTypeOption,
-                    selectedTravelType === idx && styles.travelTypeOptionSelected,
+                    selectedTravelType === idx && styles.imageSelected,
                   ]}
                   onPress={() => setSelectedTravelType(idx)}
                   activeOpacity={0.8}
@@ -262,7 +283,7 @@ export default function SurveyTravel() {
                   key={opt.label}
                   style={[
                     styles.companionOption,
-                    selectedCompanion === idx && styles.companionOptionSelected,
+                    selectedCompanion === idx && styles.imageSelected,
                   ]}
                   onPress={() => setSelectedCompanion(idx)}
                   activeOpacity={0.8}
@@ -294,6 +315,7 @@ export default function SurveyTravel() {
     try {
       const adjectives = selectedKeywords.map(idx => KEYWORD_OPTIONS[idx].label).join(',');
       
+      // 🆕 API로 여행 정보 저장 (프론트 상태에 저장 안함)
       await travelService.createTripWithAuth(
         region,
         TRAVEL_TYPE_OPTIONS[selectedTravelType].label,
@@ -301,6 +323,7 @@ export default function SurveyTravel() {
         adjectives
       );
       
+      // 🆕 여행 시작: 여행 상태를 true로 설정
       await setIsTraveling(true);
       
       console.log('[survey_travel] 여행 상태를 true로 설정 완료, home_travel로 이동');
@@ -413,6 +436,7 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
 
+
   travelTypeGrid: {
     width: '100%',
     alignItems: 'center',
@@ -429,15 +453,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-  },
-  travelTypeOptionSelected: {
-    borderColor: '#659ECF',
-    borderWidth: 3,
-    shadowColor: '#659ECF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
 
   companionGrid: {
@@ -458,15 +473,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  companionOptionSelected: {
-    borderColor: '#659ECF',
-    borderWidth: 3,
-    shadowColor: '#659ECF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
 
   optionImage: { width: '100%', height: '100%' },
   overlay: {
@@ -481,7 +487,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
   },
-
+  imageSelected: { borderColor: '#659ECF' },
 
   progressBarContainer: {
     flexDirection: 'row',
@@ -526,4 +532,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Pretendard-Medium',
   },
+
+  // 슬라이드 모달 관련 스타일 제거
 });
