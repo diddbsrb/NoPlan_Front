@@ -17,9 +17,15 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: {
-          display: 'none', // 탭 바를 완전히 숨김
-        },
+        tabBarStyle: Platform.select({
+          ios: {
+            // Use a transparent background on iOS to show the blur effect
+            position: 'absolute',
+          },
+          default: {
+            backgroundColor: 'rgba(255,255,255,0.7)',
+          },
+        }),
       }}>
       <Tabs.Screen
         name="index"
