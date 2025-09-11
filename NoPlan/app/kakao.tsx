@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, SafeAreaView, View, ActivityIndicator, Alert, TouchableOpacity, Text } from 'react-native';
+import Checkbox from 'expo-checkbox';
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -21,6 +22,7 @@ export default function KakaoLoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [agreePrivacyPolicy, setAgreePrivacyPolicy] = useState(false);
   // ★★★ 2. AuthContext에서 login 함수를 가져옵니다. (authLogin으로 별칭 부여) ★★★
   const { login: authLogin } = useAuth();
 
@@ -99,9 +101,53 @@ export default function KakaoLoginScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>카카오 로그인</Text>
         <Text style={styles.description}>
-          카카오 계정으로 간편하게 로그인하고{'\n'}서비스를 이용해보세요.
+        카카오 계정으로 로그인하기 전에{'\n'}개인정보 수집·이용에 동의해주세요.
         </Text>
-        <TouchableOpacity style={styles.kakaoButton} onPress={signInWithKakao} disabled={loading}>
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            value={agreePrivacyPolicy}
+            onValueChange={setAgreePrivacyPolicy}
+            color={agreePrivacyPolicy ? '#FEE500' : undefined}
+          />
+          <Text
+            style={styles.checkboxLabel}
+            onPress={() => setAgreePrivacyPolicy((prev) => !prev)}
+          >
+            개인정보 수집·이용 동의 (필수)
+          </Text>
+        </View>
+        <View style={styles.policyBox}>
+          <Text style={styles.policyTitle}>1. 개인정보 수집·이용 동의 (필수)</Text>
+          <Text style={styles.policyText}>
+            [ 수집·이용 목적 ]{'\n'}
+            회원 식별 및 본인 확인, 서비스 제공 및 개선, 맞춤형 여행 정보 제공
+          </Text>
+          <Text style={styles.policyText}>
+            [ 수집하는 개인정보 항목 ]{'\n'}
+            필수: 이메일 주소, 비밀번호, 이름, 나이, 성별, (소셜 로그인 시) 카카오 ID{'\n'}
+            자동 수집: 서비스 이용 기록, 접속 로그{'\n'}
+            위치정보(선택): 단말기 GPS 기반 위치 (주변 장소 추천 기능 이용 시)
+          </Text>
+          <Text style={styles.policyNoteText}>
+            ※참고:비밀번호는 안전하게 암호화하여 저장합니다.         {'\n'}
+          </Text>
+          <Text style={styles.policyText}>
+            [ 보유 및 이용기간 ]{'\n'}
+            회원 탈퇴 시 지체 없이 파기 (단, 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간 동안 보관)
+          </Text>
+          <Text style={styles.policyTitle}>2. 개인정보 제3자 제공 동의</Text>
+          <Text style={styles.policyText}>
+            NO_PLAN 서비스는 수집한 개인정보를 제3자에게 제공하는 내역이 없습니다.
+          </Text>
+          <Text style={styles.policyNoteText}>
+            ※참고:한국관광공사 API등에는 개인을 식별할 수 없는 위치 좌표값만을 일시적으로 전송하여 장소 정보를 조회하며, 이는 개인정보의 제3자 제공에 해당하지 않습니다.{'\n'}
+          </Text>
+          <Text style={styles.alertText}>
+            ※경고:앱에서 사용되는 모든 이미지는 저작권이 존재함으로 임의로 캡쳐 및 복사, 사용을 금지합니다.
+          </Text>
+        </View>
+
+        <TouchableOpacity style={styles.kakaoButton} onPress={signInWithKakao} disabled={loading || !agreePrivacyPolicy}>
           {loading ? (
             <ActivityIndicator color="#000000" />
           ) : (
@@ -136,7 +182,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#666666',
-    marginBottom: 40,
+    marginBottom: 25,
+  },
+  policyBox: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#eee',
+    width: '100%',
+  },
+  policyTitle: {
+    fontSize: 14,
+    fontFamily: 'Pretendard-Medium',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  policyText: {
+    fontSize: 12,
+    fontFamily: 'Pretendard-Light',
+    color: '#555',
+    lineHeight: 18,
+    marginBottom: 5,
+  },
+  policyNoteText: {
+    fontSize: 10,
+    fontFamily: 'Pretendard-Light',
+    color: '#777',
+    lineHeight: 16,
+    marginTop: 5,
+  },
+  alertText: {
+    fontSize: 10,
+    fontFamily: 'Pretendard-Light',
+    color: 'red',
+    lineHeight: 16,
+    marginTop: 5,
   },
   kakaoButton: {
     backgroundColor: '#FEE500',
@@ -148,11 +231,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     minHeight: 50,
+    marginTop: 10
   },
   kakaoButtonText: {
     color: '#000000',
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    marginTop: 0,
+    width: '100%',
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontFamily: 'Pretendard-Medium',
+    color: '#333',
   },
   backButton: {
     marginTop: 20,
