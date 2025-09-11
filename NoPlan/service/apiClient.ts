@@ -3,7 +3,9 @@ import * as SecureStore from 'expo-secure-store';
 
 export const apiClient = axios.create({
   baseURL: 'https://www.no-plan.cloud/api/v1',
-  timeout: 30000,
+
+  timeout: 1000000,
+
 });
 
 apiClient.interceptors.request.use(
