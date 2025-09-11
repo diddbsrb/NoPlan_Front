@@ -1,3 +1,4 @@
+// SigninScreen.tsx
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -11,11 +12,9 @@ import {
   View
 } from 'react-native';
 
-// ★★★ AuthContext import 추가 ★★★
 import { useAuth } from '../(contexts)/AuthContext';
-import { authService } from '../../service/authService'; // 이메일 로그인을 위한 서비스
+import { authService } from '../../service/authService';
 
-// 백엔드 응답 타입 (기존과 동일)
 interface LoginResponse {
   access: string;
   refresh: string;
@@ -24,7 +23,7 @@ interface LoginResponse {
     name: string;
     email: string;
     is_info_exist: boolean;
-    is_kakao_linked?: boolean; // ★★★ is_kakao_linked 속성 추가 ★★★
+    is_kakao_linked?: boolean;
   };
 }
 
@@ -36,10 +35,8 @@ export default function SigninScreen() {
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
   
-  // ★★★ AuthContext에서 login 함수 가져오기 ★★★
   const { login } = useAuth();
 
-  // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
@@ -51,9 +48,6 @@ export default function SigninScreen() {
     loadFonts();
   }, []);
 
-  // ★★★ expo-auth-session 관련 코드는 모두 삭제되었습니다. ★★★
-
-  // 이메일 로그인 함수 (AuthContext 사용)
   const handleEmailLogin = async () => {
     if (!email || !password) {
       setError('이메일과 비밀번호를 모두 입력해주세요.');
@@ -65,10 +59,9 @@ export default function SigninScreen() {
       const res = await authService.signIn(email, password);
       const { access, refresh, user } = res.data as LoginResponse;
       
-      // ★★★ AuthContext의 login 함수 사용 ★★★
       await login(access, refresh, {
         ...user,
-        is_kakao_linked: user.is_kakao_linked ?? false // ★★★ 기본값 false로 설정 ★★★
+        is_kakao_linked: user.is_kakao_linked ?? false
       });
 
       if (user.is_info_exist) {
@@ -84,13 +77,12 @@ export default function SigninScreen() {
     }
   };
 
-  // ★★★ 카카오 로그인 버튼을 눌렀을 때의 동작이 변경되었습니다. ★★★
+  // ★★★ 카카오 로그인 버튼을 눌렀을 때 동의 화면으로 이동하도록 변경 ★★★
   const handleKakaoLogin = () => {
-    // 이제 웹뷰를 띄우는 /kakao 경로로 이동시킵니다.
-    router.push('../kakao');
+    console.log("Navigating to kakao_consent");
+    router.push('./kakao_consent'); // 새로운 동의 화면 경로
   };
 
-  // 회원가입 페이지로 이동하는 함수
   const handleSignup = () => {
     router.replace('/(tabs)/signup');
   };
@@ -132,10 +124,9 @@ export default function SigninScreen() {
 
       <TouchableOpacity 
         style={styles.kakaoButton} 
-        onPress={handleKakaoLogin} // ★★★ 새로 정의된 함수를 연결합니다. ★★★
-        disabled={loading} // 이메일 로그인 중에는 카카오 로그인 버튼도 비활성화
+        onPress={handleKakaoLogin}
+        disabled={loading}
       >
-        {/* 이메일 로그인 시에는 카카오 버튼에 로딩 표시를 하지 않도록 수정 */}
         <>
           <Image
             source={{
@@ -157,7 +148,6 @@ export default function SigninScreen() {
   );
 }
 
-// 스타일 시트는 기존과 동일합니다.
 const styles = StyleSheet.create({
   container: {
     flex: 1,

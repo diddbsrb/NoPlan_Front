@@ -500,7 +500,6 @@ export async function cancelAllWeekendTravelNotifications() {
 export async function cancelAllNotifications() {
   try {
     await notifee.cancelAllNotifications(); // 표시된 알림
-    await notifee.cancelAllNotifications(); // id중복 호출 무해
     console.log('표시된 모든 알림이 취소되었습니다.');
   } catch (error) {
     console.error('모든 알림 취소 실패:', error);

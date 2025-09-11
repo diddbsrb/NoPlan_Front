@@ -1,3 +1,4 @@
+// app/(tabs)/kakao_consent.tsx
 import * as Font from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -5,26 +6,18 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
-  ScrollView, // ScrollView 추가
+  ScrollView,
 } from 'react-native';
-import Checkbox from 'expo-checkbox'; // expo-checkbox 라이브러리 추가
-import { authService } from '../../service/authService';
+import Checkbox from 'expo-checkbox';
 
-export default function SignupScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+export default function KakaoConsentScreen() {
+  const [agreePrivacyPolicy, setAgreePrivacyPolicy] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [agreePrivacyPolicy, setAgreePrivacyPolicy] = useState(false); // 개인정보 수집 이용 동의 상태
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
@@ -36,80 +29,27 @@ export default function SignupScreen() {
     loadFonts();
   }, []);
 
-  const handleSignup = async () => {
+  const handleConfirmConsent = () => {
     setError('');
-    setSuccess('');
-    setLoading(true);
-
     if (!agreePrivacyPolicy) {
-      setError('개인정보 수집·이용 동의 (필수)에 동의해야 회원가입이 가능합니다.');
-      setLoading(false);
+      setError('개인정보 수집·이용 동의 (필수)에 동의해야 카카오 로그인이 가능합니다.');
       return;
     }
-
-    try {
-      const res = await authService.signUp(email, password, confirmPassword);
-      setSuccess('회원가입이 완료되었습니다!');
-      // 회원가입 후 로그인 페이지로 이동
-      setTimeout(() => {
-        router.replace('/(tabs)/signin');
-      }, 1000); // 사용자가 성공 메시지를 볼 수 있도록 1초 지연
-    } catch (err: any) {
-      if (err.response) {
-        if (err.response.data.email) {
-          setError(err.response.data.email[0]);
-        } else if (err.response.data.password) {
-          setError(err.response.data.password[0]);
-        } else {
-          setError('회원가입에 실패했습니다.');
-        }
-        console.log('응답 에러:', err.response.data);
-      } else if (err.request) {
-        setError('서버로부터 응답이 없습니다.');
-        console.log('요청 에러:', err.request);
-      } else {
-        setError('네트워크 오류가 발생했습니다.');
-        console.log('기타 에러:', err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
+    // 동의했으면 실제 카카오 로그인 웹뷰 경로로 이동
+    router.push('/kakao'); // 기존 카카오 로그인 웹뷰 경로
   };
 
   if (!fontsLoaded) {
-    return null; // 폰트 로드 전에는 아무것도 렌더링하지 않음
+    return null;
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.headerTitle}>회원가입</Text>
+        <Text style={styles.headerTitle}>카카오 로그인 약관 동의</Text>
         <Text style={styles.description}>
-          반갑습니다! 회원가입을 위해{'\n'}이메일 주소, 비밀번호를 입력해주세요.
+          카카오 계정으로 로그인하기 전에{'\n'}개인정보 수집·이용에 동의해주세요.
         </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="이메일 주소"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호 확인"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
 
         {/* 개인정보 수집·이용 동의 */}
         <View style={styles.checkboxContainer}>
@@ -128,12 +68,12 @@ export default function SignupScreen() {
           </Text>
           <Text style={styles.policyText}>
             [ 수집하는 개인정보 항목 ]{'\n'}
-            필수: 이메일 주소, 비밀번호, 이름, 나이, 성별, (소셜 로그인 시) 카카오 ID{'\n'}
+            필수: 이메일 주소, (카카오 로그인 시) 카카오 ID, 이름, 나이, 성별{'\n'}
             자동 수집: 서비스 이용 기록, 접속 로그{'\n'}
             위치정보(선택): 단말기 GPS 기반 위치 (주변 장소 추천 기능 이용 시)
           </Text>
           <Text style={styles.policyNoteText}>
-            ※참고:비밀번호는 안전하게 암호화하여 저장합니다.         {'\n'}   
+            ※참고:비밀번호는 안전하게 암호화하여 저장합니다.   {'\n'}         
           </Text>
           <Text style={styles.policyText}>
             [ 보유 및 이용기간 ]{'\n'}
@@ -143,10 +83,9 @@ export default function SignupScreen() {
           <Text style={styles.policyText}>
             NO_PLAN 서비스는 수집한 개인정보를 제3자에게 제공하는 내역이 없습니다.
           </Text>
-          {/* '참고' 텍스트를 위한 새로운 스타일 적용 */}
           <Text style={styles.policyNoteText}>
             ※참고:한국관광공사 API등에는 개인을 식별할 수 없는 위치 좌표값만을 일시적으로 전송하여 장소 정보를 조회하며, 이는 개인정보의 제3자 제공에 해당하지 않습니다.{'\n'}
-            
+         
           </Text>
           <Text style={styles.alertText}>
           ※경고:앱에서 사용되는 모든 이미지는 저작권이 존재함으로 임의로 캡쳐 및 복사, 사용을 금지합니다.
@@ -154,22 +93,18 @@ export default function SignupScreen() {
         </View>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        {success ? <Text style={styles.successText}>{success}</Text> : null}
 
         <TouchableOpacity
-          style={[styles.button, !agreePrivacyPolicy && styles.disabledButton]} // 동의하지 않으면 비활성화 스타일 적용
-          onPress={handleSignup}
-          disabled={loading || !agreePrivacyPolicy} // 동의하지 않으면 버튼 비활성화
+          style={[styles.button, !agreePrivacyPolicy && styles.disabledButton]}
+          onPress={handleConfirmConsent}
+          disabled={!agreePrivacyPolicy}
         >
-          <Text style={styles.buttonText}>{loading ? '회원가입 중...' : '회원가입'}</Text>
+          <Text style={styles.buttonText}>카카오 로그인 계속하기</Text>
         </TouchableOpacity>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
-          <Text style={styles.footerText}>이미 계정이 있으신가요? </Text>
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/signin')}>
-            <Text style={styles.loginText}>로그인하기</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>이전으로 돌아가기</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,11 +117,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 28,
-    paddingVertical: 50, // 상하 패딩 추가
+    paddingVertical: 50,
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: 'Pretendard-Medium',
     color: '#A9D1F4',
     marginTop:10,
@@ -194,20 +129,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   description: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 20,
-  },
-  input: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-    fontSize: 14,
-    fontFamily: 'Pretendard-Light', // 폰트 적용
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -243,13 +169,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 5,
   },
-  // '참고' 텍스트를 위한 새로운 스타일
   policyNoteText: {
-    fontSize: 10, // policyText (12) 보다 2pt 작게
+    fontSize: 10,
     fontFamily: 'Pretendard-Light',
-    color: '#777', // 약간 더 연한 색상으로 구분
+    color: '#777',
     lineHeight: 16,
-    marginTop: 5, // 위쪽으로 약간 여백 추가
+    marginTop: 5,
   },
   alertText: {
     fontSize: 10, // policyText (12) 보다 2pt 작게
@@ -264,36 +189,28 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
-    marginBottom: 28,
+    marginBottom: 10, // 돌아가기 버튼과의 간격 조정
   },
   disabledButton: {
-    backgroundColor: '#d3d3d3', // 비활성화 시 버튼 색상
+    backgroundColor: '#d3d3d3',
   },
   buttonText: {
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
     color: '#fff',
   },
-  footerText: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    fontFamily: 'Pretendard-Light',
+  backButton: {
+    paddingVertical: 10,
+    alignItems: 'center',
   },
-  loginText: {
-    fontSize: 12,
+  backButtonText: {
+    fontSize: 14,
     fontFamily: 'Pretendard-Medium',
-    color: '#000',
+    color: '#666',
+    textDecorationLine: 'underline',
   },
   errorText: {
     color: 'red',
-    textAlign: 'center',
-    marginBottom: 10,
-    fontSize: 12,
-    fontFamily: 'Pretendard-Light',
-  },
-  successText: {
-    color: 'green',
     textAlign: 'center',
     marginBottom: 10,
     fontSize: 12,
