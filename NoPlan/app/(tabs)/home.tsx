@@ -20,10 +20,10 @@ import { getLastScreen } from '../../utils/pushNotificationHelper';
 const AnimatedImageBackground = Animated.createAnimatedComponent(ImageBackground);
 
 const imageList = [
-  require('../../assets/images/home/bg1.jpeg'),
-  require('../../assets/images/home/bg2.jpeg'),
-  require('../../assets/images/home/bg3.jpeg'),
-  require('../../assets/images/home/bg4.jpeg'),
+  require('../../assets/images/home/bg1.jpg'),
+  require('../../assets/images/home/bg2.jpg'),
+  require('../../assets/images/home/bg3.jpg'),
+  require('../../assets/images/home/bg4.jpg'),
 ];
 
 export default function HomeScreen() {
@@ -65,7 +65,7 @@ export default function HomeScreen() {
         flex: 1,
         justifyContent: 'space-between',
         paddingHorizontal: Math.max(12, screenWidth * 0.03), // 화면 너비의 3% 또는 최소 12px
-        paddingBottom: Math.max(40, screenHeight * 0.05), // 화면 높이의 5% 또는 최소 40px
+        paddingBottom: Math.max(60, screenHeight * 0.08), // 20에서 60으로 변경하여 버튼을 위로 올림
         zIndex: 2,
       },
       header: {

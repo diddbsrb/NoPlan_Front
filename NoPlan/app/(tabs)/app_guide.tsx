@@ -104,7 +104,25 @@ export default function AppGuide() {
       case 4:
         return (
           <>
-            <View style={[styles.iconContainer, { marginTop: 25, marginBottom: 0 }]}>
+            <View style={[styles.iconContainer, { marginTop: 60, marginBottom: 24 }]}> 
+              <Image 
+                source={require('../../assets/images/guide/case5.png')} 
+                style={[styles.icon, { width: 220, height: 220 }]} 
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={[styles.title, { marginTop: 8, marginBottom: 28 }]}>
+              방문할 여행지를 추천받고,{"\n"}방문 내역을 관리하세요
+            </Text>
+            <Text style={[styles.desc, { marginTop: 0, marginBottom: 36 }]}>
+              여행 중 방문한 특별한 장소를 기록하고{"\n"}언제든지 수정할 수 있어요
+            </Text>
+          </>
+        );
+      case 5:
+        return (
+          <>
+            <View style={[styles.iconContainer, { marginTop: 25, marginBottom: 0 }]}> 
               <Image 
                 source={require('../../assets/images/guide/case4.png')} 
                 style={[styles.icon, { width: 300, height: 300 }]} 
@@ -125,7 +143,7 @@ export default function AppGuide() {
   };
 
   const handleNext = () => {
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     }
   };
@@ -176,7 +194,7 @@ export default function AppGuide() {
       </View>
 
       <View style={styles.progressBarContainer}>
-        {[1, 2, 3, 4].map(n => (
+        {[1, 2, 3, 4, 5].map(n => (
           <View
             key={n}
             style={[
@@ -188,7 +206,7 @@ export default function AppGuide() {
       </View>
 
       <View style={styles.buttonContainer}>
-        {step < 4 ? (
+        {step < 5 ? (
           <View style={styles.buttonRow}>
             {step > 1 && (
               <TouchableOpacity
@@ -313,7 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 50,
-    marginBottom: 40,
+    marginBottom: 20, // 탭 바 제거로 인한 여백 조정
 
   },
   icon: {
