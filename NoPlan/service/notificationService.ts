@@ -6,9 +6,14 @@ import messaging from '@react-native-firebase/messaging';
 import notifee, {
   TimestampTrigger,
   TriggerType,
-  RepeatFrequency,
   AndroidImportance,
 } from '@notifee/react-native';
+import {
+  createNotificationChannels,
+  clearAllScheduledNotifications,
+  resetNotificationsBasedOnTravelStatus,
+  listenForForegroundMessages as listenForForegroundMessagesFromHelper,
+} from '../utils/pushNotificationHelper';
 
 // ===================================================================
 // 내부 헬퍼 함수들 (이 파일 안에서만 사용됩니다)
@@ -32,62 +37,11 @@ const getFCMToken = async (): Promise<void> => {
   }
 };
 
-/** 앱이 켜져 있을 때(포그라운드) 원격 알림 수신 리스너 */
-const listenForForegroundMessages = (): (() => void) => {
-  return messaging().onMessage(async remoteMessage => {
-    console.log('[FCM] 포그라운드에서 메시지 수신:', remoteMessage);
-    // 수신된 원격 알림을 로컬 알림처럼 화면에 즉시 표시
-    notifee.displayNotification({
-      title: remoteMessage.notification?.title,
-      body: remoteMessage.notification?.body,
-      android: { channelId: 'default' },
-    });
-  });
-};
+// 포그라운드 수신은 pushNotificationHelper의 로직을 사용합니다.
 
-/** Notifee(로컬) 알림을 위한 안드로이드 채널 생성 */
-const createNotificationChannel = async (): Promise<void> => {
-  if (Platform.OS === 'android') {
-    await notifee.createChannel({
-      id: 'default',
-      name: 'Default Channel',
-      importance: AndroidImportance.HIGH,
-    });
-    console.log('[Notifee] 알림 채널이 생성되었습니다.');
-  }
-};
+// 채널 생성은 pushNotificationHelper.createNotificationChannels 사용
 
-/** 주기적인 로컬 알림 예약 (점심/주말) */
-const schedulePeriodicNotifications = async (): Promise<void> => {
-    await notifee.cancelTriggerNotifications(['lunch-notification', 'weekend-notification']);
-
-    // --- 실제 서비스용 시간 계산 로직 ---
-    const now = new Date();
-
-    // 다음 정오 계산
-    const nextLunchTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-    if (now.getHours() >= 12) {
-      nextLunchTime.setDate(nextLunchTime.getDate() + 1);
-    }
-    
-    // 다음 토요일 오전 10시 계산
-    const nextSaturday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 0, 0);
-    const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
-    nextSaturday.setDate(nextSaturday.getDate() + daysUntilSaturday);
-    if (daysUntilSaturday === 0 && now.getHours() >= 10) {
-        nextSaturday.setDate(nextSaturday.getDate() + 7);
-    }
-
-    // --- 알림 예약 ---
-    const lunchTrigger: TimestampTrigger = { type: TriggerType.TIMESTAMP, timestamp: nextLunchTime.getTime(), repeatFrequency: RepeatFrequency.DAILY };
-    const weekendTrigger: TimestampTrigger = { type: TriggerType.TIMESTAMP, timestamp: nextSaturday.getTime(), repeatFrequency: RepeatFrequency.WEEKLY };
-
-    await notifee.createTriggerNotification({ id: 'lunch-notification', title: '점심 시간이에요! 🍽️', body: '근처 맛집을 추천해드릴까요?', android: { channelId: 'default' } }, lunchTrigger);
-    await notifee.createTriggerNotification({ id: 'weekend-notification', title: '주말 계획 세우셨나요? 🎉', body: '이번 주말은 즉흥 여행 어떠세요?', android: { channelId: 'default' } }, weekendTrigger);
-    
-    console.log(`[Notifee] 다음 점심 알림: ${nextLunchTime.toLocaleString()}`);
-    console.log(`[Notifee] 다음 주말 알림: ${nextSaturday.toLocaleString()}`);
-};
+// periodic(반복) 예약은 pushNotificationHelper 쪽 로직을 사용하므로 이 파일에서는 제거
 
 
 // ===================================================================
@@ -99,23 +53,20 @@ const schedulePeriodicNotifications = async (): Promise<void> => {
  * _layout.tsx에서는 이 함수 하나만 호출하면 됩니다.
  */
 export const setupAllNotifications = async (): Promise<() => void> => {
-  // 1. 필요한 권한과 채널 설정
+  // 1) 원격 푸시 권한 및 토큰
   await requestFCMpermission();
-  await createNotificationChannel();
-  
-  // 2. FCM 토큰 가져오기
   await getFCMToken();
 
-  // 3. 앱 최초 실행 시에만 주기적인 로컬 알림 예약
-  const isFirstLaunch = await AsyncStorage.getItem('isFirstLaunch');
-  if (isFirstLaunch === null) {
-    console.log('[앱] 최초 실행 감지! 주기적 로컬 알림을 예약합니다.');
-    await schedulePeriodicNotifications();
-    await AsyncStorage.setItem('isFirstLaunch', 'true');
-  }
+  // 2) 로컬 알림 채널 생성
+  await createNotificationChannels();
 
-  // 4. 포그라운드 메시지 리스너를 실행하고, 정리 함수(unsubscribe)를 반환
-  return listenForForegroundMessages();
+  // 3) 과거 스케줄 정리 후, 여행 상태 기반 스케줄 재설정
+  await clearAllScheduledNotifications();
+  await resetNotificationsBasedOnTravelStatus();
+
+  // 4) 포그라운드 수신 리스너 등록
+  const unsubscribe = listenForForegroundMessagesFromHelper();
+  return unsubscribe;
 };
 
 /**
