@@ -137,9 +137,9 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
             <Text style={styles.settingTitle}>평일 점심 알림</Text>
-                         <Text style={styles.settingDescription}>
-               매일 오후 4시 50분에 점심 추천 알림을 받습니다
-             </Text>
+            <Text style={styles.settingDescription}>
+              매일 오전 11시 50분에 점심 추천 알림을 받습니다
+            </Text>
           </View>
           <Switch
             value={preferences.weekday_lunch}
@@ -154,7 +154,7 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
           <View style={styles.settingInfo}>
             <Text style={styles.settingTitle}>주말 여행 알림</Text>
             <Text style={styles.settingDescription}>
-              매주 금요일 오후 6시에 주말 여행 추천 알림을 받습니다
+              매주 금요일 오후 6시, 토/일요일 오전 9시에 주말 여행 추천 알림을 받습니다
             </Text>
           </View>
           <Switch
