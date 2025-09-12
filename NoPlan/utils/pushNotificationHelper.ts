@@ -27,6 +27,20 @@ function nextDowTime(dow: number, hour: number, minute: number) {
   return target.getTime();
 }
 
+/** 한국 시간대(UTC+9)로 시간 설정하는 안전한 헬퍼 함수 */
+function setKoreaTime(date: Date, hour: number, minute: number): Date {
+  const result = new Date(date);
+  result.setHours(hour, minute, 0, 0);
+  
+  // 한국 시간대 오프셋 계산 (UTC+9)
+  const koreaOffset = 9 * 60; // 9시간을 분으로
+  const localOffset = result.getTimezoneOffset();
+  const totalOffset = koreaOffset + localOffset;
+  
+  result.setMinutes(result.getMinutes() + totalOffset);
+  return result;
+}
+
 async function ensureChannel(id: string, name: string) {
   await notifee.createChannel({
     id,
@@ -208,6 +222,9 @@ export async function scheduleWeekdayLunchNotification() {
       return;
     }
 
+    // 기존 여행 중 알림들 먼저 취소
+    await notifee.cancelTriggerNotifications(['weekday-lunch', 'afternoon-smart', 'evening-smart']);
+
     await ensureChannel('lunch-recommendations', '점심 추천');
     await ensureChannel('travel-recommendations', '여행 추천');
 
@@ -215,14 +232,8 @@ export async function scheduleWeekdayLunchNotification() {
     console.log('[알림 시간] 현재 시간:', now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }));
 
     // 점심: 11:50 (한국 시간 기준)
-    const lunchTime = new Date();
-    // 한국 시간대로 설정 (UTC+9)
-    const koreaTimeOffset = 9 * 60; // 9시간을 분으로
-    const localOffset = lunchTime.getTimezoneOffset();
-    const totalOffset = koreaTimeOffset + localOffset;
-    
-    lunchTime.setHours(11, 50, 0, 0);
-    lunchTime.setMinutes(lunchTime.getMinutes() + totalOffset);
+    const lunchTime = setKoreaTime(new Date(), 11, 50);
+    console.log('[알림 시간] 점심 알림 시간:', lunchTime.toLocaleString('ko-KR'));
 
     // 평일만 → 오늘이 주말이면 다음 월요일로
     const lunchDOW = lunchTime.getDay();
@@ -269,14 +280,8 @@ export async function scheduleWeekdayLunchNotification() {
     console.log('여행 중 평일 점심 알림이 스케줄링되었습니다:', lunchTime);
 
     // 오후: 15:00 (한국 시간 기준)
-    const afternoonTime = new Date();
-    // 한국 시간대로 설정 (UTC+9)
-    const afternoonKoreaTimeOffset = 9 * 60; // 9시간을 분으로
-    const afternoonLocalOffset = afternoonTime.getTimezoneOffset();
-    const afternoonTotalOffset = afternoonKoreaTimeOffset + afternoonLocalOffset;
-    
-    afternoonTime.setHours(15, 0, 0, 0);
-    afternoonTime.setMinutes(afternoonTime.getMinutes() + afternoonTotalOffset);
+    const afternoonTime = setKoreaTime(new Date(), 15, 0);
+    console.log('[알림 시간] 오후 알림 시간:', afternoonTime.toLocaleString('ko-KR'));
     if (now.getTime() > afternoonTime.getTime()) afternoonTime.setDate(afternoonTime.getDate() + 1);
 
     const afternoonRec = await getRecommendationTypeBasedOnLastVisit();
@@ -334,14 +339,8 @@ export async function scheduleWeekdayLunchNotification() {
     console.log('여행 중 오후 스마트 알림이 스케줄링되었습니다:', afternoonTime);
 
     // 저녁: 18:00 (한국 시간 기준)
-    const eveningTime = new Date();
-    // 한국 시간대로 설정 (UTC+9)
-    const eveningKoreaTimeOffset = 9 * 60; // 9시간을 분으로
-    const eveningLocalOffset = eveningTime.getTimezoneOffset();
-    const eveningTotalOffset = eveningKoreaTimeOffset + eveningLocalOffset;
-    
-    eveningTime.setHours(18, 0, 0, 0);
-    eveningTime.setMinutes(eveningTime.getMinutes() + eveningTotalOffset);
+    const eveningTime = setKoreaTime(new Date(), 18, 0);
+    console.log('[알림 시간] 저녁 알림 시간:', eveningTime.toLocaleString('ko-KR'));
     if (now.getTime() > eveningTime.getTime()) eveningTime.setDate(eveningTime.getDate() + 1);
 
     const eveningRec = await getRecommendationTypeBasedOnLastVisit();
@@ -412,6 +411,9 @@ export async function scheduleWeekendTravelNotification() {
       console.log('여행 중이므로 주말 여행 알림을 스케줄링하지 않습니다.');
       return;
     }
+
+    // 기존 주말 여행 알림들 먼저 취소
+    await cancelAllWeekendTravelNotifications();
 
     await ensureChannel('weekend-travel', '주말 여행');
 
@@ -504,6 +506,29 @@ export async function cancelAllNotifications() {
     console.log('표시된 모든 알림이 취소되었습니다.');
   } catch (error) {
     console.error('모든 알림 취소 실패:', error);
+  }
+}
+
+/** 모든 스케줄된 알림 정리 (앱 재시작 시 사용) */
+export async function clearAllScheduledNotifications() {
+  try {
+    // 특정 알림 ID들 취소
+    await notifee.cancelTriggerNotifications([
+      'weekday-lunch',
+      'afternoon-smart', 
+      'evening-smart',
+      'weekend-travel-fri-18',
+      'weekend-travel-sat-9',
+      'weekend-travel-sun-9',
+      'test-notification',
+      'test-background-0.17min',
+      'test-background-1min',
+      'test-background-3min'
+    ]);
+    
+    console.log('모든 스케줄된 알림이 정리되었습니다.');
+  } catch (error) {
+    console.error('스케줄된 알림 정리 실패:', error);
   }
 }
 

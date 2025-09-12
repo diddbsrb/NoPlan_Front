@@ -1,34 +1,34 @@
-import * as Font from 'expo-font';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   Dimensions,
   Image,
-  Linking,
+  ActivityIndicator,
   Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+  Alert,
+  Linking,
 } from 'react-native';
+import * as Font from 'expo-font';
+import { useRouter } from 'expo-router';
 import CustomTopBar from '../(components)/CustomTopBar';
 
 // --- 서비스 및 타입 import ---
-import { BookmarkResponse, bookmarkService } from '../../service/bookmarkService';
-import { travelService, Trip, VisitedContent } from '../../service/travelService';
 import { userService } from '../../service/userService';
-// ★★★ 핵심 1: AuthContext import 추가 ★★★
+import { travelService, VisitedContent, Trip } from '../../service/travelService';
+import { bookmarkService, BookmarkResponse } from '../../service/bookmarkService';
+import { authService } from '../../service/authService';
+import { useTravelSurvey } from '../(components)/TravelSurveyContext';
+import * as SecureStore from 'expo-secure-store';
 
 // --- 분리된 컴포넌트 import ---
-import AccountDeleteComponent from './AccountDeleteComponent';
-import InfoEditComponent from './InfoEditComponent';
-import NotificationSettingsComponent from './NotificationSettingsComponent';
-import PasswordChangeComponent from './PasswordChangeComponent';
 import TermsComponent from './TermsComponent';
-import CopyrightComponent from './CopyrightComponent';
+import InfoEditComponent from './InfoEditComponent';
+import PasswordChangeComponent from './PasswordChangeComponent';
+import AccountDeleteComponent from './AccountDeleteComponent';
 
 type VisitedTrips = {
   [key: string]: {
@@ -37,21 +37,14 @@ type VisitedTrips = {
   };
 };
 
-// 카테고리별 기본 아이콘
-const DEFAULT_ICONS = {
-  restaurants: require('../../assets/images/restaurants_icon.png'),
-  cafes: require('../../assets/images/cafes_icon.png'),
-  accommodations: require('../../assets/images/accommodations_icon.png'),
-  attractions: require('../../assets/images/attractions_icon.png'),
-};
-
 const PLACEHOLDER_IMAGE_URL = 'https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzA3MzBfOTAg%2FMDAxNjkwNjkyMTAzNTk0.fDiLNQxsSwWoqhWaPPENCgnOfw7rBkyA-u8IBq_bqwMg.V7vOgU00XrpbXakUxyF2OLBpxt56NpcmVdNulowZaUIg.JPEG.10sunmusa%2F100a10000000oik97DA2B_C_760_506_Q70.jpg&type=a340';
 
 export default function MyPage() {
   const router = useRouter();
+  const { setIsLoggedIn, setIsTraveling, checkTravelStatus } = useTravelSurvey();
 
   const [activeTab, setActiveTab] = useState<'visited' | 'wishlist' | 'personal'>('visited');
-  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete' | 'notifications'>('edit');
+  const [activePersonalScreen, setActivePersonalScreen] = useState<'terms' | 'edit' | 'password' | 'delete'>('terms');
   
   const [userName, setUserName] = useState('회원');
   const [visitedTrips, setVisitedTrips] = useState<VisitedTrips>({});
@@ -63,7 +56,6 @@ export default function MyPage() {
     async function loadFonts() {
       await Font.loadAsync({
         'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
-        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
       });
       setFontsLoaded(true);
     }
@@ -78,17 +70,6 @@ export default function MyPage() {
   
   const [isBookmarkModalVisible, setIsBookmarkModalVisible] = useState(false);
   const [selectedBookmark, setSelectedBookmark] = useState<BookmarkResponse | null>(null);
-  
-  // 약관 모달 상태 추가
-  const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
-  // 저작권 모달 상태 추가
-  const [isCopyrightModalVisible, setIsCopyrightModalVisible] = useState(false);
-  
-  // 페이지네이션과 정렬 관련 상태
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const itemsPerPage = 5; // 페이지당 아이템 수
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -146,57 +127,7 @@ export default function MyPage() {
     };
 
     fetchDataForTab();
-    setCurrentPage(1); // 탭 변경 시 첫 페이지로 리셋
   }, [activeTab]);
-
-  // 정렬된 데이터 계산
-  const getSortedData = () => {
-    if (activeTab === 'visited') {
-      const tripsArray = Object.entries(visitedTrips).map(([tripId, data]) => ({
-        tripId,
-        ...data
-      }));
-      
-      return tripsArray.sort((a, b) => {
-        const dateA = a.tripInfo?.created_at ? new Date(a.tripInfo.created_at).getTime() : 0;
-        const dateB = b.tripInfo?.created_at ? new Date(b.tripInfo.created_at).getTime() : 0;
-        return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
-      });
-    } else if (activeTab === 'wishlist') {
-      return bookmarks.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
-      });
-    }
-    return [];
-  };
-
-  // 페이지네이션된 데이터 계산
-  const getPaginatedData = () => {
-    const sortedData = getSortedData();
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return sortedData.slice(startIndex, endIndex);
-  };
-
-  // 전체 페이지 수 계산
-  const getTotalPages = () => {
-    const sortedData = getSortedData();
-    return Math.ceil(sortedData.length / itemsPerPage);
-  };
-
-  // 정렬 변경 핸들러
-  const handleSortChange = (newSortOrder: 'latest' | 'oldest') => {
-    setSortOrder(newSortOrder);
-    setCurrentPage(1); // 정렬 변경 시 첫 페이지로 리셋
-    setShowSortDropdown(false); // 드롭다운 닫기
-  };
-
-  // 페이지 변경 핸들러
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   const handleTripPress = (tripId: string) => {
     setSelectedTrip(visitedTrips[tripId]);
@@ -216,8 +147,36 @@ export default function MyPage() {
     Linking.openURL(kakaoMapUrl);
   };
 
-
-
+  const handleLogout = () => {
+    Alert.alert(
+      "로그아웃",
+      "정말 로그아웃 하시겠습니까?",
+      [
+        {
+          text: "취소",
+          style: "cancel"
+        },
+        { 
+          text: "로그아웃",
+          onPress: async () => {
+            try {
+              await authService.logout();
+              await setIsTraveling(false);
+              await setIsLoggedIn(false);
+              await SecureStore.deleteItemAsync('accessToken');
+              await SecureStore.deleteItemAsync('refreshToken');
+              await checkTravelStatus();
+              router.replace('/(tabs)/signin');
+            } catch (error) {
+              console.error('로그아웃 처리 중 오류 발생:', error);
+              Alert.alert("오류", "로그아웃 중 문제가 발생했습니다.");
+            }
+          },
+          style: 'destructive'
+        }
+      ]
+    );
+  };
 
   const handleDeleteTrip = async (tripId: string) => {
     Alert.alert(
@@ -281,995 +240,82 @@ export default function MyPage() {
 
   const renderContent = () => {
     if (isLoading && activeTab !== 'personal') {
-      return <ActivityIndicator size="large" color="#659ECF" style={{ marginTop: 40 }} />;
+      return <ActivityIndicator size="large" color="#123A86" style={{ marginTop: 40 }} />;
     }
 
-          if (activeTab === 'visited') {
-      const paginatedData = getPaginatedData();
-      const totalPages = getTotalPages();
-      
-      if (paginatedData.length === 0) {
-        return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
-      }
-      
-      return (
-        <>
-          {/* 정렬 옵션 */}
-          <View style={styles.sortContainer}>
-            <View style={styles.sortDropdownContainer}>
-              <TouchableOpacity 
-                style={styles.sortDropdownButton}
-                onPress={() => setShowSortDropdown(!showSortDropdown)}
-              >
-                <Text style={styles.sortDropdownButtonText}>
-                  {sortOrder === 'latest' ? '최신순' : '오래된순'}
-                </Text>
-                <Text style={[styles.sortDropdownArrow, showSortDropdown && styles.sortDropdownArrowUp]}>
-                  ▼
-                </Text>
-              </TouchableOpacity>
-              
-              {showSortDropdown && (
-                <View style={styles.sortDropdownMenu}>
-                  <TouchableOpacity 
-                    style={[styles.sortDropdownItem, sortOrder === 'latest' && styles.sortDropdownItemActive]}
-                    onPress={() => handleSortChange('latest')}
-                  >
-                    <Text style={[styles.sortDropdownItemText, sortOrder === 'latest' && styles.sortDropdownItemTextActive]}>
-                      최신순
-                    </Text>
-                    {sortOrder === 'latest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.sortDropdownItem, sortOrder === 'oldest' && styles.sortDropdownItemActive]}
-                    onPress={() => handleSortChange('oldest')}
-                  >
-                    <Text style={[styles.sortDropdownItemText, sortOrder === 'oldest' && styles.sortDropdownItemTextActive]}>
-                      오래된순
-                    </Text>
-                    {sortOrder === 'oldest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* 여행 목록 */}
-          {paginatedData.map((tripData: any) => {
-            const tripId = tripData.tripId;
-            const tripContents = tripData.contents;
-            const firstContent = tripContents[0];
-            
-            // 이미지 소스 결정
-            let imageSource;
-            if (firstContent.first_image) {
-              imageSource = { uri: firstContent.first_image };
-            } else if (firstContent.category && DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS]) {
-              imageSource = DEFAULT_ICONS[firstContent.category as keyof typeof DEFAULT_ICONS];
-            } else {
-              imageSource = DEFAULT_ICONS.attractions;
-            }
-
-            const tripDate = new Date(firstContent.created_at);
-            const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
-            const newTitle = `${formattedDate}의 여행`;
-
-            return (
-              <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardTextContainer}>
-                    <Text style={styles.cardTitle}>{newTitle}</Text>
-                    <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
-                  </View>
-                  <TouchableOpacity 
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTrip(tripId);
-                    }}
-                    style={styles.deleteTripButton}
-                  >
-                    <Text style={styles.deleteTripButtonText}>삭제</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.wishlistImageBox}>
-                  <Image 
-                    source={imageSource} 
-                    style={[
-                      styles.image,
-                      !firstContent.first_image && styles.defaultIconImage
-                    ]} 
-                    resizeMode={firstContent.first_image ? "cover" : "center"} 
-                  />
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && (
-            <View style={styles.paginationContainer}>
-              <TouchableOpacity 
-                style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
-                onPress={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
-                  이전
-                </Text>
-              </TouchableOpacity>
-              
-              <Text style={styles.paginationText}>
-                {currentPage} / {totalPages}
-              </Text>
-              
-              <TouchableOpacity 
-                style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
-                onPress={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
-                  다음
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </>
-      );
-    }
-  
-      if (activeTab === 'wishlist') {
-        const paginatedData = getPaginatedData();
-        const totalPages = getTotalPages();
-        
-        if (paginatedData.length === 0) {
-          return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
+      if (activeTab === 'visited') {
+        const tripIds = Object.keys(visitedTrips);
+        if (tripIds.length === 0) {
+          return <Text style={styles.placeholderText}>아직 여행 기록이 없어요.</Text>;
         }
         
-        return (
-          <>
-            {/* 정렬 옵션 */}
-            <View style={styles.sortContainer}>
-              <View style={styles.sortDropdownContainer}>
-                <TouchableOpacity 
-                  style={styles.sortDropdownButton}
-                  onPress={() => setShowSortDropdown(!showSortDropdown)}
-                >
-                  <Text style={styles.sortDropdownButtonText}>
-                    {sortOrder === 'latest' ? '최신순' : '오래된순'}
-                  </Text>
-                  <Text style={[styles.sortDropdownArrow, showSortDropdown && styles.sortDropdownArrowUp]}>
-                    ▼
-                  </Text>
-                </TouchableOpacity>
-                
-                {showSortDropdown && (
-                  <View style={styles.sortDropdownMenu}>
-                    <TouchableOpacity 
-                      style={[styles.sortDropdownItem, sortOrder === 'latest' && styles.sortDropdownItemActive]}
-                      onPress={() => handleSortChange('latest')}
-                    >
-                      <Text style={[styles.sortDropdownItemText, sortOrder === 'latest' && styles.sortDropdownItemTextActive]}>
-                        최신순
-                      </Text>
-                      {sortOrder === 'latest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.sortDropdownItem, sortOrder === 'oldest' && styles.sortDropdownItemActive]}
-                      onPress={() => handleSortChange('oldest')}
-                    >
-                      <Text style={[styles.sortDropdownItemText, sortOrder === 'oldest' && styles.sortDropdownItemTextActive]}>
-                        오래된순
-                      </Text>
-                      {sortOrder === 'oldest' && <Text style={styles.sortDropdownCheck}>✓</Text>}
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </View>
+        return tripIds.map((tripId) => {
+          const tripData = visitedTrips[tripId];
+          const tripContents = tripData.contents;
+          const firstContent = tripContents[0];
+          const imageUrl = firstContent.first_image ? firstContent.first_image : PLACEHOLDER_IMAGE_URL;
+  
+          const tripDate = new Date(firstContent.created_at);
+          const formattedDate = `${tripDate.getFullYear()}년 ${tripDate.getMonth() + 1}월 ${tripDate.getDate()}일`;
+          const newTitle = `${formattedDate}의 여행`;
 
-            {/* 북마크 목록 */}
-            {paginatedData.map((bookmark: any) => {
-              // 이미지 소스 결정
-              let imageSource;
-              if (bookmark.firstImage) {
-                imageSource = { uri: bookmark.firstImage };
-              } else if (bookmark.category && DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS]) {
-                imageSource = DEFAULT_ICONS[bookmark.category as keyof typeof DEFAULT_ICONS];
-              } else {
-                imageSource = DEFAULT_ICONS.attractions;
-              }
-              
-              return (
-                <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardTextContainer}>
-                      <Text style={styles.cardTitle}>{bookmark.title}</Text>
-                      <Text style={styles.locationText}>{bookmark.addr1}</Text>
-                    </View>
-                    <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteBookmark(bookmark.id); }} style={styles.starButton}>
-                      <Text style={styles.star}>★</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.wishlistImageBox}>
-                    <Image 
-                      source={imageSource} 
-                      style={[
-                        styles.image,
-                        !bookmark.firstImage && styles.defaultIconImage
-                      ]} 
-                      resizeMode={bookmark.firstImage ? "cover" : "center"} 
-                    />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-
-            {/* 페이지네이션 */}
-            {totalPages > 1 && (
-              <View style={styles.paginationContainer}>
+          return (
+            <TouchableOpacity key={tripId} style={styles.card} onPress={() => handleTripPress(tripId)}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardTitle}>{newTitle}</Text>
+                  <Text style={styles.locationText}>{`${firstContent.title} 등 ${tripContents.length}곳`}</Text>
+                </View>
                 <TouchableOpacity 
-                  style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
-                  onPress={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTrip(tripId);
+                  }}
+                  style={styles.deleteTripButton}
                 >
-                  <Text style={[styles.paginationButtonText, currentPage === 1 && styles.paginationButtonTextDisabled]}>
-                    이전
-                  </Text>
-                </TouchableOpacity>
-                
-                <Text style={styles.paginationText}>
-                  {currentPage} / {totalPages}
-                </Text>
-                
-                <TouchableOpacity 
-                  style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
-                  onPress={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <Text style={[styles.paginationButtonText, currentPage === totalPages && styles.paginationButtonTextDisabled]}>
-                    다음
-                  </Text>
+                  <Text style={styles.deleteTripButtonText}>삭제</Text>
                 </TouchableOpacity>
               </View>
-            )}
-          </>
-        );
+              <View style={styles.wishlistImageBox}>
+                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+              </View>
+            </TouchableOpacity>
+          );
+        });
+      }
+  
+      if (activeTab === 'wishlist') {
+        if (bookmarks.length === 0) {
+          return <Text style={styles.placeholderText}>북마크가 비어있어요.</Text>;
+        }
+        return bookmarks.map((bookmark) => {
+          const imageUrl = bookmark.firstImage ? bookmark.firstImage : PLACEHOLDER_IMAGE_URL;
+          return (
+            <TouchableOpacity key={bookmark.id} style={styles.card} onPress={() => handleBookmarkPress(bookmark)} activeOpacity={0.8}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTextContainer}>
+                  <Text style={styles.cardTitle}>{bookmark.title}</Text>
+                  <Text style={styles.locationText}>{bookmark.addr1}</Text>
+                </View>
+                <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteBookmark(bookmark.id); }} style={styles.starButton}>
+                  <Text style={styles.star}>★</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.wishlistImageBox}>
+                <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+              </View>
+            </TouchableOpacity>
+          );
+        });
       }
   
     if (activeTab === 'personal') {
       return (
         <>
-          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActiveTab('visited')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} onTerms={() => setIsTermsModalVisible(true)} onNotifications={() => setActivePersonalScreen('notifications')} onCopyright={() => {
-            // 개인정보 처리방침과 동일한 UX로 모달 오픈
-            
-            // 모달 오픈
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            setIsCopyrightModalVisible(true);
-            setTimeout(() => { 
-              
-              
-              
-            }, 0);
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-          }} />}
+          {activePersonalScreen === 'terms' && <TermsComponent onEdit={() => setActivePersonalScreen('edit')} />}
+          {activePersonalScreen === 'edit' && <InfoEditComponent onBack={() => setActivePersonalScreen('terms')} onPassword={() => setActivePersonalScreen('password')} onDelete={() => setActivePersonalScreen('delete')} />}
           {activePersonalScreen === 'password' && <PasswordChangeComponent onBack={() => setActivePersonalScreen('edit')} />}
           {activePersonalScreen === 'delete' && <AccountDeleteComponent onBack={() => setActivePersonalScreen('edit')} />}
-          {activePersonalScreen === 'notifications' && <NotificationSettingsComponent onBack={() => setActivePersonalScreen('edit')} />}
         </>
       );
     }
@@ -1295,53 +341,39 @@ export default function MyPage() {
         ))}
       </View>
 
+      {/* ★★★ 핵심 1: ScrollView가 화면의 남은 공간을 모두 차지하도록 View로 감쌉니다. ★★★ */}
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {renderContent()}
         </ScrollView>
       </View>
+      
+      {/* ★★★ 핵심 2: 로그아웃 버튼을 화면 하단에 절대 위치로 배치합니다. ★★★ */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>로그아웃</Text>
+      </TouchableOpacity>
 
       {/* --- Modals --- */}
       <Modal animationType="slide" transparent={true} visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>여행 기록 상세보기</Text>
-            <ScrollView 
-              style={styles.modalScrollView}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.modalScrollContent}
-            >
+            <ScrollView>
               {selectedTrip?.tripInfo?.summary && (
                 <View style={styles.summarySection}>
-                  <Text style={styles.summaryTitle}>AI 여행 요약</Text>
-                  <Text style={styles.summaryText} numberOfLines={10} ellipsizeMode="tail">{selectedTrip.tripInfo.summary}</Text>
+                  <Text style={styles.summaryTitle}>여행 요약</Text>
+                  <Text style={styles.summaryText}>{selectedTrip.tripInfo.summary}</Text>
                 </View>
               )}
               <Text style={styles.visitedPlacesTitle}>방문한 장소들</Text>
               {selectedTrip?.contents.map((content) => {
-                // 이미지 소스 결정: 실제 이미지가 있으면 사용, 없으면 카테고리별 아이콘 사용
-                let imageSource;
-                if (content.first_image) {
-                  imageSource = { uri: content.first_image };
-                } else if (content.category && DEFAULT_ICONS[content.category as keyof typeof DEFAULT_ICONS]) {
-                  imageSource = DEFAULT_ICONS[content.category as keyof typeof DEFAULT_ICONS];
-                } else {
-                  imageSource = DEFAULT_ICONS.attractions; // 기본값
-                }
-                
+                const imageUrl = content.first_image ? content.first_image : PLACEHOLDER_IMAGE_URL;
                 return (
                   <View key={content.content_id} style={styles.modalCard}>
-                    <Text style={styles.cardTitle} numberOfLines={2} ellipsizeMode="tail">{content.title}</Text>
-                    <Text style={styles.locationText} numberOfLines={2} ellipsizeMode="tail">{content.addr1}</Text>
+                    <Text style={styles.cardTitle}>{content.title}</Text>
+                    <Text style={styles.locationText}>{content.addr1}</Text>
                     <View style={styles.imageBox}>
-                      <Image 
-                        source={imageSource} 
-                        style={[
-                          styles.image,
-                          !content.first_image && styles.defaultIconImage
-                        ]} 
-                        resizeMode={content.first_image ? "cover" : "center"} 
-                      />
+                      <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
                     </View>
                   </View>
                 );
@@ -1363,36 +395,7 @@ export default function MyPage() {
                 <Text style={styles.closeXText}>✕</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView 
-              style={styles.bookmarkModalScroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.bookmarkModalScrollContent}
-            >
-              {/* 북마크 이미지 추가 */}
-              {selectedBookmark && (
-                <View style={styles.bookmarkImageContainer}>
-                  {(() => {
-                    let imageSource;
-                    if (selectedBookmark.firstImage) {
-                      imageSource = { uri: selectedBookmark.firstImage };
-                    } else if (selectedBookmark.category && DEFAULT_ICONS[selectedBookmark.category as keyof typeof DEFAULT_ICONS]) {
-                      imageSource = DEFAULT_ICONS[selectedBookmark.category as keyof typeof DEFAULT_ICONS];
-                    } else {
-                      imageSource = DEFAULT_ICONS.attractions; // 기본값
-                    }
-                    return (
-                      <Image 
-                        source={imageSource} 
-                        style={[
-                          styles.bookmarkModalImage,
-                          !selectedBookmark.firstImage && styles.defaultIconImage
-                        ]} 
-                        resizeMode={selectedBookmark.firstImage ? "cover" : "center"} 
-                      />
-                    );
-                  })()}
-                </View>
-              )}
+            <ScrollView style={styles.bookmarkModalScroll}>
               <View style={styles.infoSection}>
                 <Text style={styles.infoLabel}>주소</Text>
                 <Text style={styles.infoText}>{selectedBookmark?.addr1}</Text>
@@ -1424,36 +427,6 @@ export default function MyPage() {
               <TouchableOpacity style={styles.navigationButton} onPress={handleNavigation}>
                 <Text style={styles.navigationButtonText}>길찾기</Text>
               </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={isTermsModalVisible} onRequestClose={() => setIsTermsModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>개인정보 처리방침</Text>
-              <TouchableOpacity style={styles.closeXButton} onPress={() => setIsTermsModalVisible(false)}>
-                <Text style={styles.closeXText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <TermsComponent onBack={() => setIsTermsModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-
-      <Modal animationType="slide" transparent={true} visible={isCopyrightModalVisible} onRequestClose={() => setIsCopyrightModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, styles.modalContentSmall]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>저작권 정보</Text>
-              <TouchableOpacity style={styles.closeXButton} onPress={() => setIsCopyrightModalVisible(false)}>
-                <Text style={styles.closeXText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={[styles.modalScrollView, styles.modalScrollSmall]} contentContainerStyle={styles.modalScrollContentTight} showsVerticalScrollIndicator={false}>
-              <CopyrightComponent onBack={() => setIsCopyrightModalVisible(false)} />
             </ScrollView>
           </View>
         </View>
@@ -1499,12 +472,13 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   tabTextActive: {
-    color: '#659ECF',
+    color: '#123A86',
     fontFamily: 'Pretendard-Medium',
   },
   scrollContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    // ★★★ 핵심 3: 스크롤 맨 아래와 하단 여백을 확보합니다. ★★★
+    paddingBottom: 80, 
   },
   card: {
     marginBottom: 15,
@@ -1533,15 +507,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Pretendard-Medium',
     textAlign: 'left',
     marginBottom: 4,
-    flexWrap: 'wrap',
-    flexShrink: 1,
   },
   locationText: {
     fontSize: 13,
     color: '#888',
     textAlign: 'left',
-    flexWrap: 'wrap',
-    flexShrink: 1,
   },
   wishlistImageBox: {
     width: '100%',
@@ -1554,18 +524,12 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  defaultIconImage: {
-    backgroundColor: '#f8f9fa',
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   starButton: {
     padding: 8,
   },
   star: {
     fontSize: 24,
-    color: '#659ECF',
+    color: '#123A86',
   },
   deleteTripButton: {
     paddingVertical: 5,
@@ -1590,40 +554,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: screenWidth * 0.90,
-    height: '80%',
-    maxHeight: '95%',
+    width: screenWidth * 0.9,
+    maxHeight: '80%',
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalContentSmall: {
-    height: '25%',
   },
   modalTitle: {
     fontSize: 18,
     fontFamily: 'Pretendard-Medium',
-    textAlign: 'left',
-    marginBottom: 15,
-  },
-  modalScrollView: {
     flex: 1,
-    width: '100%',
-  },
-  modalScrollSmall: {
-    maxHeight: 160,
-  },
-  modalScrollContent: {
-    paddingBottom: 20,
-  },
-  modalScrollContentTight: {
-    paddingBottom: 0,
+    textAlign: 'left',
   },
   imageBox: {
     width: '100%',
-    height: 120,
+    height: 180,
     borderRadius: 16,
     overflow: 'hidden',
     marginTop: 10,
@@ -1635,7 +581,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#659ECF',
+    backgroundColor: '#123A86',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,
@@ -1663,9 +609,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#666',
-    textAlign: 'left',
-    flexWrap: 'wrap',
-    flexShrink: 1,
+    textAlign: 'justify',
   },
   visitedPlacesTitle: {
     fontSize: 16,
@@ -1693,14 +637,11 @@ const styles = StyleSheet.create({
   closeXText: {
     fontSize: 18,
     color: '#666',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: 'bold',
   },
   bookmarkModalScroll: {
-    flex: 1,
+    maxHeight: 400,
     width: '100%',
-  },
-  bookmarkModalScrollContent: {
-    paddingBottom: 20,
   },
   infoSection: {
     marginBottom: 20,
@@ -1733,7 +674,7 @@ const styles = StyleSheet.create({
     color: '#00796b',
   },
   navigationButton: {
-    backgroundColor: '#659ECF',
+    backgroundColor: '#123A86',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -1746,127 +687,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Pretendard-Medium',
   },
-  bookmarkImageContainer: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
+  // ★★★ 핵심 4: 로그아웃 버튼 스타일 수정 ★★★
+  logoutButton: {
+    position: 'absolute', // 화면 기준으로 절대 위치
+    bottom: 30,           // 하단에서 30만큼 띄움
+    left: 20,             // 왼쪽에서 20만큼 띄움
+    backgroundColor: '#E9ECEF', // 연한 회색 배경
+    paddingVertical: 8,   // 세로 여백
+    paddingHorizontal: 16, // 가로 여백
+    borderRadius: 20,     // 둥근 모서리
   },
-  bookmarkModalImage: {
-    width: '100%',
-    height: '100%',
+  logoutButtonText: {
+    color: '#868E96',      // 텍스트 색상
+    fontSize: 12,         // 폰트 크기
   },
-
-  // 정렬 관련 스타일
-  sortContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    paddingRight: 0, // 오른쪽 패딩 제거하여 더 오른쪽으로 이동
-  },
-  sortDropdownContainer: {
-    position: 'relative',
-    zIndex: 10,
-  },
-  sortDropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#659ECF',
-    borderRadius: 6,
-  },
-  sortDropdownButtonText: {
-    fontSize: 13,
-    color: '#333',
-    fontFamily: 'Pretendard-Medium',
-    marginRight: 4,
-  },
-  sortDropdownArrow: {
-    fontSize: 10,
-    color: '#659ECF',
-    fontFamily: 'Pretendard-Medium',
-  },
-  sortDropdownArrowUp: {
-    transform: [{ rotate: '180deg' }],
-  },
-  sortDropdownMenu: {
-    position: 'absolute',
-    top: '100%',
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#659ECF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minWidth: 120,
-    marginTop: 4,
-  },
-  sortDropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  sortDropdownItemActive: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 6,
-    marginHorizontal: 4,
-    marginVertical: 2,
-  },
-  sortDropdownItemText: {
-    fontSize: 13,
-    color: '#333',
-    fontFamily: 'Pretendard-Medium',
-  },
-  sortDropdownItemTextActive: {
-    color: '#659ECF',
-  },
-  sortDropdownCheck: {
-    fontSize: 13,
-    color: '#659ECF',
-    fontFamily: 'Pretendard-Medium',
-  },
-
-  // 페이지네이션 관련 스타일
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  paginationButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#659ECF',
-    marginHorizontal: 8,
-  },
-  paginationButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  paginationButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
-  },
-  paginationButtonTextDisabled: {
-    color: '#999',
-  },
-  paginationText: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Pretendard-Medium',
-    marginHorizontal: 10,
-  },
-
 });
