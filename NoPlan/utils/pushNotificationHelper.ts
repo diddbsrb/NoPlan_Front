@@ -160,9 +160,16 @@ export async function createNotificationChannels() {
  * ★★★ 4-x. 로컬 알림 스케줄링들 ★★★
  * ------------------------------------------------ */
 
-/** 4-1. 여행 종료 후 48시간 뒤 1회 알림 */
+/** 4-1. 여행 종료 후 48시간 뒤 1회 알림 (사용자 설정 고려) */
 export async function schedulePostTravelRecommendation() {
   try {
+    // 사용자 설정 확인
+    const preferences = await loadNotificationPreferences();
+    if (!preferences.travel_recommendations) {
+      console.log('[여행 추천 알림] 사용자 설정에 의해 비활성화되어 스케줄링하지 않습니다.');
+      return;
+    }
+
     await ensureChannel('travel-recommendations', '여행 추천');
 
     const trigger: TimestampTrigger = {
@@ -507,28 +514,20 @@ export async function cancelAllNotifications() {
   }
 }
 
-/** 4-6. 여행 상태에 따른 재설정 */
+/** 4-6. 여행 상태에 따른 재설정 (사용자 설정 고려) */
 export async function resetNotificationsBasedOnTravelStatus() {
   try {
-    const isTraveling = await checkTravelStatus();
-
-    // 여행 중 알림(트리거) ID들
-    const travelTriggerIds = ['weekday-lunch', 'evening-smart', 'afternoon-smart'];
-
-    if (isTraveling) {
-      // 주말 반복 취소 + 여행 중 1회성 재설정
-      await cancelAllWeekendTravelNotifications();
-      await notifee.cancelTriggerNotifications(travelTriggerIds);
-      await scheduleWeekdayLunchNotification();
-      console.log('여행 중 - 주말 알림 취소, 여행 중 알림(점심/오후/저녁) 재설정');
-    } else {
-      // 여행 중 알림 취소 + 주말 반복 등록
-      await notifee.cancelTriggerNotifications(travelTriggerIds);
-      await scheduleWeekendTravelNotification();
-      console.log('여행 중 아님 - 여행 중 알림 취소, 주말 여행 알림만 유지');
-    }
+    console.log('[여행 상태 알림] 여행 상태 변경에 따른 알림 재설정 시작');
+    
+    // 사용자 설정 로드
+    const preferences = await loadNotificationPreferences();
+    
+    // 설정에 따른 알림 업데이트
+    await updateNotificationsBasedOnPreferences(preferences);
+    
+    console.log('[여행 상태 알림] 여행 상태 변경에 따른 알림 재설정 완료');
   } catch (error) {
-    console.error('여행 상태에 따른 알림 재설정 실패:', error);
+    console.error('[여행 상태 알림] 여행 상태에 따른 알림 재설정 실패:', error);
   }
 }
 
@@ -978,5 +977,276 @@ export async function checkNotificationPermission(): Promise<boolean> {
   } catch (error) {
     console.error('알림 권한 확인 실패:', error);
     return false;
+  }
+}
+
+/* ------------------------------------------------
+ * 8. 사용자 알림 설정 관리
+ * ------------------------------------------------ */
+
+export interface NotificationPreferences {
+  weekday_lunch: boolean;
+  weekend_travel: boolean;
+  travel_recommendations: boolean;
+}
+
+/** 사용자 알림 설정 저장 */
+export async function saveNotificationPreferences(preferences: NotificationPreferences): Promise<void> {
+  try {
+    await SecureStore.setItemAsync('notificationPreferences', JSON.stringify(preferences));
+    console.log('[알림 설정] 저장 완료:', preferences);
+  } catch (error) {
+    console.error('[알림 설정] 저장 실패:', error);
+    throw error;
+  }
+}
+
+/** 사용자 알림 설정 로드 */
+export async function loadNotificationPreferences(): Promise<NotificationPreferences> {
+  try {
+    const stored = await SecureStore.getItemAsync('notificationPreferences');
+    if (stored) {
+      const preferences = JSON.parse(stored);
+      console.log('[알림 설정] 로드 완료:', preferences);
+      return preferences;
+    }
+    
+    // 기본값 반환
+    const defaultPreferences: NotificationPreferences = {
+      weekday_lunch: true,
+      weekend_travel: true,
+      travel_recommendations: true,
+    };
+    console.log('[알림 설정] 기본값 사용:', defaultPreferences);
+    return defaultPreferences;
+  } catch (error) {
+    console.error('[알림 설정] 로드 실패:', error);
+    // 오류 시 기본값 반환
+    return {
+      weekday_lunch: true,
+      weekend_travel: true,
+      travel_recommendations: true,
+    };
+  }
+}
+
+/** 특정 알림 타입의 스케줄된 알림 취소 */
+export async function cancelNotificationByType(type: keyof NotificationPreferences): Promise<void> {
+  try {
+    switch (type) {
+      case 'weekday_lunch':
+        // 여행 중 알림들 취소
+        await notifee.cancelTriggerNotifications([
+          'weekday-lunch',
+          'afternoon-smart', 
+          'evening-smart'
+        ]);
+        console.log('[알림 취소] 평일 점심/스마트 알림 취소 완료');
+        break;
+        
+      case 'weekend_travel':
+        // 주말 여행 알림들 취소
+        await notifee.cancelTriggerNotifications([
+          'weekend-travel-fri-18',
+          'weekend-travel-sat-9',
+          'weekend-travel-sun-9'
+        ]);
+        console.log('[알림 취소] 주말 여행 알림 취소 완료');
+        break;
+        
+      case 'travel_recommendations':
+        // 여행 추천 알림들 취소 (post-travel로 시작하는 모든 알림)
+        const scheduledIds = await notifee.getTriggerNotificationIds();
+        const postTravelIds = scheduledIds.filter(id => id.startsWith('post-travel-'));
+        if (postTravelIds.length > 0) {
+          await notifee.cancelTriggerNotifications(postTravelIds);
+          console.log('[알림 취소] 여행 추천 알림 취소 완료:', postTravelIds);
+        }
+        break;
+    }
+  } catch (error) {
+    console.error(`[알림 취소] ${type} 알림 취소 실패:`, error);
+    throw error;
+  }
+}
+
+/** 설정에 따른 알림 스케줄링/취소 */
+export async function updateNotificationsBasedOnPreferences(preferences: NotificationPreferences): Promise<void> {
+  try {
+    console.log('[알림 업데이트] 설정에 따른 알림 재구성 시작:', preferences);
+    
+    const isTraveling = await checkTravelStatus();
+    
+    // 1. 평일 점심/스마트 알림 처리
+    if (preferences.weekday_lunch && isTraveling) {
+      // 여행 중이고 평일 점심 알림이 활성화된 경우
+      await cancelNotificationByType('weekday_lunch'); // 기존 알림 취소
+      await scheduleWeekdayLunchNotification(); // 새로 스케줄링
+      console.log('[알림 업데이트] 평일 점심 알림 활성화');
+    } else {
+      // 비활성화된 경우
+      await cancelNotificationByType('weekday_lunch');
+      console.log('[알림 업데이트] 평일 점심 알림 비활성화');
+    }
+    
+    // 2. 주말 여행 알림 처리
+    if (preferences.weekend_travel && !isTraveling) {
+      // 여행 중이 아니고 주말 여행 알림이 활성화된 경우
+      await cancelNotificationByType('weekend_travel'); // 기존 알림 취소
+      await scheduleWeekendTravelNotification(); // 새로 스케줄링
+      console.log('[알림 업데이트] 주말 여행 알림 활성화');
+    } else {
+      // 비활성화된 경우
+      await cancelNotificationByType('weekend_travel');
+      console.log('[알림 업데이트] 주말 여행 알림 비활성화');
+    }
+    
+    // 3. 여행 추천 알림은 별도로 처리 (여행 종료 시에만 스케줄링)
+    if (!preferences.travel_recommendations) {
+      await cancelNotificationByType('travel_recommendations');
+      console.log('[알림 업데이트] 여행 추천 알림 비활성화');
+    }
+    
+    console.log('[알림 업데이트] 설정에 따른 알림 재구성 완료');
+  } catch (error) {
+    console.error('[알림 업데이트] 실패:', error);
+    throw error;
+  }
+}
+
+/** 앱 시작 시 설정에 따른 알림 자동 설정 */
+export async function initializeNotificationsFromPreferences(): Promise<void> {
+  try {
+    console.log('[알림 초기화] 앱 시작 시 알림 설정 적용');
+    
+    // 1. 알림 권한 확인
+    const hasPermission = await ensureNotificationPermission();
+    if (!hasPermission) {
+      console.log('[알림 초기화] 알림 권한이 없어서 알림을 설정하지 않습니다.');
+      return;
+    }
+    
+    // 2. 채널/카테고리 초기화
+    await createNotificationChannels();
+    
+    // 3. 사용자 설정 로드
+    const preferences = await loadNotificationPreferences();
+    
+    // 4. 설정에 따른 알림 스케줄링
+    await updateNotificationsBasedOnPreferences(preferences);
+    
+    console.log('[알림 초기화] 완료');
+  } catch (error) {
+    console.error('[알림 초기화] 실패:', error);
+  }
+}
+
+/** 특정 알림 타입 토글 (설정 변경 + 실제 알림 제어) */
+export async function toggleNotificationType(
+  type: keyof NotificationPreferences, 
+  currentPreferences: NotificationPreferences
+): Promise<NotificationPreferences> {
+  try {
+    // 1. 설정 토글
+    const newPreferences = {
+      ...currentPreferences,
+      [type]: !currentPreferences[type]
+    };
+    
+    // 2. 설정 저장
+    await saveNotificationPreferences(newPreferences);
+    
+    // 3. 실제 알림 업데이트
+    await updateNotificationsBasedOnPreferences(newPreferences);
+    
+    console.log(`[알림 토글] ${type} 알림 ${newPreferences[type] ? '활성화' : '비활성화'} 완료`);
+    return newPreferences;
+  } catch (error) {
+    console.error(`[알림 토글] ${type} 알림 토글 실패:`, error);
+    throw error;
+  }
+}
+
+/** 모든 기존 알림 완전 삭제 (옛날 알림 정리용) */
+export async function clearAllExistingNotifications(): Promise<void> {
+  try {
+    console.log('[알림 정리] 모든 기존 알림 삭제 시작...');
+    
+    // 1. 현재 스케줄된 모든 알림 ID 가져오기
+    const scheduledIds = await notifee.getTriggerNotificationIds();
+    console.log('[알림 정리] 현재 스케줄된 알림들:', scheduledIds);
+    
+    // 2. 모든 트리거 알림 취소
+    if (scheduledIds.length > 0) {
+      await notifee.cancelTriggerNotifications(scheduledIds);
+      console.log('[알림 정리] 모든 트리거 알림 취소 완료:', scheduledIds);
+    }
+    
+    // 3. 표시된 알림들도 모두 취소
+    await notifee.cancelAllNotifications();
+    console.log('[알림 정리] 표시된 모든 알림 취소 완료');
+    
+    // 4. 특정 알림 ID들도 개별적으로 취소 (혹시 모를 경우)
+    const knownNotificationIds = [
+      'weekday-lunch',
+      'afternoon-smart', 
+      'evening-smart',
+      'weekend-travel-fri-18',
+      'weekend-travel-sat-9',
+      'weekend-travel-sun-9',
+      'test-notification',
+      'test-background-0.17min',
+      'test-background-1min',
+      'test-background-3min',
+      'test-immediate'
+    ];
+    
+    for (const id of knownNotificationIds) {
+      try {
+        await notifee.cancelNotification(id);
+        await notifee.cancelTriggerNotification(id);
+      } catch (error) {
+        // 개별 알림 취소 실패는 무시 (이미 취소되었을 수 있음)
+      }
+    }
+    
+    // 5. post-travel로 시작하는 모든 알림들도 취소
+    const allIds = await notifee.getTriggerNotificationIds();
+    const postTravelIds = allIds.filter(id => id.startsWith('post-travel-'));
+    if (postTravelIds.length > 0) {
+      await notifee.cancelTriggerNotifications(postTravelIds);
+      console.log('[알림 정리] 여행 추천 알림들 취소 완료:', postTravelIds);
+    }
+    
+    console.log('[알림 정리] 모든 기존 알림 삭제 완료!');
+    
+    // 6. 정리 후 현재 상태 확인
+    const remainingIds = await notifee.getTriggerNotificationIds();
+    console.log('[알림 정리] 정리 후 남은 알림들:', remainingIds);
+    
+  } catch (error) {
+    console.error('[알림 정리] 알림 삭제 실패:', error);
+    throw error;
+  }
+}
+
+/** 알림 완전 초기화 (정리 + 새로 설정) */
+export async function resetAllNotifications(): Promise<void> {
+  try {
+    console.log('[알림 초기화] 완전 초기화 시작...');
+    
+    // 1. 모든 기존 알림 삭제
+    await clearAllExistingNotifications();
+    
+    // 2. 잠시 대기 (시스템 정리 시간)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // 3. 사용자 설정에 따라 새로 설정
+    await initializeNotificationsFromPreferences();
+    
+    console.log('[알림 초기화] 완전 초기화 완료!');
+  } catch (error) {
+    console.error('[알림 초기화] 실패:', error);
+    throw error;
   }
 }

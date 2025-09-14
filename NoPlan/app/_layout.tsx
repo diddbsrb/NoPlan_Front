@@ -24,7 +24,9 @@ import {
   resetNotificationsBasedOnTravelStatus,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  sendTestNotification
+  sendTestNotification,
+  initializeNotificationsFromPreferences,
+  clearAllExistingNotifications
 } from '../utils/pushNotificationHelper';
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
@@ -172,40 +174,21 @@ export default function RootLayout() {
             return;
           }
 
-          // 3. 알림 채널 생성
-          await createNotificationChannels();
-          
-          // 4. 로컬 알림 스케줄링
+          // 3. 옛날 알림 정리 (앱 시작 시 한 번만)
           try {
-            const scheduledNotifications = await notifee.getTriggerNotificationIds();
-            console.log('현재 스케줄된 알림들:', scheduledNotifications);
-            
-            // 기존 알림 취소 후 새로 스케줄링 (시간 변경을 위해)
-            if (scheduledNotifications.includes('weekday-lunch')) {
-              await notifee.cancelNotification('weekday-lunch');
-              console.log('기존 평일 점심 알림 취소됨');
+            const scheduledIds = await notifee.getTriggerNotificationIds();
+            if (scheduledIds.length > 0) {
+              console.log('[알림 초기화] 기존 알림 발견, 정리 시작:', scheduledIds);
+              await clearAllExistingNotifications();
+              console.log('[알림 초기화] 기존 알림 정리 완료');
             }
-            if (scheduledNotifications.includes('weekend-travel')) {
-              await notifee.cancelNotification('weekend-travel');
-              console.log('기존 주말 여행 알림 취소됨');
-            }
-            
-                    // 여행 상태에 따른 알림 재설정
-        await resetNotificationsBasedOnTravelStatus();
-            
-            // 스케줄링 후 다시 확인
-            const newScheduledNotifications = await notifee.getTriggerNotificationIds();
-            console.log('스케줄링 후 알림들:', newScheduledNotifications);
-            
-            
-            
           } catch (error) {
-            console.error('알림 스케줄링 확인 실패:', error);
-            // 에러 발생 시 기본적으로 스케줄링 시도
-            await scheduleWeekdayLunchNotification();
-            await scheduleWeekendTravelNotification();
+            console.error('[알림 초기화] 기존 알림 정리 실패:', error);
           }
 
+          // 4. 사용자 설정에 따른 알림 초기화
+          await initializeNotificationsFromPreferences();
+          
           console.log('알림 설정이 완료되었습니다.');
         } catch (error) {
           console.error('알림 설정 중 오류 발생:', error);
