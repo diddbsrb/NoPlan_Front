@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
+import * as Linking from 'expo-linking';
 
 interface PermissionState {
   location: boolean;
@@ -34,11 +36,18 @@ export default function PermissionConsentScreen() {
   // 폰트 로딩
   useEffect(() => {
     async function loadFonts() {
-      await Font.loadAsync({
-        'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
-        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
-      });
-      setFontsLoaded(true);
+      try {
+        await Font.loadAsync({
+          'Pretendard-Medium': require('../../assets/fonts/Pretendard-Medium.otf'),
+          'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        });
+        console.log('[permission_consent] 폰트 로딩 완료');
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error('[permission_consent] 폰트 로딩 실패:', error);
+        // 폰트 로딩 실패해도 화면 표시
+        setFontsLoaded(true);
+      }
     }
     loadFonts();
   }, []);
@@ -71,6 +80,24 @@ export default function PermissionConsentScreen() {
     }));
   };
 
+  // 설정 앱으로 이동하는 함수
+  const openAppSettings = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        await Linking.openURL('app-settings:');
+      } else {
+        await Linking.openSettings();
+      }
+    } catch (error) {
+      console.error('설정 앱 열기 실패:', error);
+      Alert.alert(
+        '설정 열기 실패',
+        '설정 앱을 열 수 없습니다. 수동으로 앱 설정에서 권한을 허용해주세요.',
+        [{ text: '확인' }]
+      );
+    }
+  };
+
   // 실제 권한 요청
   const requestPermissions = async () => {
     try {
@@ -84,7 +111,12 @@ export default function PermissionConsentScreen() {
           const currentStatus = await Location.getForegroundPermissionsAsync();
           console.log('현재 위치 권한 상태:', currentStatus.status);
           
-          // 권한 요청 (이미 허용된 경우에도 다시 요청)
+          // 권한이 이미 거부된 경우에도 다시 요청 시도
+          if (currentStatus.status === 'denied') {
+            console.log('위치 권한이 이전에 거부됨, 다시 요청 시도');
+          }
+          
+          // 권한 요청 (강제로 다시 요청)
           const { status } = await Location.requestForegroundPermissionsAsync();
           console.log('위치 권한 결과:', status);
           
@@ -93,7 +125,10 @@ export default function PermissionConsentScreen() {
             Alert.alert(
               '위치 권한 필요',
               '정확한 위치 정보가 필요합니다. 설정에서 권한을 허용해주세요.',
-              [{ text: '확인' }]
+              [
+                { text: '나중에', style: 'cancel' },
+                { text: '설정으로 이동', onPress: openAppSettings }
+              ]
             );
             return false; // 위치 권한이 거부되면 진행 중단
           }
@@ -116,7 +151,12 @@ export default function PermissionConsentScreen() {
           const currentStatus = await Notifications.getPermissionsAsync();
           console.log('현재 알림 권한 상태:', currentStatus.status);
           
-          // 권한 요청 (이미 허용된 경우에도 다시 요청)
+          // 권한이 이미 거부된 경우에도 다시 요청 시도
+          if (currentStatus.status === 'denied') {
+            console.log('알림 권한이 이전에 거부됨, 다시 요청 시도');
+          }
+          
+          // 권한 요청 (강제로 다시 요청)
           const { status } = await Notifications.requestPermissionsAsync();
           console.log('알림 권한 결과:', status);
           
@@ -150,13 +190,26 @@ export default function PermissionConsentScreen() {
       
       if (!success) {
         console.log('권한 요청 실패, 현재 페이지에 머물러 있음');
-        return; // 권한 요청이 실패하면 현재 페이지에 머물러 있음
+        // 권한 요청이 실패해도 현재 페이지에 머물러 있으므로
+        // 사용자가 다시 "시작하기" 버튼을 누를 수 있음
+        return;
       }
       
       console.log('권한 요청 완료');
       
-      // 권한 동의 완료 상태 저장
-      await SecureStore.setItemAsync('permissionsConsented', 'true');
+      // 권한 동의 완료 상태 저장 (SecureStore와 AsyncStorage 둘 다 사용)
+      try {
+        await SecureStore.setItemAsync('permissionsConsented', 'true');
+      } catch (error) {
+        console.log('SecureStore 저장 실패, AsyncStorage 사용:', error);
+      }
+      
+      try {
+        await AsyncStorage.setItem('permissionsConsented', 'true');
+      } catch (error) {
+        console.log('AsyncStorage 저장 실패:', error);
+      }
+      
       console.log('권한 동의 완료, index로 이동');
       
       // index 화면으로 이동
