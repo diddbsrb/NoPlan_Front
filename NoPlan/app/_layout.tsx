@@ -101,6 +101,7 @@ export default function RootLayout() {
       const isAppGuide = pathname.includes('app_guide');
       const isUserInfo = pathname.includes('user_info');
       const isList = pathname.includes('list');
+      const isPermission = pathname.includes('permission_consent');
       
       // list 화면인 경우 home_travel로 이동
       if (isList) {
@@ -109,7 +110,7 @@ export default function RootLayout() {
       }
       
       // 이 화면들 중 하나인 경우 앱 종료 옵션 제공
-      if (isHomeTravel || isHome || isIndex || isAppGuide || isUserInfo) {
+      if (isHomeTravel || isHome || isIndex || isAppGuide || isUserInfo || isPermission) {
         if (backPressCount === 0) {
           backPressCount = 1;
           ToastAndroid.show('뒤로가기 한 번 더 누르면 앱 종료', ToastAndroid.SHORT);

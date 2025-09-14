@@ -2,10 +2,12 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router'; // ✅ 추가
 import { useEffect, useState } from 'react';
 import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 export default function HomeScreen() {
   const router = useRouter(); // ✅ 라우터 객체 생성
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [hasCheckedPermissions, setHasCheckedPermissions] = useState(false);
 
   useEffect(() => {
     async function loadFonts() {
@@ -17,8 +19,33 @@ export default function HomeScreen() {
     loadFonts();
   }, []);
 
-  if (!fontsLoaded) {
-    return null; // 폰트가 로드될 때까지 빈 화면 표시
+  // 권한 동의 상태 확인 (한 번만 실행)
+  useEffect(() => {
+    const checkPermissionConsent = async () => {
+      if (!fontsLoaded || hasCheckedPermissions) return;
+      
+      try {
+        const permissionsConsented = await SecureStore.getItemAsync('permissionsConsented');
+        console.log('[index.tsx] 권한 동의 상태:', permissionsConsented);
+        
+        if (permissionsConsented !== 'true') {
+          // 권한 동의가 안된 경우 권한 동의 화면으로 이동
+          console.log('[index.tsx] 권한 동의 화면으로 이동');
+          router.replace('/(tabs)/permission_consent' as any);
+        }
+        
+        setHasCheckedPermissions(true); // 권한 확인 완료 표시
+      } catch (error) {
+        console.error('[index.tsx] 권한 동의 상태 확인 실패:', error);
+        setHasCheckedPermissions(true);
+      }
+    };
+
+    checkPermissionConsent();
+  }, [fontsLoaded, hasCheckedPermissions]);
+
+  if (!fontsLoaded || !hasCheckedPermissions) {
+    return null; // 폰트가 로드될 때까지 또는 권한 확인 중에는 빈 화면 표시
   }
 
   return (

@@ -70,6 +70,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="permission_consent"
+        options={{
+          title: 'Permission Consent',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checkmark.shield" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
