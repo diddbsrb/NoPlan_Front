@@ -42,6 +42,114 @@ allprojects {
 };
 
 /**
+ * Proguard 규칙을 추가하는 커스텀 플러그인 (AAB 빌드에서 네이티브 코드 보호)
+ * @param {import('@expo/config-types').ExpoConfig} config
+ */
+const withProguardRules = (config) => {
+  return withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const projectRoot = config.modRequest.projectRoot;
+      const proguardRulesFile = path.join(projectRoot, 'android', 'app', 'proguard-rules.pro');
+
+      // android/app 폴더가 없으면 생성
+      const androidAppDir = path.dirname(proguardRulesFile);
+      if (!fs.existsSync(androidAppDir)) {
+        fs.mkdirSync(androidAppDir, { recursive: true });
+      }
+
+      const proguardRulesContent = `
+# React Native 관련 라이브러리 보호
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+
+# React Native Gesture Handler
+-keep class com.swmansion.gesturehandler.** { *; }
+-keep class com.swmansion.gesturehandler.react.** { *; }
+-dontwarn com.swmansion.gesturehandler.**
+
+# React Native Reanimated
+-keep class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.reanimated.react.** { *; }
+-dontwarn com.swmansion.reanimated.**
+
+# React Native Safe Area Context
+-keep class com.th3rdwave.safeareacontext.** { *; }
+-dontwarn com.th3rdwave.safeareacontext.**
+
+# React Native Async Storage
+-keep class com.reactnativecommunity.asyncstorage.** { *; }
+-dontwarn com.reactnativecommunity.asyncstorage.**
+
+# React Native Secure Store
+-keep class expo.modules.securestore.** { *; }
+-dontwarn expo.modules.securestore.**
+
+# React Native Location
+-keep class expo.modules.location.** { *; }
+-dontwarn expo.modules.location.**
+
+# React Native Notifications
+-keep class expo.modules.notifications.** { *; }
+-dontwarn expo.modules.notifications.**
+
+# Firebase
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# Kakao Login
+-keep class com.kakao.sdk.** { *; }
+-dontwarn com.kakao.sdk.**
+
+# Expo Router
+-keep class expo.modules.router.** { *; }
+-dontwarn expo.modules.router.**
+
+# 일반적인 React Native 네이티브 모듈 보호
+-keep class * extends com.facebook.react.bridge.ReactContextBaseJavaModule { *; }
+-keep class * extends com.facebook.react.bridge.BaseJavaModule { *; }
+-keepclassmembers class * {
+    @com.facebook.react.bridge.ReactMethod <methods>;
+}
+
+# 네이티브 메서드 보호
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# JNI 관련 보호
+-keepclasseswithmembers class * {
+    native <methods>;
+}
+
+# 리플렉션 사용 클래스 보호
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
+# React Native Metro 관련
+-keep class com.facebook.react.modules.** { *; }
+-keep class com.facebook.react.uimanager.** { *; }
+-keep class com.facebook.react.views.** { *; }
+
+# Hermes 엔진 보호
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+`;
+
+      fs.writeFileSync(proguardRulesFile, proguardRulesContent.trim());
+      console.log('Proguard rules file created at:', proguardRulesFile);
+      
+      return config;
+    },
+  ]);
+};
+
+/**
  * 안드로이드 네트워크 보안 설정을 위한 커스텀 플러그인 (가장 안정적인 방식)
  * @param {import('@expo/config-types').ExpoConfig} config
  */
@@ -151,6 +259,7 @@ module.exports = ({ config }) => {
     },
     plugins: [
       withForcedKotlinVersion,
+      withProguardRules, // Proguard 규칙 추가 (AAB 빌드 대응)
       withNetworkSecurityConfig, // 수정된 플러그인이 여기에서 사용됩니다.
       'expo-router',
       'expo-secure-store',
