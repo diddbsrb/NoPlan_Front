@@ -7,8 +7,36 @@ import notifee, {
   TimestampTrigger,
   AuthorizationStatus,
   RepeatFrequency,
+  AndroidCategory,
 } from '@notifee/react-native';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+/* ------------------------------------------------
+ * ★★★ 백그라운드 이벤트 핸들러 (파일 최상단에 위치) ★★★
+ * ------------------------------------------------ */
+
+// Notifee 백그라운드 이벤트 핸들러
+notifee.onBackgroundEvent(async ({ type, detail }) => {
+  console.log('[백그라운드 이벤트] 타입:', type);
+  console.log('[백그라운드 이벤트] 상세:', detail);
+  
+  if (type === 1 && detail.pressAction) {
+    // 알림 액션 핸들링
+    const actionId = detail.pressAction.id;
+    const notificationData = detail.notification?.data;
+    
+    console.log('[백그라운드 이벤트] 액션 ID:', actionId);
+    console.log('[백그라운드 이벤트] 알림 데이터:', notificationData);
+    
+    // 여기서 필요하다면 추가 로직 처리
+  }
+});
+
+// Firebase 백그라운드 메시지 핸들러
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('[FCM 백그라운드] 메시지 수신:', remoteMessage);
+});
 
 /* ------------------------------------------------
  * 공통 유틸
@@ -175,7 +203,7 @@ export async function schedulePostTravelRecommendation() {
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: Date.now() + 48 * 60 * 60 * 1000,
-      // alarmManager: false  // 기본 false: 정확알람 권한 부담 줄이기
+      alarmManager: true,  // ✅ Android에서 앱이 종료되어도 알림 발송
     };
 
     await notifee.createTriggerNotification(
@@ -249,7 +277,7 @@ export async function scheduleWeekdayLunchNotification() {
     const lunchTrigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: lunchTime.getTime(),
-      // alarmManager: true  // 정말 초단위 정확도가 필요할 때만 활성화
+      alarmManager: true,  // ✅ 백그라운드 알람을 위해 필수
     };
 
     const rec = await getRecommendationTypeBasedOnLastVisit();
@@ -301,6 +329,7 @@ export async function scheduleWeekdayLunchNotification() {
     const afternoonTrigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: afternoonTime.getTime(),
+      alarmManager: true,  // ✅ 백그라운드 알람을 위해 필수
     };
 
     await notifee.createTriggerNotification(
@@ -363,6 +392,7 @@ export async function scheduleWeekdayLunchNotification() {
     const eveningTrigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: eveningTime.getTime(),
+      alarmManager: true,  // ✅ 백그라운드 알람을 위해 필수
     };
 
     await notifee.createTriggerNotification(
@@ -448,6 +478,7 @@ export async function scheduleWeekendTravelNotification() {
         type: TriggerType.TIMESTAMP,
         timestamp: s.ts,
         repeatFrequency: RepeatFrequency.WEEKLY,
+        alarmManager: true,  // ✅ 백그라운드 알람을 위해 필수
       };
 
       await notifee.createTriggerNotification(
@@ -601,13 +632,14 @@ export async function sendTestNotification(type: 'lunch' | 'weekend' | 'travel')
   }
 }
 
-/** 1분 뒤 테스트 트리거 */
+/** 5분 뒤 테스트 트리거 */
 export async function scheduleTestNotification() {
   try {
     await ensureChannel('default', '기본 알림');
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
-      timestamp: Date.now() + 60_000,
+      timestamp: Date.now() + 5 * 60 * 1000, // 5분으로 변경
+      alarmManager: true,  // ✅ 백그라운드 테스트 알림 작동
     };
     await notifee.createTriggerNotification(
       {
@@ -620,7 +652,7 @@ export async function scheduleTestNotification() {
       },
       trigger
     );
-    console.log('테스트 알림이 1분 후로 스케줄링되었습니다.');
+    console.log('테스트 알림이 5분 후로 스케줄링되었습니다.');
   } catch (error) {
     console.error('테스트 알림 스케줄링 실패:', error);
   }
@@ -678,6 +710,7 @@ export async function scheduleDelayedTestNotification(minutes: number) {
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: targetTime.getTime(),
+      alarmManager: true,  // ✅ 백그라운드 알림 테스트
     };
     
     await notifee.createTriggerNotification(
@@ -1248,5 +1281,63 @@ export async function resetAllNotifications(): Promise<void> {
   } catch (error) {
     console.error('[알림 초기화] 실패:', error);
     throw error;
+  }
+}
+
+
+/* ------------------------------------------------
+ * 9. Android 백그라운드 설정 확인
+ * ------------------------------------------------ */
+
+/** Android 백그라운드 알림 설정 확인 및 안내 */
+export async function checkAndroidBackgroundSettings() {
+  if (Platform.OS !== 'android') {
+    console.log('[Android 설정] iOS에서는 Android 설정 확인을 건너뜁니다.');
+    return null;
+  }
+  
+  try {
+    console.log('[Android 설정] 백그라운드 알림 설정 확인 중...');
+    
+    // 배터리 최적화 상태 확인
+    const isBatteryOptimized = await notifee.isBatteryOptimizationEnabled();
+    console.log('[Android 설정] 배터리 최적화 상태:', isBatteryOptimized);
+    
+    if (isBatteryOptimized) {
+      console.warn('⚠️ [Android 설정] 배터리 최적화가 활성화되어 있습니다!');
+      console.warn('⚠️ 백그라운드 알림이 작동하지 않을 수 있습니다.');
+      console.warn('⚠️ 설정 > 배터리 > 배터리 최적화에서 앱을 예외로 설정해주세요.');
+      
+      // 자동으로 설정 페이지를 열지 않고 로그만 출력
+      console.log('[Android 설정] 배터리 최적화 설정은 사용자가 수동으로 해주세요.');
+    } else {
+      console.log('✅ [Android 설정] 배터리 최적화가 비활성화되어 있습니다.');
+    }
+    
+    // 알림 채널 중요도 확인
+    const channels = await notifee.getChannels();
+    console.log('[Android 설정] 알림 채널들:', channels);
+    
+    const highImportanceChannels = channels.filter(c => (c.importance ?? 0) >= 4);
+    console.log('[Android 설정] 높은 중요도 채널 수:', highImportanceChannels.length);
+    
+    if (highImportanceChannels.length === 0) {
+      console.warn('⚠️ [Android 설정] 높은 중요도 알림 채널이 없습니다!');
+    }
+    
+    return {
+      isBatteryOptimized,
+      channels: channels.length,
+      highImportanceChannels: highImportanceChannels.length,
+      channelDetails: channels.map(c => ({
+        id: c.id,
+        name: c.name,
+        importance: c.importance ?? 0
+      }))
+    };
+    
+  } catch (error) {
+    console.error('[Android 설정] 백그라운드 설정 확인 실패:', error);
+    return null;
   }
 }

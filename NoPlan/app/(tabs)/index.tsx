@@ -33,6 +33,8 @@ export default function HomeScreen() {
       if (!fontsLoaded || hasCheckedPermissions) return;
       
       try {
+        console.log('[index.tsx] 권한 동의 상태 확인 시작...');
+        
         // SecureStore와 AsyncStorage 둘 다 확인
         let permissionsConsented = null;
         
@@ -53,10 +55,17 @@ export default function HomeScreen() {
           }
         }
         
+        console.log('[index.tsx] 최종 권한 동의 상태:', permissionsConsented);
+        console.log('[index.tsx] 권한 동의 상태 타입:', typeof permissionsConsented);
+        console.log('[index.tsx] 권한 동의 상태 비교 결과:', permissionsConsented !== 'true');
+        
         if (permissionsConsented !== 'true') {
           // 권한 동의가 안된 경우 권한 동의 화면으로 이동
           console.log('[index.tsx] 권한 동의 화면으로 이동');
           router.replace('/(tabs)/permission_consent' as any);
+          return; // 이동 후 함수 종료
+        } else {
+          console.log('[index.tsx] 권한 동의 완료됨, 메인 화면 표시');
         }
         
         setHasCheckedPermissions(true); // 권한 확인 완료 표시

@@ -25,18 +25,13 @@ import {
   resetNotificationsBasedOnTravelStatus,
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
-  sendTestNotification,
-  initializeNotificationsFromPreferences,
-  clearAllExistingNotifications
-} from '../utils/pushNotificationHelper';
+  checkAndroidBackgroundSettings
+} from '@/utils/pushNotificationHelper';
 
 // ★★★ 3. AuthProvider를 import 합니다. ★★★
 import { AuthProvider } from './(contexts)/AuthContext';
 
-// ★★★ 4. 백그라운드 핸들러는 반드시 컴포넌트 바깥, 파일 최상단에 위치해야 합니다. ★★★
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('백그라운드/종료 상태에서 메시지 처리:', remoteMessage);
-});
+// ★★★ 4. 백그라운드 핸들러는 이제 pushNotificationHelper.ts에 있으므로 여기서는 제거 ★★★
 
 // AuthStateHandler 컴포넌트: 앱 시작 시 저장된 인증 상태와 여행 상태를 확인하고 적절한 화면으로 라우팅
 function AuthStateHandler() {
@@ -162,36 +157,17 @@ export default function RootLayout() {
     if (loaded) {
       const setupNotifications = async () => {
         try {
-          // 1. 알림 권한 요청
-          const permissionGranted = await requestUserPermission();
-          if (!permissionGranted) {
-            console.log('알림 권한이 거부되었습니다.');
-            return;
-          }
-
-          // 2. FCM 토큰 가져오기
-          const token = await getFCMToken();
-          if (!token) {
-            console.log('FCM 토큰을 가져올 수 없습니다.');
-            return;
-          }
-
-          // 3. 옛날 알림 정리 (앱 시작 시 한 번만)
-          try {
-            const scheduledIds = await notifee.getTriggerNotificationIds();
-            if (scheduledIds.length > 0) {
-              console.log('[알림 초기화] 기존 알림 발견, 정리 시작:', scheduledIds);
-              await clearAllExistingNotifications();
-              console.log('[알림 초기화] 기존 알림 정리 완료');
-            }
-          } catch (error) {
-            console.error('[알림 초기화] 기존 알림 정리 실패:', error);
-          }
-
-          // 4. 사용자 설정에 따른 알림 초기화
-          await initializeNotificationsFromPreferences();
+          console.log('[알림 설정] 시작...');
           
-          console.log('알림 설정이 완료되었습니다.');
+          // 1. 채널 생성만 (권한 요청은 permission_consent에서 처리)
+          await createNotificationChannels();
+          
+          // 2. Android 백그라운드 설정 확인
+          await checkAndroidBackgroundSettings();
+
+          console.log('[알림 설정] 기본 설정 완료 (권한 동의 후 상세 설정 예정)');
+          
+          console.log('[알림 설정] 완료');
         } catch (error) {
           console.error('알림 설정 중 오류 발생:', error);
         }
@@ -206,59 +182,7 @@ export default function RootLayout() {
     }
   }, [loaded]); // 'loaded' 상태가 true가 되면 이 훅이 실행됩니다.
 
-    // ★★★ 6. 알림 액션 리스너 추가 ★★★
-  
-  useEffect(() => {
-    if (loaded) {
-      // 알림 클릭 리스너 설정 (앱이 백그라운드에서 열릴 때)
-      const unsubscribe = notifee.onBackgroundEvent(async ({ type, detail }) => {
-        console.log('[알림 백그라운드] 이벤트 타입:', type);
-        console.log('[알림 백그라운드] 상세 정보:', detail);
-        
-        // 모든 이벤트 타입을 처리 (PRESS, ACTION_PRESS, DELIVERED 등)
-        if (type === EventType.PRESS || type === EventType.ACTION_PRESS) {
-           // 액션 ID 가져오기 (여러 방법으로 시도)
-           let actionId = 'default';
-           
-           if (detail.pressAction?.id) {
-             actionId = detail.pressAction.id;
-           } else if (detail.notification?.data?.actionId) {
-             const dataActionId = detail.notification.data.actionId;
-             actionId = typeof dataActionId === 'string' ? dataActionId : 'default';
-           }
-           
-           console.log('[알림 백그라운드] 액션 ID:', actionId);
-           console.log('[알림 백그라운드] 알림 데이터:', detail.notification?.data);
-           
-           // 알림 데이터와 액션 ID를 함께 전달 (async 처리)
-           try {
-             const navigationData = await handleNotificationAction(actionId, detail.notification?.data || {});
-             console.log('[알림 백그라운드] handleNotificationAction 결과:', navigationData);
-          
-             if (navigationData && navigationData.screen) {
-               console.log('[알림 백그라운드] 화면 이동 시도:', navigationData.screen);
-               try {
-                 router.push({
-                   pathname: `/${navigationData.screen}` as any,
-                   params: navigationData.params
-                 });
-                 console.log('[알림 백그라운드] 화면 이동 성공');
-               } catch (error) {
-                 console.error('[알림 백그라운드] 화면 이동 실패:', error);
-               }
-             } else {
-               console.log('[알림 백그라운드] 네비게이션 데이터가 null이거나 screen이 없습니다.');
-             }
-           } catch (error) {
-             console.error('[알림 백그라운드] handleNotificationAction 처리 실패:', error);
-           }
-         }
-       });
-
-       // 컴포넌트가 사라질 때 리스너를 정리합니다.
-       return unsubscribe;
-    }
-  }, [loaded, router]);
+    // ★★★ 6. 백그라운드 이벤트 핸들러는 이제 pushNotificationHelper.ts에 있으므로 제거 ★★★
 
   // 폰트가 로드되지 않았을 때는 아무것도 렌더링하지 않습니다 (기존 로직 유지).
   if (!loaded) {
