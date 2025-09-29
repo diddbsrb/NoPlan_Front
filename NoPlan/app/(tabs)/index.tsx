@@ -2,23 +2,80 @@ import * as Font from 'expo-font';
 import { useRouter } from 'expo-router'; // ✅ 추가
 import { useEffect, useState } from 'react';
 import { Image, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
   const router = useRouter(); // ✅ 라우터 객체 생성
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [hasCheckedPermissions, setHasCheckedPermissions] = useState(false);
 
   useEffect(() => {
     async function loadFonts() {
-      await Font.loadAsync({
-        'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
-      });
-      setFontsLoaded(true);
+      try {
+        await Font.loadAsync({
+          'Pretendard-Light': require('../../assets/fonts/Pretendard-Light.otf'),
+        });
+        console.log('[index] 폰트 로딩 완료');
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error('[index] 폰트 로딩 실패:', error);
+        // 폰트 로딩 실패해도 화면 표시
+        setFontsLoaded(true);
+      }
     }
     loadFonts();
   }, []);
 
-  if (!fontsLoaded) {
-    return null; // 폰트가 로드될 때까지 빈 화면 표시
+  // 권한 동의 상태 확인 (한 번만 실행)
+  useEffect(() => {
+    const checkPermissionConsent = async () => {
+      if (!fontsLoaded || hasCheckedPermissions) return;
+      
+      try {
+        // SecureStore와 AsyncStorage 둘 다 확인
+        let permissionsConsented = null;
+        
+        try {
+          permissionsConsented = await SecureStore.getItemAsync('permissionsConsented');
+          console.log('[index.tsx] SecureStore 권한 동의 상태:', permissionsConsented);
+        } catch (secureStoreError) {
+          console.log('[index.tsx] SecureStore 읽기 실패:', secureStoreError);
+        }
+        
+        // SecureStore에서 읽기 실패한 경우 AsyncStorage에서 확인
+        if (!permissionsConsented) {
+          try {
+            permissionsConsented = await AsyncStorage.getItem('permissionsConsented');
+            console.log('[index.tsx] AsyncStorage 권한 동의 상태:', permissionsConsented);
+          } catch (asyncStorageError) {
+            console.log('[index.tsx] AsyncStorage 읽기 실패:', asyncStorageError);
+          }
+        }
+        
+        if (permissionsConsented !== 'true') {
+          // 권한 동의가 안된 경우 권한 동의 화면으로 이동
+          console.log('[index.tsx] 권한 동의 화면으로 이동');
+          router.replace('/(tabs)/permission_consent' as any);
+        }
+        
+        setHasCheckedPermissions(true); // 권한 확인 완료 표시
+      } catch (error) {
+        console.error('[index.tsx] 권한 동의 상태 확인 실패:', error);
+        setHasCheckedPermissions(true);
+      }
+    };
+
+    // 약간의 지연을 두고 권한 확인 (안정성을 위해)
+    const timer = setTimeout(() => {
+      checkPermissionConsent();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, hasCheckedPermissions]);
+
+  if (!fontsLoaded || !hasCheckedPermissions) {
+    return null; // 폰트가 로드될 때까지 또는 권한 확인 중에는 빈 화면 표시
   }
 
   return (

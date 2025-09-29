@@ -16,13 +16,12 @@ import {
   scheduleWeekdayLunchNotification,
   scheduleWeekendTravelNotification,
   schedulePostTravelRecommendation,
+  loadNotificationPreferences,
+  toggleNotificationType,
+  type NotificationPreferences,
 } from '../../utils/pushNotificationHelper';
 
-interface NotificationPreferences {
-  weekday_lunch: boolean;
-  weekend_travel: boolean;
-  travel_recommendations: boolean;
-}
+// NotificationPreferences는 pushNotificationHelper에서 import
 
 interface Props {
   onBack?: () => void;
@@ -50,15 +49,21 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
       const permission = await requestUserPermission();
       setHasPermission(permission);
       
-      // 로컬 설정은 기본값 사용 (모든 알림 활성화)
+      // 저장된 설정 로드
+      const savedPreferences = await loadNotificationPreferences();
+      setPreferences(savedPreferences);
+      
+      console.log('[알림 설정] 로드된 설정:', savedPreferences);
+    } catch (error) {
+      console.error('알림 설정 로드 실패:', error);
+      Alert.alert('오류', '알림 설정을 불러오는데 실패했습니다.');
+      
+      // 오류 시 기본값 사용
       setPreferences({
         weekday_lunch: true,
         weekend_travel: true,
         travel_recommendations: true,
       });
-    } catch (error) {
-      console.error('알림 설정 로드 실패:', error);
-      Alert.alert('오류', '알림 설정을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -79,26 +84,44 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
       return;
     }
 
-    const newPreferences = {
-      ...preferences,
-      [key]: !preferences[key],
-    };
-    
-    setPreferences(newPreferences);
-    
     try {
       setIsSaving(true);
-      // 로컬 설정만 업데이트 (서버 연동 없음)
-      console.log('알림 설정 업데이트 성공');
+      
+      // 실제 알림 토글 (설정 저장 + 알림 스케줄링/취소)
+      const newPreferences = await toggleNotificationType(key, preferences);
+      setPreferences(newPreferences);
+      
+      console.log(`[알림 설정] ${key} 알림 ${newPreferences[key] ? '활성화' : '비활성화'} 완료`);
+      
+      // 사용자에게 피드백 제공
+      const message = newPreferences[key] 
+        ? `${getNotificationDisplayName(key)} 알림이 활성화되었습니다.`
+        : `${getNotificationDisplayName(key)} 알림이 비활성화되었습니다.`;
+      
+      Alert.alert('알림 설정 변경', message);
+      
     } catch (error) {
       console.error('알림 설정 업데이트 실패:', error);
       Alert.alert('오류', '알림 설정 업데이트에 실패했습니다.');
-      // 실패 시 원래 상태로 되돌리기
-      setPreferences(preferences);
     } finally {
       setIsSaving(false);
     }
   };
+
+  // 알림 타입별 표시 이름
+  const getNotificationDisplayName = (key: keyof NotificationPreferences): string => {
+    switch (key) {
+      case 'weekday_lunch':
+        return '평일 점심';
+      case 'weekend_travel':
+        return '주말 여행';
+      case 'travel_recommendations':
+        return '여행 추천';
+      default:
+        return '알림';
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -137,9 +160,9 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
             <Text style={styles.settingTitle}>평일 점심 알림</Text>
-                         <Text style={styles.settingDescription}>
-               매일 오후 4시 50분에 점심 추천 알림을 받습니다
-             </Text>
+            <Text style={styles.settingDescription}>
+              매일 오전 11시 50분에 점심 추천 알림을 받습니다
+            </Text>
           </View>
           <Switch
             value={preferences.weekday_lunch}
@@ -154,7 +177,7 @@ export default function NotificationSettingsComponent({ onBack }: Props) {
           <View style={styles.settingInfo}>
             <Text style={styles.settingTitle}>주말 여행 알림</Text>
             <Text style={styles.settingDescription}>
-              매주 금요일 오후 6시에 주말 여행 추천 알림을 받습니다
+              매주 금요일 오후 6시, 토/일요일 오전 9시에 주말 여행 추천 알림을 받습니다
             </Text>
           </View>
           <Switch
@@ -303,3 +326,4 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
+
