@@ -4,22 +4,21 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CustomTopBar from './(components)/CustomTopBar';
-// *** [수정] ImageAssets import 추가 ***
-import { ImageAssets } from '../assets/images/ImageAssets';
 
-// *** [수정] ImageAssets를 사용하도록 배열 변경 ***
 const DEST_OPTIONS = [
-  { label: '식당', image: ImageAssets.dest_restaurant },
-  { label: '카페', image: ImageAssets.dest_cafe },
-  { label: '숙소', image: ImageAssets.dest_accommodation },
-  { label: '관광지', image: ImageAssets.dest_attractions },
+  { label: '식당', image: require('../assets/images/식당.jpg') },
+  { label: '카페', image: require('../assets/images/카페.jpg') },
+  { label: '숙소', image: require('../assets/images/숙소.jpg') },
+  { label: '관광지', image: require('../assets/images/관광지.jpg') },
 ];
+
 
 export default function SurveyDestination() {
   const router = useRouter();
   const [selected, setSelected] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // 폰트 로드
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
@@ -29,9 +28,14 @@ export default function SurveyDestination() {
     loadFonts();
   }, []);
 
+
+  // 🆕 다음 버튼 로직 수정 - 위치 정보 없이 바로 list로 이동
   const handleNextButton = async (selectedIndex: number) => {
     setLoading(true);
     try {
+      // 🆕 위치 정보 확인 없이 바로 list로 이동
+      // list 페이지에서 위치 정보를 확인하도록 수정
+      
       const typeMap = ['restaurants', 'cafes', 'accommodations', 'attractions'];
       const type = typeMap[selectedIndex];
       console.log('[survey_destination] list로 이동:', type);
@@ -120,13 +124,6 @@ const styles = StyleSheet.create({
   },
   selectedOption: {
     borderColor: '#659ECF',
-    borderWidth: 3,
-    borderRadius: 20,
-    shadowColor: '#659ECF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   optionImage: {
     width: '100%',
